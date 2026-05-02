@@ -308,23 +308,3 @@ DEBUG=true
 ```
 
 ---
-
-## 📚 Documentation
-
-- [Architecture Overview](docs/architecture.md)
-- [Data Flow Diagram](docs/flow.md)
-- [API Documentation](docs/api.md)
-
----
-
-## 🤝 Contributing
-
-- Person 1: STT + Telephony
-- Person 2: LLM Brain
-- Person 3: TTS
-- Person 4: Backend + DB + Scoring
-
----
-
-**Last Updated:** May 2, 2026  
-**Status:** 🚀 In Development
