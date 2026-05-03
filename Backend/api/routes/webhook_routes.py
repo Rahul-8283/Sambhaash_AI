@@ -6,10 +6,10 @@ from typing import Any, Dict, Optional
 from fastapi import APIRouter, Request
 from fastapi.responses import Response
 
-from config import get_settings
-from services.stt.language_detector import LanguageDetector
-from services.stt.whisper_service import WhisperService
-from services.telephony.twilio_client import TwilioClient
+from Backend.config import get_settings
+from Backend.services.stt.language_detector import LanguageDetector
+from Backend.services.stt.whisper_service import WhisperService
+from Backend.services.telephony.twilio_client import TwilioClient
 
 
 logger = logging.getLogger(__name__)
