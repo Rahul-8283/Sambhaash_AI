@@ -8,7 +8,7 @@ from xml.sax.saxutils import escape
 
 import requests
 
-from config import get_settings
+from Backend.config import get_settings
 
 
 logger = logging.getLogger(__name__)
