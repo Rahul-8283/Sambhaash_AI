@@ -13,7 +13,7 @@ import uvicorn
 
 from config import get_config
 from services.database.supabase_client import get_db_client, close_db_client
-from api.routes import lead_routes
+from api.routes import lead_routes, rm_routes
 
 # ==================== LOGGING SETUP ====================
 
@@ -102,6 +102,7 @@ def create_app() -> FastAPI:
     
     # API Routes
     app.include_router(lead_routes.router)
+    app.include_router(rm_routes.router)
     
     # ==================== ROOT ENDPOINT ====================
     
