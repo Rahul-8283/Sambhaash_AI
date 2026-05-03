@@ -5,8 +5,8 @@ import logging
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.routes import call_routes, health, webhook_routes
-from config import get_settings
+from Backend.api.routes import call_routes, health, webhook_routes
+from Backend.config import get_settings
 
 
 logging.basicConfig(level=logging.INFO)
