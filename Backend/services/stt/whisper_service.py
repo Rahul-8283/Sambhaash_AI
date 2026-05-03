@@ -7,7 +7,7 @@ from typing import Optional
 import requests
 from openai import OpenAI
 
-from config import get_settings
+from Backend.config import get_settings
 
 
 logger = logging.getLogger(__name__)
