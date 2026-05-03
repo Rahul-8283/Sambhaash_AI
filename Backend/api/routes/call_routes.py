@@ -5,8 +5,8 @@ import logging
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
-from config import get_settings
-from services.telephony.twilio_client import TwilioClient
+from Backend.config import get_settings
+from Backend.services.telephony.twilio_client import TwilioClient
 
 
 logger = logging.getLogger(__name__)
