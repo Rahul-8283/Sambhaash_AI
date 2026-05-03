@@ -50,3 +50,21 @@ pytest-asyncio==0.23.2
 
 # Logging & Monitoring
 python-json-logger==2.0.7
+
+# Telephony (YOU NEED THIS)
+twilio==8.10.0
+
+# Speech-to-Text (YOU NEED THIS)
+openai==1.14.0  # Already in file, for Whisper API
+# OR use Groq's Whisper (faster, cheaper)
+
+# Language Detection (Already present)
+langdetect==1.0.9
+
+# Audio Processing
+pydub==0.25.1
+librosa==0.10.0
+
+# Async HTTP
+httpx==0.25.2
+aiohttp==3.9.1
