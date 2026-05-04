@@ -10,18 +10,28 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@headlessui/react": "^2.1.8",
+    "@hookform/resolvers": "^3.4.2",
     "@tailwindcss/vite": "^4.2.4",
     "axios": "^1.16.0",
+    "clsx": "^2.1.1",
+    "date-fns": "^3.3.1",
+    "lucide-react": "^0.469.0",
+    "papaparse": "^5.4.1",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
+    "react-hook-form": "^7.53.2",
     "react-hot-toast": "^2.6.0",
     "react-router-dom": "^7.14.2",
+    "recharts": "^2.14.3",
     "tailwindcss": "^4.2.4",
+    "zod": "^3.24.1",
     "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^24.12.2",
+    "@types/papaparse": "^5.3.14",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.1",
