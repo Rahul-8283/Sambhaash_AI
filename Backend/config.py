@@ -55,6 +55,7 @@ class Settings(BaseSettings):
     twilio_auth_token: str = Field(default="sk-test-default", env="TWILIO_AUTH_TOKEN")
     twilio_phone_number: str = Field(default="+919999999999", env="TWILIO_PHONE_NUMBER")
     twilio_whatsapp_from: str = Field(default="+919999999999", env="TWILIO_WHATSAPP_FROM")
+    twilio_webhook_base_url: str = Field(default="http://localhost:8000", env="TWILIO_WEBHOOK_BASE_URL")
     
     # ==================== SARVAM ====================
     sarvam_api_key: str = Field(default="sk-test-default", env="SARVAM_API_KEY")
@@ -79,6 +80,27 @@ class Settings(BaseSettings):
     # ==================== SESSION ====================
     session_timeout_minutes: int = Field(default=30, env="SESSION_TIMEOUT_MINUTES")
     max_turns_per_session: int = Field(default=50, env="MAX_TURNS_PER_SESSION")
+    
+    # ==================== PROPERTIES ====================
+    
+    @property
+    def has_twilio(self) -> bool:
+        """Check if Twilio is configured"""
+        return bool(
+            self.twilio_account_sid 
+            and self.twilio_account_sid != "sk-test-default"
+            and self.twilio_auth_token 
+            and self.twilio_auth_token != "sk-test-default"
+            and self.twilio_phone_number
+        )
+    
+    @property
+    def has_openai(self) -> bool:
+        """Check if OpenAI is configured"""
+        return bool(
+            self.openai_api_key 
+            and self.openai_api_key != "sk-test-default"
+        )
 
 
 # ==================== GLOBAL INSTANCE ====================

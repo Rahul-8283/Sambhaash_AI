@@ -2,10 +2,10 @@ import asyncio
 import logging
 from typing import Tuple
 
-from Backend.config import get_settings
-from Backend.services.llm import Orchestrator, OrchestrationRequest, LLMClient
-from Backend.services.tts.sarvam_service import SarvamTTSService
-from Backend.services.tts.audio_formatter import AudioFormatter
+from config import get_config
+from services.llm import Orchestrator, OrchestrationRequest, LLMClient
+from services.tts.sarvam_service import SarvamTTSService
+from services.tts.audio_formatter import AudioFormatter
 
 logger = logging.getLogger(__name__)
 
@@ -15,19 +15,19 @@ class CallManager:
     Coordinates between LLM (Orchestrator), TTS (Sarvam), and Twilio formatting.
     '''
     def __init__(self):
-        settings = get_settings()
+        settings = get_config()
         
         # Instantiate LLM Client (OpenAI via our blocking client)
         self.llm_client = LLMClient(
             model_name="gpt-4o-mini",
-            api_key=settings.OPENAI_API_KEY or ""
+            api_key=settings.openai_api_key or ""
         )
         
         # Orchestrator uses the LLM client
         self.orchestrator = Orchestrator(llm_adapter=self.llm_client)
         
         # Instantiate TTS and Formatter
-        self.tts_service = SarvamTTSService(api_key=settings.SARVAM_API_KEY)
+        self.tts_service = SarvamTTSService(api_key=settings.sarvam_api_key)
         self.formatter = AudioFormatter()
 
     async def process_turn(self, call_sid: str, user_text: str, language: str) -> Tuple[str, str]:

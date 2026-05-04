@@ -6,11 +6,11 @@ from typing import Any, Dict, Optional
 from fastapi import APIRouter, Request
 from fastapi.responses import Response
 
-from Backend.config import get_settings
-from Backend.services.stt.language_detector import LanguageDetector
-from Backend.services.stt.whisper_service import WhisperService
-from Backend.services.telephony.twilio_client import TwilioClient
-from Backend.services.telephony.call_manager import CallManager
+from config import get_config
+from services.stt.language_detector import LanguageDetector
+from services.stt.whisper_service import WhisperService
+from services.telephony.twilio_client import TwilioClient
+from services.telephony.call_manager import CallManager
 
 
 logger = logging.getLogger(__name__)
@@ -50,7 +50,7 @@ async def voice_webhook(request: Request) -> Response:
 async def recording_webhook(request: Request) -> Response:
         """Receive a Twilio recording, transcribe it, classify language, hit LLM, generate TTS, and reply."""
 
-        settings = get_settings()
+        settings = get_config()
         form = await request.form()
         form_data = dict(form)
 
@@ -82,8 +82,8 @@ async def recording_webhook(request: Request) -> Response:
                 
                 transcript = stt.transcribe_recording_url(
                         recording_url=recording_url,
-                        twilio_account_sid=settings.TWILIO_ACCOUNT_SID or "",
-                        twilio_auth_token=settings.TWILIO_AUTH_TOKEN or "",
+                        twilio_account_sid=settings.twilio_account_sid or "",
+                        twilio_auth_token=settings.twilio_auth_token or "",
                 )
                 detected_lang = language_detector.detect_language(transcript)
                 

@@ -7,7 +7,7 @@ from typing import Optional
 import requests
 from openai import OpenAI
 
-from Backend.config import get_settings
+from config import get_config
 
 
 logger = logging.getLogger(__name__)
@@ -17,8 +17,8 @@ class WhisperService:
 	"""Speech-to-text service using OpenAI Whisper."""
 
 	def __init__(self, api_key: str | None = None) -> None:
-		self.settings = get_settings()
-		resolved_key = api_key or self.settings.OPENAI_API_KEY
+		self.settings = get_config()
+		resolved_key = api_key or self.settings.openai_api_key
 		if not resolved_key:
 			raise ValueError("OPENAI_API_KEY is missing in the backend env file.")
 		self.client = OpenAI(api_key=resolved_key)

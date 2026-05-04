@@ -8,7 +8,7 @@ from xml.sax.saxutils import escape
 
 import requests
 
-from Backend.config import get_settings
+from config import get_config
 
 
 logger = logging.getLogger(__name__)
@@ -42,12 +42,12 @@ class TwilioClient:
 		whatsapp_from: str | None = None,
 		webhook_base_url: str | None = None,
 	) -> None:
-		self.settings = get_settings()
-		self.account_sid = account_sid or self.settings.TWILIO_ACCOUNT_SID
-		self.auth_token = auth_token or self.settings.TWILIO_AUTH_TOKEN
-		self.phone_number = phone_number or self.settings.TWILIO_PHONE_NUMBER
-		self.whatsapp_from = whatsapp_from or self.settings.TWILIO_WHATSAPP_FROM
-		self.webhook_base_url = webhook_base_url or self.settings.TWILIO_WEBHOOK_BASE_URL
+		self.settings = get_config()
+		self.account_sid = account_sid or self.settings.twilio_account_sid
+		self.auth_token = auth_token or self.settings.twilio_auth_token
+		self.phone_number = phone_number or self.settings.twilio_phone_number
+		self.whatsapp_from = whatsapp_from or self.settings.twilio_whatsapp_from
+		self.webhook_base_url = webhook_base_url or self.settings.twilio_webhook_base_url
 
 	@property
 	def configured(self) -> bool:
