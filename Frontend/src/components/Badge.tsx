@@ -4,7 +4,8 @@
 
 import React from "react";
 import clsx from "clsx";
-import { STATUS_COLORS, SCORE_COLORS, SCORE_ICONS, PRIORITY_COLORS } from "../../utils/constants";
+import { STATUS_COLORS, SCORE_COLORS, SCORE_ICONS, PRIORITY_COLORS } from "../utils/constants";
+import type { ScoreClassification } from "../types";
 
 interface BadgeProps {
   variant?: "status" | "score" | "priority" | "custom";
@@ -27,16 +28,19 @@ export const Badge: React.FC<BadgeProps> = ({
   let textColor = customTextColor || "text-gray-800";
   let icon = "";
 
+  const isScoreClassification = (v: string): v is ScoreClassification => 
+    ["Hot", "Warm", "Cold", "Unscored"].includes(v);
+
   if (variant === "status" && STATUS_COLORS[value]) {
     const colors = STATUS_COLORS[value];
     bgColor = colors.split(" ")[0];
     textColor = colors.split(" ")[1];
-  } else if (variant === "score" && SCORE_COLORS[value as any]) {
-    const colors = SCORE_COLORS[value as any];
+  } else if (variant === "score" && isScoreClassification(value) && SCORE_COLORS[value]) {
+    const colors = SCORE_COLORS[value];
     bgColor = colors.split(" ")[0];
     textColor = colors.split(" ")[1];
     if (showIcon) {
-      icon = SCORE_ICONS[value as any] || "";
+      icon = SCORE_ICONS[value] || "";
     }
   } else if (variant === "priority" && PRIORITY_COLORS[value]) {
     const colors = PRIORITY_COLORS[value];

@@ -4,7 +4,6 @@
 
 import React, { useState } from "react";
 import { Menu, Bell, LogOut, Settings, User } from "lucide-react";
-import clsx from "clsx";
 
 interface TopNavProps {
   onMenuClick: () => void;

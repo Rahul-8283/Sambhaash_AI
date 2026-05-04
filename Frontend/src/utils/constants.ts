@@ -2,10 +2,10 @@
  * Constants and color mappings
  */
 
-import { LeadStatus, LeadScore, CallStatus, UserRole } from "../types";
+import type { LeadStatus, ScoreClassification, UserRole } from "../types";
 
-// Status colors
-export const STATUS_COLORS: Record<LeadStatus | CallStatus | string, string> = {
+// Status colors - supports LeadStatus AND Call statuses
+export const STATUS_COLORS: Record<LeadStatus | "Connected" | "No Answer" | "Failed" | string, string> = {
   "Not Called": "bg-gray-100 text-gray-800",
   "Calling": "bg-blue-100 text-blue-800",
   "Connected": "bg-green-100 text-green-800",
@@ -15,14 +15,14 @@ export const STATUS_COLORS: Record<LeadStatus | CallStatus | string, string> = {
 };
 
 // Score colors
-export const SCORE_COLORS: Record<LeadScore, string> = {
+export const SCORE_COLORS: Record<ScoreClassification, string> = {
   "Hot": "bg-red-100 text-red-800",
   "Warm": "bg-yellow-100 text-yellow-800",
   "Cold": "bg-blue-100 text-blue-800",
   "Unscored": "bg-gray-100 text-gray-800",
 };
 
-export const SCORE_ICONS: Record<LeadScore, string> = {
+export const SCORE_ICONS: Record<ScoreClassification, string> = {
   "Hot": "🔥",
   "Warm": "🟡",
   "Cold": "❄️",

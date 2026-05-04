@@ -1,46 +1,83 @@
 /**
  * Core Types for Sambhaash AI Admin Dashboard
+ * Aligned with Backend Schema
  */
+
+import type { ReactNode } from "react";
 
 // ============ Lead Types ============
 export type LeadStatus = "Not Called" | "Calling" | "Connected" | "No Answer" | "Failed" | "Completed";
-export type LeadScore = "Hot" | "Warm" | "Cold" | "Unscored";
+export type ScoreClassification = "Hot" | "Warm" | "Cold" | "Unscored";
 export type LeadPriority = "High" | "Medium" | "Low";
+
+export interface ConversationTurn {
+  role: "user" | "assistant";
+  text: string;
+  timestamp: string;
+}
+
+export interface LeadScore {
+  id: string;
+  leadId: string;
+  callSessionId: string;
+  interestScore: number;
+  engagementScore: number;
+  sentimentScore: number;
+  compositeScore: number;
+  classification: ScoreClassification;
+  timestamp: string;
+}
+
+export interface RmAssignment {
+  id: string;
+  leadId: string;
+  rmName: string;
+  assignedAt: string;
+  converted: boolean;
+}
+
+export interface CallSession {
+  id: string;
+  leadId: string;
+  conversationHistory: ConversationTurn[];
+  languageDetected: string;
+  durationSeconds: number;
+  createdAt: string;
+}
+
+export interface ObjectionLog {
+  id: string;
+  callSessionId: string;
+  objectionType: string;
+  objectionText: string;
+  resolved: boolean;
+  timestamp: string;
+}
 
 export interface Lead {
   id: string;
-  name: string;
   phone: string;
+  name: string;
   email?: string;
   language: string;
-  source: string; // Facebook, website, etc.
-  priority: LeadPriority;
-  tags: string[];
   status: LeadStatus;
-  score: LeadScore;
-  scoreDetails?: {
-    intent: number;
-    engagement: number;
-    sentiment: number;
-    overall: number;
-  };
-  campaign?: string;
-  lastCalled?: string; // ISO date
-  totalCalls: number;
-  notes?: string;
+  currentScore?: LeadScore;
+  rmAssignment?: RmAssignment;
   createdAt: string;
-  updatedAt: string;
+}
+
+export interface LeadWithDetails extends Lead {
+  callSessions: CallSession[];
+  scoreHistory: LeadScore[];
+  objections: ObjectionLog[];
+  totalCalls: number;
+  lastCalledAt?: string;
 }
 
 export interface LeadFilters {
   status?: LeadStatus[];
-  score?: LeadScore[];
-  dateRange?: {
-    start: string;
-    end: string;
-  };
-  campaign?: string;
-  source?: string;
+  classification?: ScoreClassification[];
+  rmAssignment?: string;
   language?: string;
   search?: string;
 }
@@ -57,34 +94,26 @@ export type CallStatus = "Connected" | "No Answer" | "Failed";
 
 export interface Call {
   id: string;
-  callSid: string;
+  callSessionId: string;
   leadId: string;
   leadName: string;
   leadPhone: string;
-  duration: number; // seconds
-  timestamp: string; // ISO date
+  duration: number;
+  timestamp: string;
   status: CallStatus;
-  retryCount: number;
   transcript?: string;
-  recordingUrl?: string;
   sentiment?: "Positive" | "Neutral" | "Negative";
-  detectedObjections?: string[];
-  interestSignals?: string[];
-  campaign?: string;
+  detectedObjections: ObjectionLog[];
+  classification?: ScoreClassification;
   createdAt: string;
 }
 
 export interface CallFilters {
   status?: CallStatus[];
+  leadId?: string;
   dateRange?: {
     start: string;
     end: string;
-  };
-  leadId?: string;
-  campaign?: string;
-  durationRange?: {
-    min: number;
-    max: number;
   };
 }
 
@@ -107,23 +136,13 @@ export interface Campaign {
   script?: string;
 }
 
-export interface CampaignAnalytics {
-  campaignId: string;
-  campaignName: string;
-  totalLeads: number;
-  callsMade: number;
-  connectionRate: number; // percentage
-  conversionRate: number; // percentage
-  avgCallDuration: number; // seconds
-}
-
 // ============ Analytics Types ============
 export interface AnalyticsMetrics {
   totalLeads: number;
   callsMade: number;
-  connectionRate: number; // percentage
-  conversionRate: number; // percentage
-  avgCallDuration: number; // seconds
+  connectionRate: number;
+  conversionRate: number;
+  avgCallDuration: number;
   scoreDistribution: {
     hot: number;
     warm: number;
@@ -138,7 +157,7 @@ export interface TimeSeriesData {
 }
 
 export interface ScoreDistribution {
-  score: LeadScore;
+  score: ScoreClassification;
   count: number;
   percentage: number;
 }
@@ -180,8 +199,8 @@ export interface LanguageSettings {
 export interface RetrySettings {
   maxRetries: number;
   retryDelayMinutes: number;
-  retryWindowStart: string; // "HH:MM"
-  retryWindowEnd: string; // "HH:MM"
+  retryWindowStart: string;
+  retryWindowEnd: string;
 }
 
 export interface IntegrationSettings {
@@ -203,7 +222,7 @@ export interface IntegrationSettings {
   };
 }
 
-// ============ API Request/Response Types ============
+// ============ API Types ============
 export interface PaginationParams {
   page: number;
   limit: number;
@@ -212,7 +231,6 @@ export interface PaginationParams {
 export interface ApiResponse<T> {
   data: T;
   message?: string;
-  error?: string;
 }
 
 export interface ApiErrorResponse {
@@ -239,15 +257,6 @@ export interface CreateLeadFormData {
   phone: string;
   email?: string;
   language: string;
-  source: string;
-  priority: LeadPriority;
-  tags: string[];
-}
-
-export interface CreateCampaignFormData {
-  name: string;
-  description?: string;
-  script?: string;
 }
 
 export interface CreateUserFormData {
@@ -256,13 +265,19 @@ export interface CreateUserFormData {
   role: UserRole;
 }
 
+export interface CreateCampaignFormData {
+  name: string;
+  description?: string;
+  script?: string;
+}
+
 // ============ UI Helper Types ============
 export interface TableColumn<T> {
   key: keyof T;
   label: string;
   sortable?: boolean;
   filterable?: boolean;
-  render?: (value: unknown, row: T) => React.ReactNode;
+  render?: (value: unknown, row: T) => ReactNode;
   width?: string;
 }
 
@@ -275,6 +290,6 @@ export interface SidebarItem {
   id: string;
   label: string;
   path: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   badge?: number;
 }

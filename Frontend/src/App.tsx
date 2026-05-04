@@ -2,12 +2,12 @@
  * App.tsx - Main application with routing
  */
 
-import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "./components/Layout/MainLayout";
 
 // Pages
 import LeadsPage from "./pages/LeadsPage";
+import LeadDetailPage from "./pages/LeadDetailPage";
 import CallsPage from "./pages/CallsPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import CampaignsPage from "./pages/CampaignsPage";
@@ -24,6 +24,7 @@ function App() {
         <Route path="/" element={<Navigate to="/dashboard/leads" replace />} />
         <Route path="/dashboard/*" element={<MainLayout><Routes>
           <Route path="leads" element={<LeadsPage />} />
+          <Route path="leads/:id" element={<LeadDetailPage />} />
           <Route path="calls" element={<CallsPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="campaigns" element={<CampaignsPage />} />
