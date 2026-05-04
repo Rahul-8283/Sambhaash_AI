@@ -22,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from worker.call_worker import BackgroundWorker
 from worker.call_initiator import CallInitiator
+from services.ngrok_setup import initialize_ngrok
 
 
 def setup_logging():
@@ -55,6 +56,13 @@ async def main():
     logger.info("=" * 80)
     logger.info("[WORKER] Sambhaash AI Background Worker (Call Initiator + Job Processor)")
     logger.info("=" * 80)
+    
+    # Initialize ngrok tunnel if in development mode
+    try:
+        logger.info("[WORKER] Setting up ngrok tunnel...")
+        await initialize_ngrok()
+    except Exception as e:
+        logger.error(f"[WORKER] Ngrok setup error: {e}")
     
     # Create both worker instances
     call_initiator = CallInitiator()
