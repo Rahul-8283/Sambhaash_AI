@@ -6,14 +6,17 @@ Loads and validates environment variables
 import os
 from typing import Optional
 from pydantic_settings import BaseSettings
-from pydantic import Field
+from pydantic import Field, ConfigDict
 
 
 class Settings(BaseSettings):
     """Application settings from environment variables"""
     
+    model_config = ConfigDict(extra='ignore')
+    
     # ==================== APPLICATION ====================
     environment: str = Field(default="development", env="ENVIRONMENT")
+    mode: str = Field(default="development", env="MODE")
     debug: bool = Field(default=True, env="DEBUG")
     log_level: str = Field(default="INFO", env="LOG_LEVEL")
     
@@ -22,6 +25,10 @@ class Settings(BaseSettings):
     server_port: int = Field(default=8000, env="SERVER_PORT")
     
     # ==================== DATABASE ====================
+    
+    # ==================== SUPABASE ====================
+    supabase_url: str = Field(default="", env="SUPABASE_URL")
+    supabase_service_role_key: str = Field(default="", env="SUPABASE_SERVICE_ROLE_KEY")
     database_url: str = Field(default="", env="DATABASE_URL")
     db_pool_min_size: int = Field(default=5, env="DB_POOL_MIN_SIZE")
     db_pool_max_size: int = Field(default=20, env="DB_POOL_MAX_SIZE")
@@ -33,6 +40,7 @@ class Settings(BaseSettings):
     
     openai_api_key: str = Field(default="", env="OPENAI_API_KEY")
     groq_api_key: str = Field(default="", env="GROQ_API_KEY")
+    google_api_key: str = Field(default="", env="GOOGLE_API_KEY")
     
     # ==================== TWILIO ====================
     twilio_account_sid: str = Field(default="", env="TWILIO_ACCOUNT_SID")
