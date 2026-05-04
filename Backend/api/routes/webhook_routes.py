@@ -161,7 +161,7 @@ async def _score_and_assign_lead(
                         # Assign to RM immediately
                         rm_name = get_config().default_rm_name or "Auto"
                         await repository.assign_lead_to_rm(lead_id, rm_name)
-                        logger.info(f"🔥 HOT lead assigned to RM: {rm_name}")
+                        logger.info(f"[SCORE] HOT lead assigned to RM: {rm_name}")
                 
                 elif classification == "WARM":
                         # Schedule WhatsApp follow-up
@@ -171,7 +171,7 @@ async def _score_and_assign_lead(
                                 "message": "Thanks for chatting with us! We'll be in touch soon."
                         }
                         await queue_manager.enqueue_job(JobType.SEND_WHATSAPP.value, job)
-                        logger.info("📱 Scheduled WhatsApp follow-up for WARM lead")
+                        logger.info("[SCORE] Scheduled WhatsApp follow-up for WARM lead")
         
         except Exception as e:
                 logger.error(f"Error scoring lead: {e}")

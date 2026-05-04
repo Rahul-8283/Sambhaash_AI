@@ -26,14 +26,25 @@ from worker.call_initiator import CallInitiator
 
 def setup_logging():
     """Setup logging configuration."""
+    import os
+    
+    # Force UTF-8 encoding for Windows
+    if sys.platform.startswith('win'):
+        os.environ['PYTHONIOENCODING'] = 'utf-8'
+    
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         handlers=[
-            logging.FileHandler("worker.log"),
-            logging.StreamHandler()
+            logging.FileHandler("worker.log", encoding='utf-8'),
+            logging.StreamHandler(sys.stdout)
         ]
     )
+    
+    # Reconfigure stdout for UTF-8 on Windows
+    if sys.platform.startswith('win'):
+        import io
+        sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8', errors='replace')
 
 
 async def main():
@@ -42,7 +53,7 @@ async def main():
     logger = logging.getLogger(__name__)
     
     logger.info("=" * 80)
-    logger.info("🚀 Sambhaash AI Background Worker (Call Initiator + Job Processor)")
+    logger.info("[WORKER] Sambhaash AI Background Worker (Call Initiator + Job Processor)")
     logger.info("=" * 80)
     
     # Create both worker instances
@@ -59,9 +70,9 @@ async def main():
             return_exceptions=True
         )
     except KeyboardInterrupt:
-        logger.info("\n⏹️  Workers stopped by user")
+        logger.info("[WORKER] Workers stopped by user")
     except Exception as e:
-        logger.error(f"❌ Worker crashed: {e}")
+        logger.error(f"[WORKER] Worker crashed: {e}", exc_info=True)
         sys.exit(1)
 
 
