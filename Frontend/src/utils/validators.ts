@@ -28,7 +28,7 @@ export function validateRequired(value: string | unknown[]): boolean {
   if (Array.isArray(value)) {
     return value.length > 0;
   }
-  return !!value;
+  return false;
 }
 
 /**
@@ -73,6 +73,12 @@ export function validateCsvHeaders(
  * Validate phone number format (E.164)
  */
 export function validateE164Phone(phone: string): boolean {
-  const e164Regex = /^\+?[1-9]\d{1,14}$/;
-  return e164Regex.test(phone.replace(/\D/g, ""));
+  const e164Regex = /^\+[1-9]\d{1,14}$/;
+  const trimmed = phone.trim();
+  const hasPlus = trimmed.startsWith("+");
+  const cleaned = trimmed.replace(/\D/g, "");
+  
+  // Test with preserved plus sign
+  const normalized = hasPlus ? `+${cleaned}` : `+${cleaned}`;
+  return e164Regex.test(normalized);
 }

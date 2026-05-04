@@ -2,7 +2,7 @@
  * Constants and color mappings
  */
 
-import type { LeadStatus, ScoreClassification, UserRole } from "../types";
+import type { LeadStatus, ScoreClassification, UserRole } from "../types/index";
 
 // Status colors - supports LeadStatus AND Call statuses
 export const STATUS_COLORS: Record<LeadStatus | "Connected" | "No Answer" | "Failed" | string, string> = {

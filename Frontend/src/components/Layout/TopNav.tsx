@@ -25,6 +25,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick }) => {
       <div className="flex items-center gap-4">
         <button
           onClick={onMenuClick}
+          aria-label="Open menu"
           className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
         >
           <Menu size={20} />
@@ -38,7 +39,9 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick }) => {
       <div className="flex items-center gap-4">
         {/* Notifications */}
         <div className="relative">
-          <button className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative">
+          <button 
+            aria-label="Show notifications"
+            className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative">
             <Bell size={20} className="text-gray-600" />
             {notifications > 0 && (
               <span className="absolute top-1 right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
@@ -52,6 +55,8 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick }) => {
         <div className="relative">
           <button
             onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+            aria-haspopup="menu"
+            aria-expanded={isUserMenuOpen}
             className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors"
           >
             <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">

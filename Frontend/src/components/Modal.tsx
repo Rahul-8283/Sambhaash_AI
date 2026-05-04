@@ -24,10 +24,9 @@ export const Modal: React.FC<ModalProps> = ({
   size = "md",
 }) => {
   useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
     if (isOpen) {
       document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
     }
 
     const handleEscape = (e: KeyboardEvent) => {
@@ -37,7 +36,10 @@ export const Modal: React.FC<ModalProps> = ({
     };
 
     document.addEventListener("keydown", handleEscape);
-    return () => document.removeEventListener("keydown", handleEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener("keydown", handleEscape);
+    };
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
@@ -51,26 +53,28 @@ export const Modal: React.FC<ModalProps> = ({
 
   return (
     <>
-      {/* Overlay */}
+      {/* Wrapper with outside-click handler */}
       <div
-        className="fixed inset-0 bg-black/50 z-40 transition-opacity"
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 transition-opacity"
         onClick={onClose}
-      />
-
-      {/* Modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      >
+        {/* Modal */}
         <div
           className={clsx(
             "bg-white rounded-lg shadow-xl w-full",
             sizeClasses[size]
           )}
           onClick={(e) => e.stopPropagation()}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={`modal-title-${title}`}
         >
           {/* Header */}
           <div className="flex items-center justify-between p-6 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+            <h2 id={`modal-title-${title}`} className="text-lg font-semibold text-gray-900">{title}</h2>
             <button
               onClick={onClose}
+              aria-label="Close dialog"
               className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <X size={20} />

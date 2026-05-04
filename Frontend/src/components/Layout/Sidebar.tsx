@@ -99,6 +99,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
           <h1 className="text-2xl font-bold text-blue-600">Sambhaash</h1>
           <button
             onClick={onToggle}
+            aria-label="Close sidebar"
             className="md:hidden p-1 hover:bg-gray-100 rounded"
           >
             <X size={20} />
@@ -113,6 +114,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
                 // Submenu item
                 <button
                   onClick={() => toggleMenu(item.id)}
+                  aria-expanded={openMenus.includes(item.id)}
                   className={clsx(
                     "w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-medium transition-colors",
                     openMenus.includes(item.id)

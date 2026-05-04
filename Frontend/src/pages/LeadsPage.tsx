@@ -23,6 +23,10 @@ export const LeadsPage: React.FC = () => {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showFilters, setShowFilters] = useState(false);
   const [selectedLeads, setSelectedLeads] = useState<Lead[]>([]);
+  const [fileInputRef, setFileInputRef] = useState<HTMLInputElement | null>(null);
+
+  // Create Lead form state
+  const [createForm, setCreateForm] = useState({ name: "", phone: "", email: "", language: "English" });
 
   // Filters
   const [filters, setFilters] = useState<LeadFilters>({});
@@ -58,11 +62,74 @@ export const LeadsPage: React.FC = () => {
     navigate(`/dashboard/leads/${lead.id}`);
   };
 
-  const handleBulkDelete = () => {
+  const handleUploadClick = () => {
+    fileInputRef?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const csv = event.target?.result as string;
+        const lines = csv.split("\n").filter(l => l.trim());
+        
+        const newLeads: Lead[] = lines.slice(1).map((line, idx) => {
+          const values = line.split(",").map(v => v.trim());
+          return {
+            id: `lead-${Date.now()}-${idx}`,
+            name: values[0] || "",
+            phone: values[1] || "",
+            email: values[2] || undefined,
+            language: values[3] || "English",
+            status: "Not Called",
+            createdAt: new Date().toISOString(),
+          };
+        });
+        
+        setLeads([...newLeads, ...leads]);
+        setShowUploadModal(false);
+      } catch (error) {
+        console.error("Error parsing CSV:", error);
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleCreateLead = async () => {
+    if (!createForm.name || !createForm.phone) {
+      alert("Name and phone are required");
+      return;
+    }
+    
+    const newLead: Lead = {
+      id: `lead-${Date.now()}`,
+      name: createForm.name,
+      phone: createForm.phone,
+      email: createForm.email || undefined,
+      language: createForm.language,
+      status: "Not Called",
+      createdAt: new Date().toISOString(),
+    };
+    
+    setLeads([newLead, ...leads]);
+    setCreateForm({ name: "", phone: "", email: "", language: "English" });
+    setShowCreateModal(false);
+  };
+
+  const handleBulkDelete = async () => {
     if (selectedLeads.length === 0) return;
-    selectedLeads.forEach((lead) => mockApiClient.deleteLead(lead.id));
-    setSelectedLeads([]);
-    setLeads(leads.filter((l) => !selectedLeads.find((s) => s.id === l.id)));
+    if (!window.confirm(`Delete ${selectedLeads.length} selected lead(s)?`)) return;
+    
+    try {
+      await Promise.all(selectedLeads.map(lead => mockApiClient.deleteLead(lead.id)));
+      setSelectedLeads([]);
+      setLeads(leads.filter((l) => !selectedLeads.find((s) => s.id === l.id)));
+    } catch (error) {
+      console.error("Failed to delete leads:", error);
+    }
   };
 
   return (
@@ -321,8 +388,7 @@ export const LeadsPage: React.FC = () => {
             {/* Pagination */}
             <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
               <p className="text-sm text-gray-600">
-                Showing {(page - 1) * 20 + 1} to {Math.min(page * 20, total)} of{" "}
-                {total} leads
+                Showing {total === 0 ? 0 : (page - 1) * 20 + 1} to {Math.min(page * 20, total)} of {total} leads
               </p>
               <div className="flex items-center gap-2">
                 <button
@@ -359,9 +425,16 @@ export const LeadsPage: React.FC = () => {
             >
               Cancel
             </button>
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            <button onClick={handleUploadClick} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
               Upload
             </button>
+            <input
+              ref={setFileInputRef}
+              type="file"
+              accept=".csv"
+              onChange={handleFileChange}
+              className="hidden"
+            />
           </>
         }
       >
@@ -394,7 +467,7 @@ export const LeadsPage: React.FC = () => {
             >
               Cancel
             </button>
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+            <button onClick={handleCreateLead} className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
               Create Lead
             </button>
           </>
@@ -407,6 +480,8 @@ export const LeadsPage: React.FC = () => {
             </label>
             <input
               type="text"
+              value={createForm.name}
+              onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -416,6 +491,8 @@ export const LeadsPage: React.FC = () => {
             </label>
             <input
               type="tel"
+              value={createForm.phone}
+              onChange={(e) => setCreateForm({ ...createForm, phone: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -425,6 +502,8 @@ export const LeadsPage: React.FC = () => {
             </label>
             <input
               type="email"
+              value={createForm.email}
+              onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -432,7 +511,11 @@ export const LeadsPage: React.FC = () => {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Language
             </label>
-            <select className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <select
+              value={createForm.language}
+              onChange={(e) => setCreateForm({ ...createForm, language: e.target.value })}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
               <option>English</option>
               <option>Hindi</option>
               <option>Hinglish</option>

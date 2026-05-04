@@ -208,14 +208,14 @@ const mockApiClient = {
     return {
       totalLeads: total,
       callsMade: mockCallSessions.length,
-      connectionRate: (connected / total) * 100,
-      conversionRate: (converted / total) * 100,
-      avgCallDuration: mockCallSessions.reduce((sum, s) => sum + s.durationSeconds, 0) / mockCallSessions.length,
+      connectionRate: total === 0 ? 0 : (connected / total) * 100,
+      conversionRate: total === 0 ? 0 : (converted / total) * 100,
+      avgCallDuration: mockCallSessions.length === 0 ? 0 : mockCallSessions.reduce((sum, s) => sum + s.durationSeconds, 0) / mockCallSessions.length,
       scoreDistribution: {
-        hot: mockLeads.filter(l => l.currentScore?.classification === "Hot").length,
-        warm: mockLeads.filter(l => l.currentScore?.classification === "Warm").length,
-        cold: mockLeads.filter(l => l.currentScore?.classification === "Cold").length,
-        unscored: mockLeads.filter(l => !l.currentScore).length,
+        "Hot": mockLeads.filter(l => l.currentScore?.classification === "Hot").length,
+        "Warm": mockLeads.filter(l => l.currentScore?.classification === "Warm").length,
+        "Cold": mockLeads.filter(l => l.currentScore?.classification === "Cold").length,
+        "Unscored": mockLeads.filter(l => l.currentScore?.classification === "Unscored" || !l.currentScore).length,
       },
     };
   },

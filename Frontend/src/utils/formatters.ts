@@ -8,14 +8,16 @@ import { format, formatDistanceToNow } from "date-fns";
  * Format phone number to standard format
  */
 export function formatPhoneNumber(phone: string): string {
+  const hasPlus = phone.startsWith("+");
   const cleaned = phone.replace(/\D/g, "");
+  
   if (cleaned.length === 10) {
     return `+1${cleaned}`;
   }
   if (cleaned.length === 11 && cleaned.startsWith("1")) {
     return `+${cleaned}`;
   }
-  if (!cleaned.startsWith("+")) {
+  if (hasPlus || cleaned.length > 0) {
     return `+${cleaned}`;
   }
   return phone;
@@ -109,10 +111,24 @@ export function formatTime(hours: number, minutes: number): string {
 }
 
 /**
- * Parse time string "HH:MM" to { hours, minutes }
+ * Parse time string "HH:MM" to { hours, minutes } or null if invalid
  */
-export function parseTime(timeStr: string): { hours: number; minutes: number } {
-  const [hours, minutes] = timeStr.split(":").map(Number);
+export function parseTime(timeStr: string): { hours: number; minutes: number } | null {
+  const trimmed = timeStr.trim();
+  const parts = trimmed.split(":");
+  
+  if (parts.length !== 2) {
+    return null;
+  }
+  
+  const hours = parseInt(parts[0], 10);
+  const minutes = parseInt(parts[1], 10);
+  
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes) || 
+      hours < 0 || hours > 23 || minutes < 0 || minutes > 59) {
+    return null;
+  }
+  
   return { hours, minutes };
 }
 

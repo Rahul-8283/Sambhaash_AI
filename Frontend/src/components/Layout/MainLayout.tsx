@@ -3,14 +3,15 @@
  */
 
 import { useState } from "react";
+import type { ReactNode, FC } from "react";
 import Sidebar from "./Sidebar";
 import TopNav from "./TopNav";
 
 interface MainLayoutProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
-export const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
+export const MainLayout: FC<MainLayoutProps> = ({ children }) => {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const toggleSidebar = () => {

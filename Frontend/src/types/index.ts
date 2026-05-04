@@ -143,12 +143,7 @@ export interface AnalyticsMetrics {
   connectionRate: number;
   conversionRate: number;
   avgCallDuration: number;
-  scoreDistribution: {
-    hot: number;
-    warm: number;
-    cold: number;
-    unscored: number;
-  };
+  scoreDistribution: Record<ScoreClassification, number>;
 }
 
 export interface TimeSeriesData {

@@ -105,9 +105,9 @@ export const DataTable = React.forwardRef<
                 key={String(column.key)}
                 className={clsx(
                   "px-6 py-3 text-left font-semibold text-gray-700",
-                  column.width && `w-${column.width}`,
                   column.sortable && "cursor-pointer hover:bg-gray-100"
                 )}
+                style={column.width ? { width: column.width } : undefined}
                 onClick={() => column.sortable && handleSort(String(column.key))}
               >
                 <div className="flex items-center gap-2">
@@ -158,6 +158,7 @@ export const DataTable = React.forwardRef<
                   <td
                     key={String(column.key)}
                     className="px-6 py-3"
+                    style={column.width ? { width: column.width } : undefined}
                     onClick={() => onRowClick?.(row)}
                   >
                     {column.render
