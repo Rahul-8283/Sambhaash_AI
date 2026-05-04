@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import re
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, field
 from enum import Enum
 from typing import Any, Dict, Optional, Tuple
 
@@ -41,7 +41,7 @@ class IntentDetectionResult:
     is_ready: bool = False
     is_callback: bool = False
     sentiment: str = "neutral"
-    qualification_signals: QualificationSignals = QualificationSignals()
+    qualification_signals: QualificationSignals = field(default_factory=QualificationSignals)
 
     def to_dict(self) -> Dict[str, Any]:
         payload = asdict(self)
