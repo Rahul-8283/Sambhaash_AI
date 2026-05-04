@@ -188,7 +188,7 @@ class CallInitiator:
                 return False
         
         except Exception as e:
-            logger.error(f"Exception initiating call: {e}", exc_info=True)
+            logger.error(f"[CALL_INIT] Exception initiating call for {phone}: {e}", exc_info=False)
             # Cleanup pending session if exists
             try:
                 lead_id_raw = lead.get("id")
