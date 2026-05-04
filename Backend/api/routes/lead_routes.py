@@ -81,7 +81,7 @@ class LeadResponse(BaseModel):
             "name": "Rajesh Kumar",
             "email": "rajesh@example.com",
             "language": "hi",
-            "status": "new",
+            "status": "NEW",
             "created_at": "2026-05-03T10:00:00",
             "updated_at": "2026-05-03T10:00:00"
         }
@@ -642,7 +642,7 @@ def _format_lead_response(lead: Dict[str, Any]) -> Dict[str, Any]:
         "name": lead.get("name"),
         "email": lead.get("email"),
         "language": lead.get("language", "hi"),
-        "status": lead.get("status", "new"),
+        "status": lead.get("status", "NEW"),
         "created_at": _format_datetime(lead.get("created_at")),
         "updated_at": _format_datetime(lead.get("updated_at")),
     }

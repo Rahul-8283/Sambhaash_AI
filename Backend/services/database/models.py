@@ -27,35 +27,35 @@ Base = declarative_base()
 
 class LeadStatus(str, PyEnum):
     """Lead status enumeration"""
-    NEW = "new"
-    CONTACTED = "contacted"
-    INTERESTED = "interested"
-    CONVERTED = "converted"
-    REJECTED = "rejected"
-    FOLLOW_UP = "follow_up"
+    NEW = "NEW"
+    CONTACTED = "CONTACTED"
+    INTERESTED = "INTERESTED"
+    CONVERTED = "CONVERTED"
+    REJECTED = "REJECTED"
+    FOLLOW_UP = "FOLLOW_UP"
 
 
 class LeadClassification(str, PyEnum):
     """Lead quality classification"""
-    HOT = "hot"
-    WARM = "warm"
-    COLD = "cold"
+    HOT = "HOT"
+    WARM = "WARM"
+    COLD = "COLD"
 
 
 class ConversationClassification(str, PyEnum):
     """Conversation classification"""
-    OBJECTION = "objection"
-    BENEFIT = "benefit"
-    FAQ = "faq"
-    GENERIC = "generic"
+    OBJECTION = "OBJECTION"
+    BENEFIT = "BENEFIT"
+    FAQ = "FAQ"
+    GENERIC = "GENERIC"
 
 
 class DocumentType(str, PyEnum):
     """Document type enumeration"""
-    PDF = "pdf"
-    DOCX = "docx"
-    JSON = "json"
-    TXT = "txt"
+    PDF = "PDF"
+    DOCX = "DOCX"
+    JSON = "JSON"
+    TXT = "TXT"
 
 
 # ==================== MODELS ====================
