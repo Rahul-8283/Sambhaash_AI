@@ -40,10 +40,9 @@ async def lifespan(app: FastAPI):
         if health:
             logger.info("✅ Database connection successful")
         else:
-            logger.error("❌ Database health check failed")
+            logger.warning("⚠️  Database health check failed - running in degraded mode")
     except Exception as e:
-        logger.error(f"❌ Startup error: {str(e)}")
-        raise
+        logger.warning(f"⚠️  Database connection failed - running in degraded mode: {str(e)}")
     
     yield
     

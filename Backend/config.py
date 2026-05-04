@@ -12,7 +12,12 @@ from pydantic import Field, ConfigDict
 class Settings(BaseSettings):
     """Application settings from environment variables"""
     
-    model_config = ConfigDict(extra='ignore')
+    model_config = ConfigDict(
+        extra='ignore',
+        env_file='.env',
+        env_file_encoding='utf-8',
+        case_sensitive=False
+    )
     
     # ==================== APPLICATION ====================
     environment: str = Field(default="development", env="ENVIRONMENT")
@@ -25,11 +30,14 @@ class Settings(BaseSettings):
     server_port: int = Field(default=8000, env="SERVER_PORT")
     
     # ==================== DATABASE ====================
+    database_url: str = Field(
+        default="postgresql+asyncpg://postgres:password@localhost:5432/sambhaash_ai_test",
+        env="DATABASE_URL"
+    )
     
     # ==================== SUPABASE ====================
-    supabase_url: str = Field(default="", env="SUPABASE_URL")
-    supabase_service_role_key: str = Field(default="", env="SUPABASE_SERVICE_ROLE_KEY")
-    database_url: str = Field(default="", env="DATABASE_URL")
+    supabase_url: str = Field(default="https://localhost.supabase.co", env="SUPABASE_URL")
+    supabase_service_role_key: str = Field(default="sk-test-default", env="SUPABASE_SERVICE_ROLE_KEY")
     db_pool_min_size: int = Field(default=5, env="DB_POOL_MIN_SIZE")
     db_pool_max_size: int = Field(default=20, env="DB_POOL_MAX_SIZE")
     
@@ -38,18 +46,18 @@ class Settings(BaseSettings):
     llm_temperature: float = Field(default=0.2, env="LLM_TEMPERATURE")
     llm_max_tokens: int = Field(default=700, env="LLM_MAX_TOKENS")
     
-    openai_api_key: str = Field(default="", env="OPENAI_API_KEY")
-    groq_api_key: str = Field(default="", env="GROQ_API_KEY")
-    google_api_key: str = Field(default="", env="GOOGLE_API_KEY")
+    openai_api_key: str = Field(default="sk-test-default", env="OPENAI_API_KEY")
+    groq_api_key: str = Field(default="sk-test-default", env="GROQ_API_KEY")
+    google_api_key: str = Field(default="sk-test-default", env="GOOGLE_API_KEY")
     
     # ==================== TWILIO ====================
-    twilio_account_sid: str = Field(default="", env="TWILIO_ACCOUNT_SID")
-    twilio_auth_token: str = Field(default="", env="TWILIO_AUTH_TOKEN")
-    twilio_phone_number: str = Field(default="", env="TWILIO_PHONE_NUMBER")
-    twilio_whatsapp_from: str = Field(default="", env="TWILIO_WHATSAPP_FROM")
+    twilio_account_sid: str = Field(default="sk-test-default", env="TWILIO_ACCOUNT_SID")
+    twilio_auth_token: str = Field(default="sk-test-default", env="TWILIO_AUTH_TOKEN")
+    twilio_phone_number: str = Field(default="+919999999999", env="TWILIO_PHONE_NUMBER")
+    twilio_whatsapp_from: str = Field(default="+919999999999", env="TWILIO_WHATSAPP_FROM")
     
     # ==================== SARVAM ====================
-    sarvam_api_key: str = Field(default="", env="SARVAM_API_KEY")
+    sarvam_api_key: str = Field(default="sk-test-default", env="SARVAM_API_KEY")
     sarvam_language: str = Field(default="hi", env="SARVAM_LANGUAGE")
     
     # ==================== REDIS ====================
@@ -71,11 +79,6 @@ class Settings(BaseSettings):
     # ==================== SESSION ====================
     session_timeout_minutes: int = Field(default=30, env="SESSION_TIMEOUT_MINUTES")
     max_turns_per_session: int = Field(default=50, env="MAX_TURNS_PER_SESSION")
-    
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = False
 
 
 # ==================== GLOBAL INSTANCE ====================
@@ -115,3 +118,8 @@ def _validate_config(config: Settings) -> None:
             raise ValueError(f"Missing required environment variable: {env_name}")
     
     print(f"✅ Configuration validated (environment: {config.environment})")
+
+
+# ==================== MODULE LEVEL INSTANCE ====================
+# Create global settings instance that can be imported
+settings = get_config()

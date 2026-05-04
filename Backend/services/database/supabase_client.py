@@ -8,8 +8,28 @@ from typing import Any, Dict, List, Optional
 import asyncpg
 from contextlib import asynccontextmanager
 import logging
+from config import settings
 
 logger = logging.getLogger(__name__)
+
+
+def _parse_database_url(url: str) -> str:
+    """
+    Convert SQLAlchemy format to asyncpg format.
+    
+    SQLAlchemy: postgresql+asyncpg://user:password@host:port/database
+    asyncpg:    postgresql://user:password@host:port/database
+    
+    Args:
+        url: Database URL (either format)
+    
+    Returns:
+        URL in asyncpg format
+    """
+    if url.startswith("postgresql+asyncpg://"):
+        # SQLAlchemy format - convert to asyncpg
+        return url.replace("postgresql+asyncpg://", "postgresql://")
+    return url
 
 
 class SupabaseClientError(Exception):
@@ -40,10 +60,11 @@ class SupabaseClient:
         Args:
             database_url: Full PostgreSQL connection URL from Supabase
                          Format: postgresql://user:password@host:port/database
+                         OR:     postgresql+asyncpg://user:password@host:port/database (SQLAlchemy)
             min_size: Minimum pool size
             max_size: Maximum pool size
         """
-        self.database_url = database_url
+        self.database_url = _parse_database_url(database_url)
         self.min_size = min_size
         self.max_size = max_size
         self.pool: Optional[asyncpg.Pool] = None
@@ -272,7 +293,7 @@ async def get_db_client() -> SupabaseClient:
     """
     global _client
     if _client is None:
-        database_url = os.getenv("DATABASE_URL")
+        database_url = settings.database_url
         if not database_url:
             raise SupabaseClientError("DATABASE_URL not set in environment variables")
         
