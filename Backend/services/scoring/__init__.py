@@ -8,10 +8,10 @@ Modules:
 - scoring_engine: Main orchestrator combining all scores
 """
 
-from backend.services.scoring.intent_score import IntentScoreCalculator
-from backend.services.scoring.engagement_score import EngagementScoreCalculator
-from backend.services.scoring.sentiment_score import SentimentScoreCalculator
-from backend.services.scoring.scoring_engine import ScoringEngine, LeadClassification
+from services.scoring.intent_score import IntentScoreCalculator
+from services.scoring.engagement_score import EngagementScoreCalculator
+from services.scoring.sentiment_score import SentimentScoreCalculator
+from services.scoring.scoring_engine import ScoringEngine, LeadClassification
 
 __all__ = [
     "IntentScoreCalculator",

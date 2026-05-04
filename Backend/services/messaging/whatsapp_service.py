@@ -15,8 +15,8 @@ from datetime import datetime
 from uuid import UUID
 from twilio.rest import Client
 
-from backend.config import get_config
-from backend.services.database.repository import Repository
+from config import get_config
+from services.database.repository import Repository
 
 logger = logging.getLogger(__name__)
 

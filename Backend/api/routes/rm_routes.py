@@ -17,8 +17,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from pydantic import BaseModel, Field
 
-from backend.services.database.repository import Repository
-from backend.services.database.supabase_client import get_db_client
+from services.database.repository import Repository
+from services.database.supabase_client import get_db_client
 
 logger = logging.getLogger(__name__)
 

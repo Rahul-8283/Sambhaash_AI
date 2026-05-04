@@ -17,7 +17,7 @@ from pathlib import Path
 # Add Backend directory to path
 sys.path.insert(0, str(Path(__file__).parent))
 
-from backend.worker.call_worker import BackgroundWorker
+from worker.call_worker import BackgroundWorker
 
 
 def setup_logging():

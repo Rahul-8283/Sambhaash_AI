@@ -18,7 +18,7 @@ from uuid import uuid4
 from enum import Enum
 
 import redis
-from backend.config import get_config
+from config import get_config
 
 logger = logging.getLogger(__name__)
 

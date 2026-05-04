@@ -15,12 +15,12 @@ import logging
 from typing import Dict, Any, Optional
 from datetime import datetime
 
-from backend.worker.queue_manager import QueueManager, JobStatus, JobType
-from backend.services.messaging.whatsapp_service import WhatsAppService
-from backend.services.scoring.scoring_engine import ScoringEngine
-from backend.services.database.supabase_client import get_db_client, close_db_client
-from backend.services.database.repository import Repository
-from backend.config import get_config
+from worker.queue_manager import QueueManager, JobStatus, JobType
+from services.messaging.whatsapp_service import WhatsAppService
+from services.scoring.scoring_engine import ScoringEngine
+from services.database.supabase_client import get_db_client, close_db_client
+from services.database.repository import Repository
+from config import get_config
 
 logger = logging.getLogger(__name__)
 
