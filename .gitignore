@@ -67,3 +67,8 @@ htmlcov/
 .vscode/
 .idea/
 *.code-workspace
+.env
+Backend/env
+Backend/.env
+
+

@@ -308,3 +308,204 @@ DEBUG=true
 ```
 
 ---
+
+
+
+
+# Sambhaash AI Backend (Person 1 Runbook)
+
+This guide documents the **Person 1 (Telephony + STT)** workflow for Sambhaash AI.
+
+Current implementation focus:
+- Twilio Voice webhook (record-and-process flow)
+- Whisper speech-to-text
+- Language detection (Hindi / English / Hinglish)
+- Twilio WhatsApp sandbox webhook
+
+---
+
+## 1) What is implemented
+
+### Core files
+- `main.py` — FastAPI app entry
+- `config.py` — loads env vars from `Backend/env`
+- `api/routes/webhook_routes.py` — Twilio webhooks
+- `api/routes/call_routes.py` — outbound call + WhatsApp trigger endpoints
+- `api/routes/health.py` — health/readiness checks
+- `services/telephony/twilio_client.py` — Twilio helper logic
+- `services/stt/whisper_service.py` — Whisper transcription
+- `services/stt/language_detector.py` — language classification
+
+### Active endpoints
+- `GET /` 
+- `GET /health`
+- `GET /ready`
+- `GET|POST /api/webhook/twilio/voice`
+- `POST /api/webhook/twilio/recording`
+- `POST /api/webhook/twilio/whatsapp`
+- `POST /api/calls/outbound`
+- `POST /api/calls/whatsapp`
+- `GET /api/calls/status/{call_sid}`
+
+---
+
+## 2) Person 1 → Person 2 handoff payload
+
+Person 1 prepares this payload after transcription + language detection:
+
+```json
+{
+  "call_sid": "CAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+  "from_number": "+9198xxxxxxxx",
+  "recording_url": "https://api.twilio.com/...",
+  "recording_duration": "8",
+  "text": "hello I want to know about this",
+  "language": "hinglish"
+}
+```
+
+Where it currently appears:
+- Logged by `recording_webhook` in `api/routes/webhook_routes.py`
+- Log line contains: `Person 1 payload ready: {...}`
+
+Suggested next integration for Person 2:
+- Add a direct internal function call or queue publish right after payload creation.
+
+---
+
+## 3) Local setup
+
+Run from repo root (`.\Sambhaash_AI`).
+
+```powershell
+python -m pip install -r .\Backend\requirements.txt
+```
+
+Make sure `Backend/env` exists and contains at least:
+- `OPENAI_API_KEY`
+- `TWILIO_ACCOUNT_SID`
+- `TWILIO_AUTH_TOKEN`
+- `TWILIO_PHONE_NUMBER`
+- `TWILIO_WHATSAPP_FROM`
+
+Start backend:
+
+```powershell
+uvicorn Backend.main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+---
+
+## 4) Quick local validation (before Twilio)
+
+In a new terminal:
+
+```powershell
+Invoke-WebRequest http://127.0.0.1:8000/health -UseBasicParsing
+Invoke-WebRequest http://127.0.0.1:8000/ready -UseBasicParsing
+```
+
+Expected:
+- HTTP 200 for both
+- `/ready` should show `twilio` and `openai` service flags
+
+Check Twilio voice webhook response XML:
+
+```powershell
+Invoke-WebRequest -Method POST http://127.0.0.1:8000/api/webhook/twilio/voice -UseBasicParsing
+```
+
+Expected response body contains TwiML tags like `<Response>`, `<Say>`, `<Record>`.
+
+---
+
+## 5) ngrok setup (to receive Twilio webhooks)
+
+Install ngrok, then expose your local backend:
+
+```powershell
+ngrok http 8000
+```
+
+Copy the HTTPS forwarding URL from ngrok, e.g.:
+- `https://abcd-12-34-56-78.ngrok-free.app`
+
+Optional but recommended: set this in `Backend/env`:
+- `TWILIO_WEBHOOK_BASE_URL=https://abcd-12-34-56-78.ngrok-free.app`
+
+Restart backend after env updates.
+
+---
+
+## 6) Twilio Voice testing (step-by-step)
+
+1. Open Twilio Console → **Phone Numbers** → your active number.
+2. Under **Voice Configuration**:
+   - A call comes in → **Webhook**
+   - URL: `https://<your-ngrok-url>/api/webhook/twilio/voice`
+   - Method: `HTTP POST`
+3. Save configuration.
+4. Call your Twilio number from your phone.
+5. Speak after the beep and wait for processing.
+6. Inspect backend logs for:
+   - inbound webhook log
+   - transcription log (`Person 1 payload ready`)
+   - detected language
+
+If you do not get transcription:
+- confirm ngrok URL is live
+- verify Twilio number webhook method is POST
+- verify OpenAI key in `Backend/env`
+- verify Twilio account SID/token in `Backend/env`
+
+---
+
+## 7) Twilio WhatsApp sandbox testing (step-by-step)
+
+You already joined sandbox (good ✅).
+
+1. In Twilio Console → **Messaging** → **Try it out** → **WhatsApp Sandbox**.
+2. Set **When a message comes in** webhook URL to:
+   - `https://<your-ngrok-url>/api/webhook/twilio/whatsapp`
+   - Method: `HTTP POST`
+3. From your WhatsApp, send a test message to sandbox number (`+14155238886`).
+4. You should receive auto XML-driven response:
+   - “Thanks for messaging Sambhaash AI...”
+
+---
+
+## 8) API test commands
+
+### Trigger outbound call
+
+```powershell
+$body = @{ phone_number = "+91XXXXXXXXXX" } | ConvertTo-Json
+Invoke-RestMethod -Method POST -Uri http://127.0.0.1:8000/api/calls/outbound -ContentType "application/json" -Body $body
+```
+
+### Trigger WhatsApp send API
+
+```powershell
+$body = @{ phone_number = "+91XXXXXXXXXX" } | ConvertTo-Json
+Invoke-RestMethod -Method POST -Uri http://127.0.0.1:8000/api/calls/whatsapp -ContentType "application/json" -Body $body
+```
+
+---
+
+## 9) Known prototype constraints
+
+- Current voice flow is recording-based, not real-time streaming.
+- Person 2 handoff is currently logging payload (not yet queue/API integrated).
+- TTS loopback to caller is minimal and can be expanded by Person 3 integration.
+
+---
+
+## 10) Security note (important)
+
+If any credentials were ever committed to git history, rotate them immediately:
+- Twilio auth token
+- OpenAI API key
+- Supabase keys
+- Any other provider secrets
+
+Keep secrets only in `Backend/env` (ignored by git).
