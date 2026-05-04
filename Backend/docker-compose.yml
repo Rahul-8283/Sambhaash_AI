@@ -4,11 +4,11 @@ services:
   # Redis: In-memory queue for background jobs
   redis:
     image: redis:7-alpine
-    container_name: sambhaash-redis
+    container_name: sambhaash-ai-redis
     ports:
       - "6379:6379"
     volumes:
-      - redis_data:/data
+      - sambhaash-data:/data
     command: redis-server --appendonly yes
     networks:
       - sambhaash-network
@@ -26,7 +26,7 @@ services:
       context: .
       dockerfile: Dockerfile
       target: production
-    container_name: sambhaash-api
+    container_name: sambhaash-ai-api
     ports:
       - "8000:8000"
     volumes:
@@ -63,10 +63,10 @@ services:
       context: .
       dockerfile: Dockerfile
       target: worker
-    container_name: sambhaash-worker
+    container_name: sambhaash-ai-worker
     volumes:
       - .:/app
-      - worker_logs:/app/logs
+      - sambhaash-logs:/app/logs
     networks:
       - sambhaash-network
     environment:
@@ -90,9 +90,9 @@ services:
     restart: unless-stopped
 
 volumes:
-  redis_data:
+  sambhaash-data:
     driver: local
-  worker_logs:
+  sambhaash-logs:
     driver: local
 
 networks:
