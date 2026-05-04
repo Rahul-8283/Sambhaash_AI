@@ -55,9 +55,9 @@ class BackgroundWorker:
             self.whatsapp_service = WhatsAppService(self.repository)
             self.scoring_engine = ScoringEngine(self.repository)
             
-            logger.info("✅ Worker startup complete")
+            logger.info("[WORKER] Worker startup complete")
         except Exception as e:
-            logger.error(f"❌ Worker startup failed: {e}")
+            logger.error(f"[WORKER] Worker startup failed: {e}")
             raise
 
     async def shutdown(self):
@@ -77,7 +77,7 @@ class BackgroundWorker:
             poll_interval: Seconds between polls
             max_workers: Max concurrent workers
         """
-        logger.info(f"🚀 Starting worker (poll_interval={poll_interval}s, max_workers={max_workers})")
+        logger.info(f"[WORKER] Starting worker (poll_interval={poll_interval}s, max_workers={max_workers})")
         
         await self.startup()
         
@@ -176,7 +176,7 @@ class BackgroundWorker:
         if not result.get("success"):
             raise Exception(f"WhatsApp send failed: {result.get('error')}")
         
-        logger.info(f"✅ WhatsApp sent: {result}")
+        logger.info(f"[WORKER] WhatsApp sent: {result}")
 
     async def _process_send_summary(self, job: Dict[str, Any]):
         """
@@ -209,7 +209,7 @@ Created: {session.get('created_at')}"""
         if not result.get("success"):
             raise Exception(f"Summary send failed: {result.get('error')}")
         
-        logger.info(f"✅ Summary sent for session {session_id}")
+        logger.info(f"[WORKER] Summary sent for session {session_id}")
 
     async def _process_assign_rm(self, job: Dict[str, Any]):
         """
@@ -227,7 +227,7 @@ Created: {session.get('created_at')}"""
         # Assign lead to RM
         result = await self.repository.assign_lead_to_rm(lead_id, rm_name)
         
-        logger.info(f"✅ Lead assigned to RM: {result}")
+        logger.info(f"[WORKER] Lead assigned to RM: {result}")
 
     async def _process_update_score(self, job: Dict[str, Any]):
         """
@@ -248,7 +248,7 @@ Created: {session.get('created_at')}"""
         if not result:
             raise ValueError(f"Scoring failed for lead {lead_id}")
         
-        logger.info(f"✅ Score updated: {result['classification']}")
+        logger.info(f"[WORKER] Score updated: {result['classification']}")
 
 
 async def main():

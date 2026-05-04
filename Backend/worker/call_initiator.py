@@ -9,6 +9,7 @@ from services.database.supabase_client import get_db_client, close_db_client
 from services.database.repository import Repository
 from services.telephony.twilio_client import TwilioClient
 from services.database.models import LeadStatus
+from services.ngrok_setup import load_ngrok_url
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +29,16 @@ class CallInitiator:
         self.config = get_config()
         self.db_client: Optional[any] = None
         self.repository: Optional[Repository] = None
+        
+        # Load ngrok URL from file if in development mode (written by backend)
+        ngrok_url = None
+        if self.config.mode.lower() == "development":
+            ngrok_url = load_ngrok_url()
+            if ngrok_url:
+                logger.info(f"[CALL_INIT] Using ngrok URL: {ngrok_url}")
+                # Update config so TwilioClient uses it
+                self.config.twilio_webhook_base_url = ngrok_url
+        
         self.twilio_client = TwilioClient()
         
     async def startup(self):

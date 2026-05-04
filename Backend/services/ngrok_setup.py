@@ -8,12 +8,17 @@ In production, this is skipped and the configured URL is used directly.
 """
 
 import logging
+import json
+from pathlib import Path
 from typing import Optional
 
 from config import get_config
 
 
 logger = logging.getLogger(__name__)
+
+# Path to store ngrok URL (shared between backend and worker)
+NGROK_URL_FILE = Path(__file__).parent.parent / "ngrok_url.json"
 
 
 async def setup_ngrok_tunnel() -> Optional[str]:
@@ -90,6 +95,47 @@ async def setup_ngrok_tunnel() -> Optional[str]:
         return None
 
 
+def save_ngrok_url(tunnel_url: Optional[str]) -> None:
+    """
+    Save ngrok URL to shared file for worker to read.
+    
+    Args:
+        tunnel_url: The ngrok public URL to save
+    """
+    if not tunnel_url:
+        return
+    
+    try:
+        data = {"ngrok_url": tunnel_url, "timestamp": str(__import__('datetime').datetime.utcnow())}
+        with open(NGROK_URL_FILE, "w") as f:
+            json.dump(data, f)
+        logger.info(f"[NGROK] URL saved to {NGROK_URL_FILE}")
+    except Exception as e:
+        logger.error(f"[NGROK] Failed to save URL to file: {e}")
+
+
+def load_ngrok_url() -> Optional[str]:
+    """
+    Load ngrok URL from shared file (called by worker).
+    
+    Returns:
+        The ngrok URL if available, else None
+    """
+    if not NGROK_URL_FILE.exists():
+        return None
+    
+    try:
+        with open(NGROK_URL_FILE, "r") as f:
+            data = json.load(f)
+        url = data.get("ngrok_url")
+        if url:
+            logger.info(f"[NGROK] Loaded tunnel URL from file: {url}")
+        return url
+    except Exception as e:
+        logger.error(f"[NGROK] Failed to load URL from file: {e}")
+        return None
+
+
 def update_twilio_webhook_url(tunnel_url: Optional[str]) -> str:
     """
     Update Twilio webhook URL based on environment mode.
@@ -122,6 +168,11 @@ async def initialize_ngrok():
     logger.info(f"[NGROK] Initializing ngrok (MODE={get_config().mode})")
     
     tunnel_url = await setup_ngrok_tunnel()
+    
+    # Save URL to file for worker to read
+    if tunnel_url:
+        save_ngrok_url(tunnel_url)
+    
     final_url = update_twilio_webhook_url(tunnel_url)
     
     return final_url
