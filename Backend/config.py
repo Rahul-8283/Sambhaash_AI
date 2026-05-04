@@ -1,77 +1,125 @@
-from __future__ import annotations
+"""
+Application Configuration
+Loads and validates environment variables
+"""
 
-from functools import lru_cache
-from pathlib import Path
+import os
 from typing import Optional
-
-from dotenv import load_dotenv
-from pydantic_settings import BaseSettings, SettingsConfigDict
-
-
-BASE_DIR = Path(__file__).resolve().parent
-
-
-def _load_backend_env() -> None:
-	"""Load the shared backend env file if it exists."""
-
-	for candidate in (
-		BASE_DIR / "env",
-		BASE_DIR / ".env",
-		BASE_DIR.parent / ".env",
-	):
-		if candidate.exists():
-			load_dotenv(candidate, override=False)
-			break
-
-
-_load_backend_env()
+from pydantic_settings import BaseSettings
+from pydantic import Field, ConfigDict
 
 
 class Settings(BaseSettings):
-	"""Application settings backed by the shared backend environment."""
+    """Application settings from environment variables"""
+    
+    model_config = ConfigDict(
+        extra='ignore',
+        env_file='.env',
+        env_file_encoding='utf-8',
+        case_sensitive=False
+    )
+    
+    # ==================== APPLICATION ====================
+    environment: str = Field(default="development", env="ENVIRONMENT")
+    mode: str = Field(default="development", env="MODE")
+    debug: bool = Field(default=True, env="DEBUG")
+    log_level: str = Field(default="INFO", env="LOG_LEVEL")
+    
+    # ==================== SERVER ====================
+    server_host: str = Field(default="0.0.0.0", env="SERVER_HOST")
+    server_port: int = Field(default=8000, env="SERVER_PORT")
+    
+    # ==================== DATABASE ====================
+    database_url: str = Field(
+        default="postgresql+asyncpg://postgres:password@localhost:5432/sambhaash_ai_test",
+        env="DATABASE_URL"
+    )
+    
+    # ==================== SUPABASE ====================
+    supabase_url: str = Field(default="https://localhost.supabase.co", env="SUPABASE_URL")
+    supabase_service_role_key: str = Field(default="sk-test-default", env="SUPABASE_SERVICE_ROLE_KEY")
+    db_pool_min_size: int = Field(default=5, env="DB_POOL_MIN_SIZE")
+    db_pool_max_size: int = Field(default=20, env="DB_POOL_MAX_SIZE")
+    
+    # ==================== LLM ====================
+    llm_model_name: str = Field(default="mixtral-8x7b-32768", env="LLM_MODEL_NAME")
+    llm_temperature: float = Field(default=0.2, env="LLM_TEMPERATURE")
+    llm_max_tokens: int = Field(default=700, env="LLM_MAX_TOKENS")
+    
+    openai_api_key: str = Field(default="sk-test-default", env="OPENAI_API_KEY")
+    groq_api_key: str = Field(default="sk-test-default", env="GROQ_API_KEY")
+    google_api_key: str = Field(default="sk-test-default", env="GOOGLE_API_KEY")
+    
+    # ==================== TWILIO ====================
+    twilio_account_sid: str = Field(default="sk-test-default", env="TWILIO_ACCOUNT_SID")
+    twilio_auth_token: str = Field(default="sk-test-default", env="TWILIO_AUTH_TOKEN")
+    twilio_phone_number: str = Field(default="+919999999999", env="TWILIO_PHONE_NUMBER")
+    twilio_whatsapp_from: str = Field(default="+919999999999", env="TWILIO_WHATSAPP_FROM")
+    
+    # ==================== SARVAM ====================
+    sarvam_api_key: str = Field(default="sk-test-default", env="SARVAM_API_KEY")
+    sarvam_language: str = Field(default="hi", env="SARVAM_LANGUAGE")
+    
+    # ==================== REDIS ====================
+    redis_url: str = Field(default="redis://localhost:6379", env="REDIS_URL")
+    redis_max_connections: int = Field(default=50, env="REDIS_MAX_CONNECTIONS")
+    
+    # ==================== SCORING ====================
+    score_hot_threshold: float = Field(default=0.75, env="SCORE_HOT_THRESHOLD")
+    score_warm_threshold: float = Field(default=0.50, env="SCORE_WARM_THRESHOLD")
+    
+    # ==================== RM SETTINGS ====================
+    default_rm_name: str = Field(default="Auto", env="DEFAULT_RM_NAME")
+    auto_assign_hot_leads: bool = Field(default=True, env="AUTO_ASSIGN_HOT_LEADS")
+    
+    # ==================== WHATSAPP ====================
+    whatsapp_template_language: str = Field(default="hi", env="WHATSAPP_TEMPLATE_LANGUAGE")
+    whatsapp_send_on_warm: bool = Field(default=True, env="WHATSAPP_SEND_ON_WARM")
+    
+    # ==================== SESSION ====================
+    session_timeout_minutes: int = Field(default=30, env="SESSION_TIMEOUT_MINUTES")
+    max_turns_per_session: int = Field(default=50, env="MAX_TURNS_PER_SESSION")
 
-	model_config = SettingsConfigDict(extra="ignore")
 
-	MODE: str = "development"
-	BACKEND_HOST: str = "0.0.0.0"
-	BACKEND_PORT: int = 8000
+# ==================== GLOBAL INSTANCE ====================
 
-	# Core AI / STT credentials
-	OPENAI_API_KEY: Optional[str] = None
-	GROQ_API_KEY: Optional[str] = None
-	SARVAM_API_KEY: Optional[str] = None
-
-	# Twilio credentials
-	TWILIO_ACCOUNT_SID: Optional[str] = None
-	TWILIO_AUTH_TOKEN: Optional[str] = None
-	TWILIO_PHONE_NUMBER: Optional[str] = None
-	TWILIO_WHATSAPP_FROM: Optional[str] = None
-
-	# Infra / storage
-	SUPABASE_URL: Optional[str] = None
-	SUPABASE_SERVICE_ROLE_KEY: Optional[str] = None
-	DATABASE_URL: Optional[str] = None
-	REDIS_URL: Optional[str] = None
-
-	# Optional deployment helper for Twilio webhooks
-	TWILIO_WEBHOOK_BASE_URL: Optional[str] = None
-
-	@property
-	def has_twilio(self) -> bool:
-		return bool(
-			self.TWILIO_ACCOUNT_SID
-			and self.TWILIO_AUTH_TOKEN
-			and self.TWILIO_PHONE_NUMBER
-		)
-
-	@property
-	def has_openai(self) -> bool:
-		return bool(self.OPENAI_API_KEY)
+_config: Optional[Settings] = None
 
 
-@lru_cache(maxsize=1)
-def get_settings() -> Settings:
-	return Settings()
+def get_config() -> Settings:
+    """
+    Get or create global configuration instance.
+    
+    Returns:
+        Settings object with all environment variables
+    """
+    global _config
+    if _config is None:
+        _config = Settings()
+        _validate_config(_config)
+    return _config
 
 
-settings = get_settings()
+def _validate_config(config: Settings) -> None:
+    """
+    Validate critical configuration values.
+    
+    Raises:
+        ValueError: If critical config is missing
+    """
+    required_fields = [
+        ("database_url", "DATABASE_URL"),
+        ("openai_api_key", "OPENAI_API_KEY"),
+        ("groq_api_key", "GROQ_API_KEY"),
+    ]
+    
+    for field, env_name in required_fields:
+        if not getattr(config, field):
+            raise ValueError(f"Missing required environment variable: {env_name}")
+    
+    print(f"✅ Configuration validated (environment: {config.environment})")
+
+
+# ==================== MODULE LEVEL INSTANCE ====================
+# Create global settings instance that can be imported
+settings = get_config()

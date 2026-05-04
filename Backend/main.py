@@ -1,53 +1,153 @@
-from __future__ import annotations
+"""
+Sambhaash AI - Main FastAPI Application
+Entry point for the backend server
+"""
 
+import os
 import logging
-
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.trustedhost import TrustedHostMiddleware
+import uvicorn
 
-from Backend.api.routes import call_routes, health, webhook_routes, lead_routes
-from Backend.config import get_settings
+from config import get_config
+from services.database.supabase_client import get_db_client, close_db_client
+from api.routes import lead_routes, rm_routes
 
+# ==================== LOGGING SETUP ====================
 
-logging.basicConfig(level=logging.INFO)
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
 logger = logging.getLogger(__name__)
 
 
-settings = get_settings()
+# ==================== LIFESPAN CONTEXT ====================
 
-app = FastAPI(title="Sambhaash AI Backend", version="0.1.0")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    FastAPI lifespan context manager.
+    Handles startup and shutdown events.
+    """
+    # STARTUP
+    logger.info("🚀 Starting Sambhaash AI Backend...")
+    try:
+        db = await get_db_client()
+        health = await db.health_check()
+        if health:
+            logger.info("✅ Database connection successful")
+        else:
+            logger.warning("⚠️  Database health check failed - running in degraded mode")
+    except Exception as e:
+        logger.warning(f"⚠️  Database connection failed - running in degraded mode: {str(e)}")
+    
+    yield
+    
+    # SHUTDOWN
+    logger.info("🛑 Shutting down Sambhaash AI Backend...")
+    try:
+        await close_db_client()
+        logger.info("✅ Database connection closed")
+    except Exception as e:
+        logger.error(f"Error during shutdown: {str(e)}")
 
-app.add_middleware(
-	CORSMiddleware,
-	allow_origins=["*"],
-	allow_credentials=True,
-	allow_methods=["*"],
-	allow_headers=["*"],
-)
 
-app.include_router(health.router)
-app.include_router(webhook_routes.router)
-app.include_router(call_routes.router)
-app.include_router(lead_routes.router)
+# ==================== APPLICATION SETUP ====================
+
+def create_app() -> FastAPI:
+    """
+    Create and configure FastAPI application.
+    """
+    config = get_config()
+    
+    app = FastAPI(
+        title="Sambhaash AI",
+        description="Voice Agent Backend for Partner Lead Conversion",
+        version="1.0.0",
+        lifespan=lifespan
+    )
+    
+    # ==================== MIDDLEWARE ====================
+    
+    # CORS Middleware
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],  # Allow all origins for development
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+    
+    # Trusted Host Middleware
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=["*"]
+    )
+    
+    # ==================== ROUTES ====================
+    
+    # Health check endpoint
+    @app.get("/health", tags=["health"])
+    async def health_check():
+        """Health check endpoint"""
+        return {
+            "status": "healthy",
+            "service": "Sambhaash AI Backend",
+            "version": "1.0.0"
+        }
+    
+    # API Routes
+    app.include_router(lead_routes.router)
+    app.include_router(rm_routes.router)
+    
+    # ==================== ROOT ENDPOINT ====================
+    
+    @app.get("/", tags=["root"])
+    async def root():
+        """Root endpoint with API info"""
+        return {
+            "name": "Sambhaash AI",
+            "description": "Voice Agent Backend for Partner Lead Conversion",
+            "version": "1.0.0",
+            "docs": "/docs",
+            "endpoints": {
+                "health": "/health",
+                "leads": "/api/leads"
+            }
+        }
+    
+    # ==================== ERROR HANDLERS ====================
+    
+    @app.exception_handler(Exception)
+    async def general_exception_handler(request, exc):
+        """Handle general exceptions"""
+        logger.error(f"Unhandled exception: {str(exc)}")
+        return {
+            "error": "Internal server error",
+            "message": str(exc)
+        }
+    
+    logger.info("✅ FastAPI application created successfully")
+    return app
 
 
-@app.get("/")
-async def root():
-	return {
-		"service": "Sambhaash AI",
-		"layer": "Person 1 - Input (Telephony + STT)",
-		"status": "running",
-	}
+# ==================== APPLICATION INSTANCE ====================
+
+app = create_app()
 
 
-@app.on_event("startup")
-async def startup_event() -> None:
-	logger.info("Sambhaash AI backend starting in %s mode", settings.MODE)
-	logger.info("Twilio configured: %s", settings.has_twilio)
-	logger.info("OpenAI configured: %s", settings.has_openai)
-
+# ==================== MAIN ====================
 
 if __name__ == "__main__":
-	import uvicorn
-
-	uvicorn.run(app, host=settings.BACKEND_HOST, port=settings.BACKEND_PORT)
+    config = get_config()
+    
+    uvicorn.run(
+        "main:app",
+        host=config.server_host,
+        port=config.server_port,
+        reload=config.debug,
+        log_level=config.log_level.lower()
+    )

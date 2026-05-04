@@ -1,0 +1,100 @@
+version: '3.9'
+
+services:
+  # Redis: In-memory queue for background jobs
+  redis:
+    image: redis:7-alpine
+    container_name: sambhaash-ai-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - sambhaash-data:/data
+    command: redis-server --appendonly yes
+    networks:
+      - sambhaash-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    environment:
+      - REDIS_PORT=6379
+
+  # FastAPI: REST API server
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: sambhaash-ai-api
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    networks:
+      - sambhaash-network
+    environment:
+      - PYTHONUNBUFFERED=1
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=${DATABASE_URL}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+      - TWILIO_PHONE_NUMBER=${TWILIO_PHONE_NUMBER}
+      - TWILIO_WHATSAPP_FROM=${TWILIO_WHATSAPP_FROM}
+      - SARVAM_API_KEY=${SARVAM_API_KEY}
+      - MODE=development
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Background Worker: Processes queued jobs
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: worker
+    container_name: sambhaash-ai-worker
+    volumes:
+      - .:/app
+      - sambhaash-logs:/app/logs
+    networks:
+      - sambhaash-network
+    environment:
+      - PYTHONUNBUFFERED=1
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=${DATABASE_URL}
+      - SUPABASE_URL=${SUPABASE_URL}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+      - TWILIO_PHONE_NUMBER=${TWILIO_PHONE_NUMBER}
+      - TWILIO_WHATSAPP_FROM=${TWILIO_WHATSAPP_FROM}
+      - SARVAM_API_KEY=${SARVAM_API_KEY}
+      - MODE=development
+    depends_on:
+      redis:
+        condition: service_healthy
+    command: python run_worker.py
+    restart: unless-stopped
+
+volumes:
+  sambhaash-data:
+    driver: local
+  sambhaash-logs:
+    driver: local
+
+networks:
+  sambhaash-network:
+    driver: bridge
