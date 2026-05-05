@@ -24,6 +24,8 @@ asyncpg==0.29.0
 
 # Vector Operations & Embeddings
 numpy==1.26.4
+sentence-transformers==2.7.0
+huggingface-hub==0.24.0
 
 # Language Detection
 langdetect==1.0.9
@@ -70,3 +72,4 @@ librosa==0.10.0
 # Async HTTP
 httpx==0.25.2
 aiohttp==3.9.1
+requests==2.31.0

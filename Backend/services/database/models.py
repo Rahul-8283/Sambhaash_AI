@@ -86,13 +86,14 @@ class Lead(Base):
 
 class CallSession(Base):
     """
-    Individual call session with conversation history
+    Individual call session with conversation history and KB context tracking
     """
     __tablename__ = "call_sessions"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     lead_id = Column(UUID(as_uuid=True), ForeignKey("leads.id", ondelete="CASCADE"), nullable=False, index=True)
     conversation_history = Column(JSON, nullable=False, default=list)
+    kb_usage_log = Column(JSON, nullable=False, default=list)  # Track KB articles used per turn
     classification = Column(
         SQLEnum(ConversationClassification),
         nullable=True,
@@ -251,3 +252,57 @@ class RmAssignment(Base):
     
     def __repr__(self):
         return f"<RmAssignment lead={self.lead_id} rm={self.rm_name}>"
+
+
+class CallRecording(Base):
+    """
+    Call recordings and transcriptions (Phase 2B)
+    Stores audio file metadata and transcription text
+    """
+    __tablename__ = "call_recordings"
+    
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    call_session_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("call_sessions.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True,
+        unique=True
+    )
+    # Twilio recording metadata
+    twilio_recording_sid = Column(String(255), nullable=True, index=True)
+    twilio_call_sid = Column(String(255), nullable=True, index=True)
+    
+    # Storage paths
+    storage_path = Column(String(512), nullable=False)  # e.g., "recordings/2026-05-05_123456_abc123.wav"
+    storage_url = Column(String(512), nullable=True)    # Public URL to recording
+    
+    # Recording metadata
+    duration_seconds = Column(Integer, nullable=False, default=0)
+    file_size_bytes = Column(Integer, nullable=False, default=0)
+    
+    # Transcription data
+    transcription_text = Column(Text, nullable=True)    # Full transcription from Whisper
+    transcription_language = Column(String(50), nullable=True)
+    transcription_confidence = Column(Float, nullable=True)  # Whisper confidence score
+    
+    # Summary & analytics
+    call_summary = Column(Text, nullable=True)          # AI-generated summary of call
+    key_topics = Column(JSON, nullable=False, default=list)  # ["product", "pricing", "demo"]
+    sentiment = Column(String(20), nullable=True)       # positive, negative, neutral
+    
+    # Timestamps
+    recorded_at = Column(DateTime(timezone=True), nullable=False)  # When call happened
+    created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow, index=True)
+    
+    # Relationships
+    call_session = relationship("CallSession", backref="recordings")
+    
+    # Index for faster queries
+    __table_args__ = (
+        Index("ix_call_recordings_session_created", "call_session_id", "created_at"),
+        Index("ix_call_recordings_language", "transcription_language"),
+    )
+    
+    def __repr__(self):
+        return f"<CallRecording session={self.call_session_id} duration={self.duration_seconds}s>"

@@ -38,6 +38,7 @@ class Settings(BaseSettings):
     # ==================== SUPABASE ====================
     supabase_url: str = Field(default="https://localhost.supabase.co", env="SUPABASE_URL")
     supabase_service_role_key: str = Field(default="sk-test-default", env="SUPABASE_SERVICE_ROLE_KEY")
+    supabase_bucket_name: str = Field(default="knowledge-base-documents", env="SUPABASE_BUCKET_NAME")
     db_pool_min_size: int = Field(default=5, env="DB_POOL_MIN_SIZE")
     db_pool_max_size: int = Field(default=20, env="DB_POOL_MAX_SIZE")
     
@@ -85,6 +86,11 @@ class Settings(BaseSettings):
     max_turns_per_session: int = Field(default=50, env="MAX_TURNS_PER_SESSION")
     
     # ==================== PROPERTIES ====================
+    
+    @property
+    def supabase_key(self) -> str:
+        """Get Supabase service role key (alias for storage)"""
+        return self.supabase_service_role_key
     
     @property
     def has_twilio(self) -> bool:
