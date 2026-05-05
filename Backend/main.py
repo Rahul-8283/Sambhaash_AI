@@ -13,6 +13,7 @@ import uvicorn
 
 from config import get_config
 from services.database.supabase_client import get_db_client, close_db_client
+from services.ngrok_setup import initialize_ngrok
 from api.routes import lead_routes, rm_routes
 
 # ==================== LOGGING SETUP ====================
@@ -33,26 +34,34 @@ async def lifespan(app: FastAPI):
     Handles startup and shutdown events.
     """
     # STARTUP
-    logger.info("🚀 Starting Sambhaash AI Backend...")
+    logger.info("[APP] Starting Sambhaash AI Backend...")
+    
+    try:
+        # Initialize ngrok tunnel if in development mode
+        logger.info("[APP] Setting up ngrok tunnel...")
+        await initialize_ngrok()
+    except Exception as e:
+        logger.error(f"[APP] Ngrok setup error: {e}")
+    
     try:
         db = await get_db_client()
         health = await db.health_check()
         if health:
-            logger.info("✅ Database connection successful")
+            logger.info("[APP] Database connection successful")
         else:
-            logger.warning("⚠️  Database health check failed - running in degraded mode")
+            logger.warning("[APP] Database health check failed - running in degraded mode")
     except Exception as e:
-        logger.warning(f"⚠️  Database connection failed - running in degraded mode: {str(e)}")
+        logger.warning(f"[APP] Database connection failed - running in degraded mode: {str(e)}")
     
     yield
     
     # SHUTDOWN
-    logger.info("🛑 Shutting down Sambhaash AI Backend...")
+    logger.info("[APP] Shutting down Sambhaash AI Backend...")
     try:
         await close_db_client()
-        logger.info("✅ Database connection closed")
+        logger.info("[APP] Database connection closed")
     except Exception as e:
-        logger.error(f"Error during shutdown: {str(e)}")
+        logger.error(f"[APP] Error during shutdown: {str(e)}")
 
 
 # ==================== APPLICATION SETUP ====================
@@ -130,7 +139,7 @@ def create_app() -> FastAPI:
             "message": str(exc)
         }
     
-    logger.info("✅ FastAPI application created successfully")
+    logger.info("[APP] FastAPI application created successfully")
     return app
 
 

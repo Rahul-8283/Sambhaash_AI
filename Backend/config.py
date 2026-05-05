@@ -57,6 +57,9 @@ class Settings(BaseSettings):
     twilio_whatsapp_from: str = Field(default="+919999999999", env="TWILIO_WHATSAPP_FROM")
     twilio_webhook_base_url: str = Field(default="http://localhost:8000", env="TWILIO_WEBHOOK_BASE_URL")
     
+    # ==================== NGROK ====================
+    ngrok_auth_token: str = Field(default="ngrok_auth_token", env="NGROK_AUTH_TOKEN")
+    
     # ==================== SARVAM ====================
     sarvam_api_key: str = Field(default="sk-test-default", env="SARVAM_API_KEY")
     sarvam_language: str = Field(default="hi", env="SARVAM_LANGUAGE")

@@ -27,35 +27,35 @@ Base = declarative_base()
 
 class LeadStatus(str, PyEnum):
     """Lead status enumeration"""
-    NEW = "new"
-    CONTACTED = "contacted"
-    INTERESTED = "interested"
-    CONVERTED = "converted"
-    REJECTED = "rejected"
-    FOLLOW_UP = "follow_up"
+    NEW = "NEW"
+    CONTACTED = "CONTACTED"
+    INTERESTED = "INTERESTED"
+    CONVERTED = "CONVERTED"
+    REJECTED = "REJECTED"
+    FOLLOW_UP = "FOLLOW_UP"
 
 
 class LeadClassification(str, PyEnum):
     """Lead quality classification"""
-    HOT = "hot"
-    WARM = "warm"
-    COLD = "cold"
+    HOT = "HOT"
+    WARM = "WARM"
+    COLD = "COLD"
 
 
 class ConversationClassification(str, PyEnum):
     """Conversation classification"""
-    OBJECTION = "objection"
-    BENEFIT = "benefit"
-    FAQ = "faq"
-    GENERIC = "generic"
+    OBJECTION = "OBJECTION"
+    BENEFIT = "BENEFIT"
+    FAQ = "FAQ"
+    GENERIC = "GENERIC"
 
 
 class DocumentType(str, PyEnum):
     """Document type enumeration"""
-    PDF = "pdf"
-    DOCX = "docx"
-    JSON = "json"
-    TXT = "txt"
+    PDF = "PDF"
+    DOCX = "DOCX"
+    JSON = "JSON"
+    TXT = "TXT"
 
 
 # ==================== MODELS ====================
@@ -145,10 +145,9 @@ class LeadScore(Base):
     lead = relationship("Lead", back_populates="lead_scores")
     call_session = relationship("CallSession", back_populates="lead_scores")
     
-    # Index for latest score queries
+    # Index for latest score queries (composite index)
     __table_args__ = (
         Index("ix_lead_scores_lead_timestamp", "lead_id", "timestamp"),
-        Index("ix_lead_scores_classification", "classification"),
     )
     
     def __repr__(self):
@@ -224,13 +223,6 @@ class KnowledgeBase(Base):
     
     # Relationships
     document = relationship("Document", back_populates="knowledge_base_entries")
-    
-    # Index for faster retrieval
-    __table_args__ = (
-        Index("ix_knowledge_base_language", "language"),
-        Index("ix_knowledge_base_objection_type", "objection_type"),
-        Index("ix_knowledge_base_benefit_type", "benefit_type"),
-    )
     
     def __repr__(self):
         return f"<KnowledgeBase {self.id[:8]}... lang={self.language}>"

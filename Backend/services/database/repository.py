@@ -6,6 +6,7 @@ Handles all database operations using raw SQL queries via asyncpg
 from typing import Any, Dict, List, Optional, Tuple
 from datetime import datetime, timedelta
 from uuid import UUID
+import uuid
 import logging
 import json
 
@@ -60,14 +61,15 @@ class Repository:
         """
         try:
             query = """
-            INSERT INTO leads (phone, name, email, language, status, created_at, updated_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
+            INSERT INTO leads (id, phone, name, email, language, status, created_at, updated_at)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
             RETURNING *
             """
             now = datetime.utcnow()
+            lead_id = uuid.uuid4()
             result = await self.db.execute_insert_returning(
                 query,
-                (phone, name, email, language, LeadStatus.NEW.value, now, now)
+                (lead_id, phone, name, email, language, LeadStatus.NEW.value, now, now)
             )
             logger.info(f"✅ Created lead: {phone}")
             return result
@@ -196,13 +198,13 @@ class Repository:
         Create a new call session.
         """
         query = """
-        INSERT INTO call_sessions (lead_id, language_detected, conversation_history, duration_seconds, created_at)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO call_sessions (id, lead_id, language_detected, conversation_history, duration_seconds, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *
         """
         result = await self.db.execute_insert_returning(
             query,
-            (str(lead_id), language_detected, json.dumps([]), 0, datetime.utcnow())
+            (uuid.uuid4(), str(lead_id), language_detected, json.dumps([]), 0, datetime.utcnow())
         )
         logger.info(f"✅ Created call session for lead: {lead_id}")
         return result
@@ -288,14 +290,15 @@ class Repository:
         
         query = """
         INSERT INTO lead_scores 
-        (lead_id, call_session_id, interest_score, engagement_score, sentiment_score, composite_score, classification, timestamp)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        (id, lead_id, call_session_id, interest_score, engagement_score, sentiment_score, composite_score, classification, timestamp)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING *
         """
         
         result = await self.db.execute_insert_returning(
             query,
             (
+                uuid.uuid4(),
                 str(lead_id),
                 str(call_session_id),
                 interest_score,
@@ -374,13 +377,13 @@ class Repository:
         Log an objection from a call.
         """
         query = """
-        INSERT INTO objections_log (call_session_id, objection_type, objection_text, resolved, timestamp)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO objections_log (id, call_session_id, objection_type, objection_text, resolved, timestamp)
+        VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *
         """
         result = await self.db.execute_insert_returning(
             query,
-            (str(call_session_id), objection_type, objection_text, False, datetime.utcnow())
+            (uuid.uuid4(), str(call_session_id), objection_type, objection_text, False, datetime.utcnow())
         )
         logger.info(f"✅ Logged objection: {objection_type} for session {call_session_id}")
         return result
@@ -427,13 +430,13 @@ class Repository:
         Create a document record.
         """
         query = """
-        INSERT INTO documents (file_name, document_type, upload_user_id, chunk_count, uploaded_at)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO documents (id, file_name, document_type, upload_user_id, chunk_count, uploaded_at)
+        VALUES ($1, $2, $3, $4, $5, $6)
         RETURNING *
         """
         result = await self.db.execute_insert_returning(
             query,
-            (file_name, document_type, upload_user_id, 0, datetime.utcnow())
+            (uuid.uuid4(), file_name, document_type, upload_user_id, 0, datetime.utcnow())
         )
         logger.info(f"✅ Created document: {file_name}")
         return result
@@ -467,14 +470,15 @@ class Repository:
         
         query = """
         INSERT INTO knowledge_base 
-        (document_id, content, embedding, language, objection_type, benefit_type, source_section, created_at)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        (id, document_id, content, embedding, language, objection_type, benefit_type, source_section, created_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING *
         """
         
         result = await self.db.execute_insert_returning(
             query,
             (
+                uuid.uuid4(),
                 str(document_id),
                 content,
                 embedding_str,
@@ -528,15 +532,15 @@ class Repository:
         Assign a HOT lead to an RM.
         """
         query = """
-        INSERT INTO rm_assignments (lead_id, rm_name, assigned_at, converted)
-        VALUES ($1, $2, $3, $4)
+        INSERT INTO rm_assignments (id, lead_id, rm_name, assigned_at, converted)
+        VALUES ($1, $2, $3, $4, $5)
         ON CONFLICT (lead_id) DO UPDATE
-        SET rm_name = $2, assigned_at = $3
+        SET rm_name = $3, assigned_at = $4
         RETURNING *
         """
         result = await self.db.execute_insert_returning(
             query,
-            (str(lead_id), rm_name, datetime.utcnow(), False)
+            (uuid.uuid4(), str(lead_id), rm_name, datetime.utcnow(), False)
         )
         logger.info(f"✅ Assigned lead {lead_id} to RM: {rm_name}")
         return result

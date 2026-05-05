@@ -105,14 +105,35 @@ class TwilioClient:
 			"Url": callback_url,
 			"Method": "POST",
 		}
-		response = requests.post(
-			f"{TWILIO_API_BASE}/Accounts/{self._auth()[0]}/Calls.json",
-			data=payload,
-			auth=self._auth(),
-			timeout=30,
-		)
-		response.raise_for_status()
+		
+		logger.info(f"[TWILIO] Creating outbound call: To={to_number}, From={self.phone_number}, Url={callback_url}")
+		
+		try:
+			response = requests.post(
+				f"{TWILIO_API_BASE}/Accounts/{self._auth()[0]}/Calls.json",
+				data=payload,
+				auth=self._auth(),
+				timeout=30,
+			)
+			response.raise_for_status()
+		except requests.exceptions.HTTPError as e:
+			# Log the actual error response from Twilio
+			error_detail = ""
+			try:
+				error_data = response.json()
+				error_detail = error_data.get("message", str(error_data))
+			except:
+				error_detail = response.text
+			
+			logger.error(f"[TWILIO] Call creation failed: {response.status_code} - {error_detail}")
+			logger.error(f"[TWILIO] Request payload: To={to_number}, From={self.phone_number}")
+			logger.error(f"[TWILIO] Webhook URL: {callback_url}")
+			logger.error(f"[TWILIO] Full error: {e}")
+			
+			raise
+		
 		data = response.json()
+		logger.info(f"[TWILIO] Call created successfully: SID={data.get('sid')}, Status={data.get('status')}")
 		return TwilioCallResult(sid=data.get("sid"), status=data.get("status", "unknown"), raw=data)
 
 	def send_whatsapp_message(self, to_number: str, body: str) -> dict[str, Any]:

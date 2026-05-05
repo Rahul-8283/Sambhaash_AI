@@ -39,6 +39,10 @@ build/
 *.log
 logs/
 
+# Runtime generated files
+ngrok_url.json
+worker.log
+
 # Cache
 .cache/
 *.cache
