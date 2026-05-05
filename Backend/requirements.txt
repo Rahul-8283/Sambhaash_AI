@@ -24,7 +24,8 @@ asyncpg==0.29.0
 
 # Vector Operations & Embeddings
 numpy==1.26.4
-sentence-transformers==2.2.2
+sentence-transformers==2.7.0
+huggingface-hub==0.24.0
 
 # Language Detection
 langdetect==1.0.9
