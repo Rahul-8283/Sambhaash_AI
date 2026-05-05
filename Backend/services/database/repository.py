@@ -232,6 +232,7 @@ class Repository:
         self,
         session_id: UUID,
         conversation_history: Optional[List[Dict]] = None,
+        kb_usage_log: Optional[List[Dict]] = None,
         duration_seconds: Optional[int] = None,
         classification: Optional[str] = None,
     ) -> Optional[Dict[str, Any]]:
@@ -241,6 +242,8 @@ class Repository:
         updates = {}
         if conversation_history is not None:
             updates["conversation_history"] = json.dumps(conversation_history)
+        if kb_usage_log is not None:
+            updates["kb_usage_log"] = json.dumps(kb_usage_log)
         if duration_seconds is not None:
             updates["duration_seconds"] = duration_seconds
         if classification is not None:

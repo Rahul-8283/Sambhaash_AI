@@ -86,13 +86,14 @@ class Lead(Base):
 
 class CallSession(Base):
     """
-    Individual call session with conversation history
+    Individual call session with conversation history and KB context tracking
     """
     __tablename__ = "call_sessions"
     
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     lead_id = Column(UUID(as_uuid=True), ForeignKey("leads.id", ondelete="CASCADE"), nullable=False, index=True)
     conversation_history = Column(JSON, nullable=False, default=list)
+    kb_usage_log = Column(JSON, nullable=False, default=list)  # Track KB articles used per turn
     classification = Column(
         SQLEnum(ConversationClassification),
         nullable=True,

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import re
 from dataclasses import dataclass, field, asdict
 from typing import Any, Callable, Dict, List, Optional, Protocol, Sequence, runtime_checkable
@@ -14,6 +15,9 @@ from .objection_handler import ObjectionHandler
 from .prompt_builder import PromptBundle, PromptBuilder
 from .rag_engine import RAGEngine
 from .state_machine import ConversationStage, LeadIntent, StateMachine
+
+
+logger = logging.getLogger(__name__)
 
 
 @runtime_checkable
@@ -223,6 +227,16 @@ class Orchestrator:
             memory_snapshot=snapshot_after_update,
             top_k=request.top_k_context,
         )
+        
+        # Merge KB Context from Phase 2A if available
+        if request.metadata and request.metadata.get("kb_context") and request.metadata.get("kb_available"):
+            kb_context = request.metadata.get("kb_context", {})
+            kb_formatted = kb_context.get("formatted_context", "")
+            
+            if kb_formatted:
+                # Prepend KB context to retrieved_context for higher priority
+                retrieved_context = [kb_formatted] + list(retrieved_context or [])
+                logger.info(f"[PHASE2A] KB Context injected ({len(kb_context.get('context_blocks', []))} chunks)")
 
         # Objection handling plan is used as an approved guidance layer.
         objection_plan: Dict[str, Any] = {}

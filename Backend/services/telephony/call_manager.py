@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from typing import Tuple
+from typing import Tuple, Optional, Dict, Any
 
 from config import get_config
 from services.llm import Orchestrator, OrchestrationRequest, LLMClient
@@ -30,18 +30,40 @@ class CallManager:
         self.tts_service = SarvamTTSService(api_key=settings.sarvam_api_key)
         self.formatter = AudioFormatter()
 
-    async def process_turn(self, call_sid: str, user_text: str, language: str) -> Tuple[str, str]:
+    async def process_turn(
+        self,
+        call_sid: str,
+        user_text: str,
+        language: str,
+        kb_context: Optional[Dict[str, Any]] = None
+    ) -> Tuple[str, str]:
         '''
-        Takes transcribed text, processes with LLM, and returns the response text and suggested playback language.
+        Takes transcribed text, processes with LLM (with optional KB context), 
+        and returns the response text and suggested playback language.
+        
+        Args:
+            call_sid: Twilio call SID
+            user_text: Transcribed user message
+            language: Detected language
+            kb_context: Optional KB context from retrieve_context_for_call()
+        
+        Returns:
+            (reply_text, language) tuple
         '''
         request_obj = OrchestrationRequest(
-            lead_id=call_sid, # use call_sid as connection ID
+            lead_id=call_sid,
             user_text=user_text,
             language=language,
-            session_id=call_sid
+            session_id=call_sid,
+            metadata={
+                "kb_context": kb_context if kb_context else {},
+                "kb_available": kb_context.get("kb_available", False) if kb_context else False
+            }
         )
         
         logger.info(f"Processing turn for call {call_sid} with text: {user_text}")
+        if kb_context and kb_context.get("kb_available"):
+            logger.info(f"KB Context: {len(kb_context.get('context_blocks', []))} chunks injected")
         
         # Run blocking orchestrator in a thread so FastAPI stays async/non-blocking
         try:
