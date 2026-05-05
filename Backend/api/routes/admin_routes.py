@@ -9,11 +9,13 @@ from typing import List, Optional, Dict, Any
 from uuid import UUID
 import logging
 import io
+from datetime import datetime
 
 from services.database.supabase_client import get_db_client, SupabaseClient
 from services.database.repository import Repository
 from services.document_parser import DocumentParser, DocumentChunk
 from services.llm.embedder import EmbedderService
+from services.storage_client import get_storage_client, SupabaseStorageClient
 
 logger = logging.getLogger(__name__)
 
@@ -28,6 +30,8 @@ class DocumentUploadResponse(BaseModel):
     document_id: str = Field(..., description="Document ID in database")
     file_name: str = Field(..., description="Uploaded file name")
     chunks_created: int = Field(..., description="Number of chunks created")
+    storage_path: str = Field(..., description="File path in Supabase Storage")
+    storage_url: str = Field(..., description="Public URL in Supabase Storage")
     message: str = Field(..., description="Status message")
 
 
@@ -105,23 +109,25 @@ async def upload_knowledge_base(
     doc_type: str = Query(default="appendix_a", description="Document type: appendix_a, faq, script, policy"),
     language: str = Query(default="hi", description="Language: hi, en, tamil, telugu, etc."),
     db: SupabaseClient = Depends(get_db_client),
+    storage: SupabaseStorageClient = Depends(get_storage_client),
     embedder: EmbedderService = Depends(get_embedder),
     parser: DocumentParser = Depends(get_parser),
 ) -> DocumentUploadResponse:
     """
     Upload and index a knowledge document.
     
+    Process:
+    1. Save file to Supabase Storage
+    2. Parse file → extract text
+    3. Chunk intelligently → 500 tokens per chunk
+    4. Generate embeddings → 384-dimensional vectors
+    5. Store in pgvector → ready for RAG retrieval
+    
     Supported formats:
     - PDF (text extraction)
     - DOCX (paragraph extraction)
     - JSON (flattened structure)
     - TXT (line-based)
-    
-    Process:
-    1. Parse file → extract text
-    2. Chunk intelligently → 500 tokens per chunk
-    3. Generate embeddings → 384-dimensional vectors
-    4. Store in pgvector → ready for RAG retrieval
     """
     try:
         # Validate file
@@ -140,14 +146,43 @@ async def upload_knowledge_base(
         if not file_content:
             raise HTTPException(status_code=400, detail="File is empty")
         
-        # Parse document
+        # ==================== STEP 1: SAVE TO STORAGE ====================
+        
+        # Generate storage path: documents/{timestamp}_{filename}
+        timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+        storage_path = f"documents/{timestamp}_{file.filename}"
+        
+        # Determine content type
+        content_type_map = {
+            "pdf": "application/pdf",
+            "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "json": "application/json",
+            "txt": "text/plain"
+        }
+        content_type = content_type_map.get(file_ext, "application/octet-stream")
+        
+        logger.info(f"[ADMIN] Saving to storage: {storage_path}")
+        
+        # Upload to Supabase Storage
+        storage_result = await storage.upload_file(
+            file_path=storage_path,
+            file_content=file_content,
+            content_type=content_type
+        )
+        
+        storage_url = storage_result["public_url"]
+        logger.info(f"[ADMIN] Storage URL: {storage_url}")
+        
+        # ==================== STEP 2: PARSE DOCUMENT ====================
+        
         full_text, metadata_list = parser.parse_file(file_content, file_ext)
         if not full_text.strip():
             raise HTTPException(status_code=400, detail="No text extracted from file")
         
         logger.info(f"[ADMIN] Parsed {file.filename}: {len(full_text)} characters")
         
-        # Chunk document
+        # ==================== STEP 3: CHUNK DOCUMENT ====================
+        
         chunks: List[DocumentChunk] = parser.chunk_text(
             full_text,
             strategy="semantic",
@@ -159,7 +194,8 @@ async def upload_knowledge_base(
         
         logger.info(f"[ADMIN] Created {len(chunks)} chunks from {file.filename}")
         
-        # Create document record
+        # ==================== STEP 4: CREATE DATABASE RECORD ====================
+        
         repo = Repository(db)
         doc_record = await repo.create_document(
             file_name=file.filename,
@@ -168,13 +204,15 @@ async def upload_knowledge_base(
         )
         document_id = UUID(doc_record["id"])
         
-        # Generate embeddings and store KB entries
+        # ==================== STEP 5: GENERATE EMBEDDINGS ====================
+        
         chunk_texts = [chunk.text for chunk in chunks]
         embeddings = embedder.embed_texts(chunk_texts, batch_size=32)
         
         logger.info(f"[ADMIN] Generated {len(embeddings)} embeddings")
         
-        # Store in knowledge base
+        # ==================== STEP 6: STORE IN KNOWLEDGE BASE ====================
+        
         stored_count = 0
         for i, (chunk, embedding) in enumerate(zip(chunks, embeddings)):
             try:
@@ -199,7 +237,9 @@ async def upload_knowledge_base(
             document_id=str(document_id),
             file_name=file.filename,
             chunks_created=stored_count,
-            message=f"Document indexed successfully. {stored_count} chunks ready for RAG retrieval."
+            storage_path=storage_path,
+            storage_url=storage_url,
+            message=f"Document uploaded and indexed successfully. {stored_count} chunks ready for RAG retrieval."
         )
     
     except HTTPException:

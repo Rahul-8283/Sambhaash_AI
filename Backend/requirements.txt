@@ -71,3 +71,4 @@ librosa==0.10.0
 # Async HTTP
 httpx==0.25.2
 aiohttp==3.9.1
+requests==2.31.0
