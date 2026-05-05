@@ -67,6 +67,7 @@ async def init_database():
         tables = await conn.fetch(tables_query)
         
         expected_tables = [
+            "call_recordings",
             "call_sessions",
             "documents",
             "knowledge_base",
