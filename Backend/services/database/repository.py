@@ -735,3 +735,200 @@ class Repository:
         except Exception as e:
             logger.error(f"[KB_STATS] Error fetching stats: {e}")
             return {"total_chunks": 0, "total_documents": 0, "languages": []}
+    
+    # ==================== CALL RECORDING OPERATIONS (Phase 2B) ====================
+    
+    async def create_call_recording(
+        self,
+        call_session_id: UUID,
+        storage_path: str,
+        storage_url: str,
+        duration_seconds: int = 0,
+        file_size_bytes: int = 0,
+        transcription_text: Optional[str] = None,
+        transcription_language: str = "en",
+        transcription_confidence: float = 0.0,
+        key_topics: Optional[list] = None,
+        sentiment: str = "neutral",
+        twilio_recording_sid: Optional[str] = None,
+        twilio_call_sid: Optional[str] = None,
+        recorded_at: Optional[datetime] = None,
+    ) -> Dict[str, Any]:
+        """
+        Create a call recording record.
+        
+        Args:
+            call_session_id: Associated call session
+            storage_path: Path in Supabase Storage
+            storage_url: Public URL
+            duration_seconds: Call duration
+            file_size_bytes: Audio file size
+            transcription_text: Transcribed text from Whisper
+            transcription_language: Detected language
+            transcription_confidence: Whisper confidence score
+            key_topics: Extracted topics from transcript
+            sentiment: Sentiment analysis result
+            twilio_recording_sid: Twilio recording ID
+            twilio_call_sid: Twilio call ID
+            recorded_at: When call occurred
+        
+        Returns:
+            Recording record
+        """
+        try:
+            if not recorded_at:
+                recorded_at = datetime.utcnow()
+            
+            if not key_topics:
+                key_topics = []
+            
+            query = """
+            INSERT INTO call_recordings (
+                id, call_session_id, twilio_recording_sid, twilio_call_sid,
+                storage_path, storage_url, duration_seconds, file_size_bytes,
+                transcription_text, transcription_language, transcription_confidence,
+                key_topics, sentiment, recorded_at, created_at
+            ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+            RETURNING *
+            """
+            
+            params = (
+                str(uuid.uuid4()),
+                str(call_session_id),
+                twilio_recording_sid,
+                twilio_call_sid,
+                storage_path,
+                storage_url,
+                duration_seconds,
+                file_size_bytes,
+                transcription_text,
+                transcription_language,
+                transcription_confidence,
+                json.dumps(key_topics),
+                sentiment,
+                recorded_at,
+                datetime.utcnow()
+            )
+            
+            result = await self.db.execute_insert_returning(query, params)
+            logger.info(f"[RECORDING] Created recording: {result['id']}")
+            return result
+        except Exception as e:
+            logger.error(f"[RECORDING] Error creating recording: {e}")
+            raise
+    
+    async def get_call_recording(self, recording_id: UUID) -> Optional[Dict[str, Any]]:
+        """Get call recording by ID"""
+        try:
+            query = "SELECT * FROM call_recordings WHERE id = $1"
+            result = await self.db.execute_fetchone(query, (str(recording_id),))
+            return result
+        except Exception as e:
+            logger.error(f"[RECORDING] Error fetching recording: {e}")
+            return None
+    
+    async def get_recording_by_session(self, call_session_id: UUID) -> Optional[Dict[str, Any]]:
+        """Get recording for a call session"""
+        try:
+            query = "SELECT * FROM call_recordings WHERE call_session_id = $1"
+            result = await self.db.execute_fetchone(query, (str(call_session_id),))
+            return result
+        except Exception as e:
+            logger.error(f"[RECORDING] Error fetching session recording: {e}")
+            return None
+    
+    async def list_recordings(
+        self,
+        limit: int = 50,
+        offset: int = 0,
+        language: Optional[str] = None,
+        sentiment: Optional[str] = None
+    ) -> Tuple[List[Dict[str, Any]], int]:
+        """List all call recordings with optional filters"""
+        try:
+            where_clauses = []
+            params = []
+            
+            if language:
+                where_clauses.append("transcription_language = $" + str(len(params) + 1))
+                params.append(language)
+            
+            if sentiment:
+                where_clauses.append("sentiment = $" + str(len(params) + 1))
+                params.append(sentiment)
+            
+            where_clause = " WHERE " + " AND ".join(where_clauses) if where_clauses else ""
+            
+            # Count total
+            count_query = f"SELECT COUNT(*) as total FROM call_recordings {where_clause}"
+            total_result = await self.db.execute_fetchval(count_query, tuple(params))
+            total = total_result or 0
+            
+            # Fetch with pagination
+            query = f"""
+            SELECT id, call_session_id, duration_seconds, transcription_language, 
+                   sentiment, key_topics, created_at
+            FROM call_recordings
+            {where_clause}
+            ORDER BY created_at DESC
+            LIMIT ${ len(params) + 1} OFFSET ${len(params) + 2}
+            """
+            
+            params.extend([limit, offset])
+            results = await self.db.execute_query(query, tuple(params))
+            
+            return results, total
+        except Exception as e:
+            logger.error(f"[RECORDING] Error listing recordings: {e}")
+            return [], 0
+    
+    async def search_recordings_by_text(
+        self,
+        search_text: str,
+        limit: int = 20
+    ) -> List[Dict[str, Any]]:
+        """Search recordings by transcript text"""
+        try:
+            query = """
+            SELECT id, call_session_id, duration_seconds, sentiment, created_at,
+                   transcription_text
+            FROM call_recordings
+            WHERE transcription_text ILIKE $1
+            ORDER BY created_at DESC
+            LIMIT $2
+            """
+            
+            search_pattern = f"%{search_text}%"
+            results = await self.db.execute_query(query, (search_pattern, limit))
+            return results
+        except Exception as e:
+            logger.error(f"[RECORDING] Search error: {e}")
+            return []
+    
+    async def get_recording_statistics(self) -> Dict[str, Any]:
+        """Get recording statistics"""
+        try:
+            query = """
+            SELECT 
+                COUNT(*) as total_recordings,
+                AVG(duration_seconds) as avg_duration,
+                SUM(file_size_bytes) as total_storage_bytes,
+                sentiment,
+                COUNT(*) as count
+            FROM call_recordings
+            GROUP BY sentiment
+            """
+            
+            results = await self.db.execute_query(query, ())
+            
+            total_query = "SELECT COUNT(*) as total FROM call_recordings"
+            total = await self.db.execute_fetchval(total_query, ())
+            
+            return {
+                "total_recordings": total or 0,
+                "recordings_by_sentiment": results,
+                "stats_available": True
+            }
+        except Exception as e:
+            logger.error(f"[RECORDING] Stats error: {e}")
+            return {"total_recordings": 0, "stats_available": False}

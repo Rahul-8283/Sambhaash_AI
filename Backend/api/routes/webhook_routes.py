@@ -19,6 +19,7 @@ from services.database.repository import Repository
 from services.scoring.scoring_engine import ScoringEngine
 from services.database.models import LeadStatus
 from services.llm.kb_context_injection import KBContextInjectionService
+from services.call_recording_service import CallRecordingService
 from worker.queue_manager import QueueManager, JobType
 
 
@@ -334,6 +335,21 @@ async def recording_webhook(request: Request) -> Response:
                                 scoring_engine=scoring_engine,
                                 queue_manager=queue_manager
                         )
+                        
+                        # 6.1 Save call recording (Phase 2B)
+                        try:
+                                recording_service = CallRecordingService(db_client=db_client)
+                                recording_result = await recording_service.save_call_recording(
+                                        call_session_id=UUID(session_id),
+                                        recording_url=recording_url,
+                                        twilio_recording_sid=call_sid,
+                                        twilio_call_sid=call_sid,
+                                        duration_seconds=int(duration) if duration else 0,
+                                        recorded_at=datetime.utcnow()
+                                )
+                                logger.info(f"[RECORDING] Call recording saved: {recording_result.get('status')}")
+                        except Exception as e:
+                                logger.error(f"[RECORDING] Failed to save recording: {e}")
                         
                         # End call with summary
                         summary_text = "Thanks for chatting with us! Our team will be in touch shortly. Goodbye!"
