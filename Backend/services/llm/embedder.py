@@ -1,177 +1,207 @@
 # services/llm/embedder.py
+"""
+Local Embedding Service using sentence-transformers
+No API key required — uses free, local all-MiniLM-L6-v2 model
+384-dimensional vectors optimized for semantic similarity
+"""
 
-from __future__ import annotations
+from typing import List, Optional, Tuple
+import logging
+import numpy as np
+from sentence_transformers import SentenceTransformer, util
 
-import hashlib
-import json
-import math
-from typing import Any, Dict, List, Optional, Sequence
-from urllib import error, request
-
-
-class EmbedderError(RuntimeError):
-    pass
+logger = logging.getLogger(__name__)
 
 
-class TextEmbedder:
+class EmbedderService:
     """
-    Embedding client for Appendix A / FAQ / script ingestion and retrieval.
-
-    Supports:
-    - OpenAI-compatible embeddings endpoint
-    - deterministic local fallback when explicitly allowed
+    Local embedding service using sentence-transformers.
+    Converts text to 384-dimensional vectors for pgvector storage.
     """
 
-    def __init__(
-        self,
-        model_name: str = "model name",
-        api_key: str = "your api key",
-        base_url: str = "https://api.openai.com/v1",
-        timeout: int = 30,
-        extra_headers: Optional[Dict[str, str]] = None,
-        use_local_fallback: bool = True,
-        local_dimension: int = 384,
-    ) -> None:
-        self.model_name = model_name
-        self.api_key = api_key
-        self.base_url = base_url.rstrip("/")
-        self.timeout = timeout
-        self.extra_headers = extra_headers or {}
-        self.use_local_fallback = use_local_fallback
-        self.local_dimension = max(64, local_dimension)
+    MODEL_NAME = "all-MiniLM-L6-v2"
+    EMBEDDING_DIM = 384
 
-    def embed_text(self, text: str) -> List[float]:
-        text = (text or "").strip()
-        if not text:
-            return self._zero_vector()
+    def __init__(self, model_name: Optional[str] = None):
+        """
+        Initialize embedder with local model.
+        
+        Args:
+            model_name: Optional model name. Defaults to all-MiniLM-L6-v2
+        """
+        self.model_name = model_name or self.MODEL_NAME
+        try:
+            logger.info(f"[EMBEDDER] Loading model: {self.model_name}")
+            self.model = SentenceTransformer(self.model_name)
+            logger.info(f"[EMBEDDER] Model loaded successfully. Dimension: {self.get_embedding_dimension()}")
+        except Exception as e:
+            logger.error(f"[EMBEDDER] Failed to load model: {e}")
+            raise
 
-        if self._is_configured():
-            try:
-                return self._remote_embed([text])[0]
-            except Exception:
-                if not self.use_local_fallback:
-                    raise
-        return self._local_embed(text)
+    def get_embedding_dimension(self) -> int:
+        """Get embedding vector dimension"""
+        return self.EMBEDDING_DIM
 
-    def embed_texts(self, texts: Sequence[str]) -> List[List[float]]:
-        cleaned = [(t or "").strip() for t in texts]
-        cleaned = [t for t in cleaned if t]
+    def embed_text(self, text: str, normalize: bool = True) -> List[float]:
+        """
+        Convert single text to embedding vector.
 
-        if not cleaned:
+        Args:
+            text: Text to embed
+            normalize: Whether to normalize vector (L2 norm)
+
+        Returns:
+            384-dimensional embedding vector
+        """
+        if not text or not isinstance(text, str):
+            logger.warning("[EMBEDDER] Invalid text input")
+            return [0.0] * self.EMBEDDING_DIM
+
+        try:
+            embedding = self.model.encode(
+                text,
+                convert_to_numpy=True,
+                normalize_embeddings=normalize
+            )
+            return embedding.tolist()
+        except Exception as e:
+            logger.error(f"[EMBEDDER] Error embedding text: {e}")
+            return [0.0] * self.EMBEDDING_DIM
+
+    def embed_texts(self, texts: List[str], normalize: bool = True, batch_size: int = 32) -> List[List[float]]:
+        """
+        Convert multiple texts to embedding vectors (batch processing).
+
+        Args:
+            texts: List of texts to embed
+            normalize: Whether to normalize vectors
+            batch_size: Batch size for efficient processing
+
+        Returns:
+            List of 384-dimensional embedding vectors
+        """
+        if not texts:
+            logger.warning("[EMBEDDER] Empty text list provided")
             return []
 
-        if self._is_configured():
-            try:
-                return self._remote_embed(cleaned)
-            except Exception:
-                if not self.use_local_fallback:
-                    raise
+        try:
+            logger.debug(f"[EMBEDDER] Embedding batch of {len(texts)} texts")
+            embeddings = self.model.encode(
+                texts,
+                convert_to_numpy=True,
+                normalize_embeddings=normalize,
+                batch_size=batch_size,
+                show_progress_bar=False
+            )
+            return embeddings.tolist()
+        except Exception as e:
+            logger.error(f"[EMBEDDER] Error embedding batch: {e}")
+            return [[0.0] * self.EMBEDDING_DIM for _ in texts]
 
-        return [self._local_embed(text) for text in cleaned]
+    def similarity(
+        self,
+        query_embedding: List[float],
+        document_embeddings: List[List[float]],
+        top_k: Optional[int] = None
+    ) -> List[Tuple[int, float]]:
+        """
+        Compute cosine similarity between query and documents.
 
-    def _remote_embed(self, texts: Sequence[str]) -> List[List[float]]:
-        if not self.api_key or self.api_key.strip() == "your api key":
-            raise EmbedderError("Embedder api_key is not configured.")
+        Args:
+            query_embedding: Query embedding vector
+            document_embeddings: List of document embeddings
+            top_k: Return only top-k results
 
-        url = f"{self.base_url}/embeddings"
-        payload = {
-            "model": self.model_name,
-            "input": list(texts),
+        Returns:
+            List of (index, similarity_score) tuples sorted by similarity
+        """
+        if not document_embeddings:
+            return []
+
+        try:
+            query_emb = np.array(query_embedding)
+            doc_embs = np.array(document_embeddings)
+
+            # Compute cosine similarity
+            similarities = util.cos_sim(query_emb, doc_embs)[0].numpy()
+
+            # Get indices sorted by similarity (descending)
+            sorted_indices = np.argsort(-similarities)
+
+            if top_k:
+                sorted_indices = sorted_indices[:top_k]
+
+            results = [
+                (int(idx), float(similarities[idx]))
+                for idx in sorted_indices
+            ]
+            return results
+        except Exception as e:
+            logger.error(f"[EMBEDDER] Error computing similarity: {e}")
+            return []
+
+    def semantic_search(
+        self,
+        query: str,
+        corpus: List[str],
+        top_k: int = 5
+    ) -> List[dict]:
+        """
+        Semantic search: find most relevant corpus texts for query.
+
+        Args:
+            query: Search query
+            corpus: List of candidate texts
+            top_k: Number of top results
+
+        Returns:
+            List of dicts with 'index', 'corpus_id', 'score', 'text'
+        """
+        if not corpus:
+            logger.warning("[EMBEDDER] Empty corpus provided")
+            return []
+
+        try:
+            # Embed query and corpus
+            query_emb = self.model.encode(query, convert_to_numpy=True, normalize_embeddings=True)
+            corpus_embs = self.model.encode(
+                corpus,
+                convert_to_numpy=True,
+                normalize_embeddings=True,
+                batch_size=32
+            )
+
+            # Find top-k matches
+            hits = util.semantic_search(query_emb, corpus_embs, top_k=min(top_k, len(corpus)))
+
+            results = []
+            for hit in hits[0]:  # semantic_search returns list of lists
+                idx = hit['corpus_id']
+                results.append({
+                    'index': idx,
+                    'corpus_id': idx,
+                    'score': float(hit['score']),
+                    'text': corpus[idx]
+                })
+            return results
+        except Exception as e:
+            logger.error(f"[EMBEDDER] Error in semantic search: {e}")
+            return []
+
+    def get_model_info(self) -> dict:
+        """Get information about loaded model"""
+        return {
+            "model_name": self.model_name,
+            "embedding_dimension": self.EMBEDDING_DIM,
+            "max_seq_length": self.model.get_max_seq_length(),
+            "device": str(self.model.device)
         }
 
-        req = request.Request(
-            url=url,
-            data=json.dumps(payload).encode("utf-8"),
-            headers=self._headers(),
-            method="POST",
-        )
 
-        try:
-            with request.urlopen(req, timeout=self.timeout) as resp:
-                body = resp.read().decode("utf-8")
-        except error.HTTPError as e:
-            detail = e.read().decode("utf-8", errors="ignore") if hasattr(e, "read") else str(e)
-            raise EmbedderError(f"Embedding request failed: {e.code} {detail}") from e
-        except Exception as e:
-            raise EmbedderError(f"Embedding request failed: {e}") from e
-
-        data = self._safe_json_loads(body)
-        if not isinstance(data, dict):
-            raise EmbedderError("Embedding provider returned an invalid payload.")
-
-        try:
-            rows = data["data"]
-            vectors = [row["embedding"] for row in rows]
-            return [[float(x) for x in vec] for vec in vectors]
-        except Exception as e:
-            raise EmbedderError("Embedding response did not contain vectors.") from e
-
-    def _local_embed(self, text: str) -> List[float]:
-        """
-        Deterministic local embedding fallback for development/demo use.
-
-        It is not a semantic embedding model, but it keeps the pipeline usable
-        when a remote embedding service is not available.
-        """
-        vec = [0.0] * self.local_dimension
-        tokens = self._tokenize(text)
-        if not tokens:
-            return self._zero_vector()
-
-        for token in tokens:
-            digest = hashlib.sha256(token.encode("utf-8")).digest()
-            # Spread token signal across the vector
-            for i in range(0, len(digest), 2):
-                idx = (digest[i] << 8 | digest[i + 1]) % self.local_dimension
-                sign = 1.0 if (digest[i] % 2 == 0) else -1.0
-                vec[idx] += sign * (1.0 / (1 + i // 2))
-
-        return self._normalize(vec)
-
-    def _tokenize(self, text: str) -> List[str]:
-        text = text.lower()
-        tokens = []
-        current = []
-        for ch in text:
-            if ch.isalnum():
-                current.append(ch)
-            else:
-                if current:
-                    token = "".join(current)
-                    if len(token) > 1:
-                        tokens.append(token)
-                    current = []
-        if current:
-            token = "".join(current)
-            if len(token) > 1:
-                tokens.append(token)
-        return tokens
-
-    def _normalize(self, vec: List[float]) -> List[float]:
-        norm = math.sqrt(sum(v * v for v in vec))
-        if norm == 0:
-            return self._zero_vector()
-        return [v / norm for v in vec]
-
-    def _zero_vector(self) -> List[float]:
-        return [0.0] * self.local_dimension
-
-    def _headers(self) -> Dict[str, str]:
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json",
-        }
-        headers.update(self.extra_headers)
-        return headers
-
-    def _safe_json_loads(self, text: str) -> Optional[Dict[str, Any]]:
-        try:
-            loaded = json.loads(text)
-            if isinstance(loaded, dict):
-                return loaded
-            return None
-        except Exception:
-            return None
-
-    def _is_configured(self) -> bool:
-        return bool(self.api_key and self.api_key.strip() != "your api key")
+# Backward compatibility: Keep TextEmbedder as alias
+class TextEmbedder(EmbedderService):
+    """Backward compatible alias for EmbedderService"""
+    
+    def embed_batch(self, texts: List[str], normalize: bool = True, batch_size: int = 32) -> List[List[float]]:
+        """Alias for embed_texts for backward compatibility"""
+        return self.embed_texts(texts, normalize=normalize, batch_size=batch_size)

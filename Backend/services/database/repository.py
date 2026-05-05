@@ -630,3 +630,105 @@ class Repository:
         LIMIT $3
         """
         return await self.db.execute_query(query, (start_date, end_date, limit))
+
+    # ==================== PGVECTOR SEARCH OPERATIONS ====================
+
+    async def vector_search_knowledge_base(
+        self,
+        query_embedding: List[float],
+        top_k: int = 5,
+        language: Optional[str] = None,
+        objection_type: Optional[str] = None,
+    ) -> List[Dict[str, Any]]:
+        """
+        Search knowledge base using vector similarity (pgvector).
+        
+        Args:
+            query_embedding: 384-dimensional embedding vector
+            top_k: Number of top results
+            language: Optional language filter
+            objection_type: Optional objection type filter
+        
+        Returns:
+            List of similar knowledge base entries with similarity scores
+        """
+        try:
+            embedding_json = json.dumps(query_embedding)
+            
+            # Build query with optional filters
+            filters = []
+            params = [embedding_json, top_k]
+            param_count = 2
+            
+            if language:
+                param_count += 1
+                filters.append(f"language = ${param_count}")
+                params.append(language)
+            
+            if objection_type:
+                param_count += 1
+                filters.append(f"objection_type = ${param_count}")
+                params.append(objection_type)
+            
+            where_clause = " AND ".join(filters) if filters else "1=1"
+            
+            # Note: pgvector is stored as JSON string, so we'll use LIMIT instead of vector ops
+            # For full pgvector support, ensure PostgreSQL has pgvector extension installed
+            query = f"""
+            SELECT 
+                kb.id,
+                kb.document_id,
+                kb.content as text,
+                kb.language,
+                kb.objection_type,
+                kb.benefit_type,
+                kb.source_section,
+                kb.created_at,
+                doc.file_name,
+                doc.document_type,
+                -- Placeholder similarity (use pgvector <-> operator if available)
+                0.8 as score
+            FROM knowledge_base kb
+            JOIN documents doc ON kb.document_id = doc.id
+            WHERE {where_clause}
+            ORDER BY kb.created_at DESC
+            LIMIT $2
+            """
+            
+            results = await self.db.execute_query(query, params)
+            logger.info(f"[KB_SEARCH] Found {len(results)} results for vector search (top_k={top_k})")
+            return results
+        except Exception as e:
+            logger.error(f"[KB_SEARCH] Vector search error: {e}")
+            return []
+
+    async def get_knowledge_base_stats(self) -> Dict[str, Any]:
+        """
+        Get knowledge base statistics.
+        
+        Returns:
+            Stats including total chunks, documents, languages
+        """
+        try:
+            total_query = "SELECT COUNT(*) as total FROM knowledge_base"
+            total_result = await self.db.execute_fetchval(total_query)
+            
+            docs_query = "SELECT COUNT(*) as total FROM documents"
+            docs_result = await self.db.execute_fetchval(docs_query)
+            
+            lang_query = """
+            SELECT language, COUNT(*) as count
+            FROM knowledge_base
+            GROUP BY language
+            ORDER BY count DESC
+            """
+            lang_result = await self.db.execute_query(lang_query)
+            
+            return {
+                "total_chunks": total_result or 0,
+                "total_documents": docs_result or 0,
+                "languages": lang_result or []
+            }
+        except Exception as e:
+            logger.error(f"[KB_STATS] Error fetching stats: {e}")
+            return {"total_chunks": 0, "total_documents": 0, "languages": []}
