@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 class WhisperService:
-	"""Speech-to-text service using OpenAI Whisper."""
+	"""Speech-to-text service using OpenAI Whisper with automatic Groq fallback."""
 
 	def __init__(self, api_key: str | None = None) -> None:
 		self.settings = get_config()
@@ -23,8 +23,20 @@ class WhisperService:
 			raise ValueError("OPENAI_API_KEY is missing in the backend env file.")
 		self.client = OpenAI(api_key=resolved_key)
 
+		# Lazy initialize Groq fallback client
+		self.groq_client = None
+		if self.settings.groq_api_key and self.settings.groq_api_key != "sk-test-default":
+			try:
+				self.groq_client = OpenAI(
+					api_key=self.settings.groq_api_key,
+					base_url="https://api.groq.com/openai/v1"
+				)
+				logger.info("[STT] Initialized Groq Whisper fallback client.")
+			except Exception as e:
+				logger.warning(f"[STT] Failed to initialize Groq client: {e}")
+
 	def transcribe_audio_bytes(self, audio_bytes: bytes, filename: str = "recording.mp3", language: Optional[str] = None) -> str:
-		"""Transcribe raw audio bytes using Whisper."""
+		"""Transcribe raw audio bytes using Whisper (OpenAI or Groq fallback)."""
 
 		audio_file = BytesIO(audio_bytes)
 		audio_file.name = filename
@@ -41,9 +53,26 @@ class WhisperService:
 			elif normalized_language in {"hindi", "hi"}:
 				kwargs["language"] = "hi"
 
-		result = self.client.audio.transcriptions.create(**kwargs)
-		text = getattr(result, "text", None) or ""
-		return text.strip()
+		try:
+			result = self.client.audio.transcriptions.create(**kwargs)
+			text = getattr(result, "text", None) or ""
+			return text.strip()
+		except Exception as e:
+			logger.warning(f"[STT] OpenAI Whisper transcription failed: {e}. Trying Groq fallback...")
+			if self.groq_client:
+				try:
+					audio_file.seek(0)
+					kwargs["model"] = "whisper-large-v3"
+					kwargs["file"] = audio_file
+					result = self.groq_client.audio.transcriptions.create(**kwargs)
+					text = getattr(result, "text", None) or ""
+					logger.info("[STT] ✅ Successfully transcribed using Groq Whisper-large-v3 fallback!")
+					return text.strip()
+				except Exception as ge:
+					logger.error(f"[STT] Groq Whisper fallback also failed: {ge}")
+					raise e
+			else:
+				raise e
 
 	def transcribe_recording_url(
 		self,
