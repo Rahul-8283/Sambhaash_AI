@@ -17,10 +17,11 @@ class CallManager:
     def __init__(self):
         settings = get_config()
         
-        # Instantiate LLM Client (OpenAI via our blocking client)
+        # Instantiate LLM Client using Groq
         self.llm_client = LLMClient(
-            model_name="gpt-4o-mini",
-            api_key=settings.openai_api_key or ""
+            model_name="llama-3.3-70b-versatile",
+            api_key=settings.groq_api_key or "",
+            base_url="https://api.groq.com/openai/v1"
         )
         
         # Orchestrator uses the LLM client
