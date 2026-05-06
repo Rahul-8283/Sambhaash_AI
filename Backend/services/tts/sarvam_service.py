@@ -68,7 +68,7 @@ class SarvamTTSService:
             "model": "bulbul:v3"
         }
 
-        async with httpx.AsyncClient(timeout=15.0) as client:
+        async with httpx.AsyncClient(timeout=20.0) as client:
             try:
                 logger.debug(f"Requesting Sarvam TTS for text: {text[:20]}... in {target_language}")
                 response = await client.post(
