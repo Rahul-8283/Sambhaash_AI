@@ -24,7 +24,7 @@ class CallManager:
         )
         
         # Orchestrator uses the LLM client
-        self.orchestrator = Orchestrator(llm_adapter=self.llm_client)
+        self.orchestrator = Orchestrator(llm_callable=self.llm_client)
         
         # Instantiate TTS and Formatter
         self.tts_service = SarvamTTSService(api_key=settings.sarvam_api_key)
