@@ -5,7 +5,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Phone, Mail } from "lucide-react";
-import mockApiClient from "../services/mockApiClient";
+import { apiService } from "../services/apiService";
 import type { LeadWithDetails } from "../types";
 import Badge from "../components/Badge";
 import { formatDateTime, formatPhoneNumber, formatDuration } from "../utils/formatters";
@@ -25,7 +25,7 @@ export const LeadDetailPage: React.FC = () => {
       }
       setLoading(true);
       try {
-        const result = await mockApiClient.getLeadById(id);
+        const result = await apiService.getLead(id);
         setLead(result);
       } catch (error) {
         console.error("Failed to load lead:", error);

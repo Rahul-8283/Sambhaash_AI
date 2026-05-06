@@ -6,7 +6,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Upload, Filter } from "lucide-react";
-import mockApiClient from "../services/mockApiClient";
+import { apiService } from "../services/apiService";
 import type { Lead, LeadFilters } from "../types";
 import DataTable from "../components/DataTable";
 import Badge from "../components/Badge";
@@ -37,7 +37,7 @@ export const LeadsPage: React.FC = () => {
     const loadLeads = async () => {
       setLoading(true);
       try {
-        const result = await mockApiClient.getLeads(
+        const result = await apiService.getLeads(
           { ...filters, search: searchQuery || undefined },
           { page, limit: 20 }
         );
@@ -66,36 +66,26 @@ export const LeadsPage: React.FC = () => {
     fileInputRef?.click();
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      try {
-        const csv = event.target?.result as string;
-        const lines = csv.split("\n").filter(l => l.trim());
-        
-        const newLeads: Lead[] = lines.slice(1).map((line, idx) => {
-          const values = line.split(",").map(v => v.trim());
-          return {
-            id: `lead-${Date.now()}-${idx}`,
-            name: values[0] || "",
-            phone: values[1] || "",
-            email: values[2] || undefined,
-            language: values[3] || "English",
-            status: "Not Called",
-            createdAt: new Date().toISOString(),
-          };
-        });
-        
-        setLeads([...newLeads, ...leads]);
-        setShowUploadModal(false);
-      } catch (error) {
-        console.error("Error parsing CSV:", error);
-      }
-    };
-    reader.readAsText(file);
+    setLoading(true);
+    try {
+      const response = await apiService.batchUploadCsv(file);
+      alert(`Upload complete: ${response.created} leads created, ${response.duplicates} duplicates found.`);
+      setShowUploadModal(false);
+      // Refresh leads
+      const result = await apiService.getLeads(filters, { page: 1, limit: 20 });
+      setLeads(result.data);
+      setTotal(result.total);
+      setPage(1);
+    } catch (error) {
+      console.error("Error uploading CSV:", error);
+      alert("Failed to upload leads. Please check the file format.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCreateLead = async () => {
@@ -104,31 +94,48 @@ export const LeadsPage: React.FC = () => {
       return;
     }
     
-    const newLead: Lead = {
-      id: `lead-${Date.now()}`,
-      name: createForm.name,
-      phone: createForm.phone,
-      email: createForm.email || undefined,
-      language: createForm.language,
-      status: "Not Called",
-      createdAt: new Date().toISOString(),
-    };
-    
-    setLeads([newLead, ...leads]);
-    setCreateForm({ name: "", phone: "", email: "", language: "English" });
-    setShowCreateModal(false);
+    setLoading(true);
+    try {
+      await apiService.createLead({
+        name: createForm.name,
+        phone: createForm.phone,
+        email: createForm.email,
+        language: createForm.language,
+      });
+      
+      setCreateForm({ name: "", phone: "", email: "", language: "English" });
+      setShowCreateModal(false);
+      
+      // Refresh leads
+      const result = await apiService.getLeads(filters, { page: 1, limit: 20 });
+      setLeads(result.data);
+      setTotal(result.total);
+      setPage(1);
+    } catch (error) {
+      console.error("Error creating lead:", error);
+      alert("Failed to create lead.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleBulkDelete = async () => {
     if (selectedLeads.length === 0) return;
     if (!window.confirm(`Delete ${selectedLeads.length} selected lead(s)?`)) return;
     
+    setLoading(true);
     try {
-      await Promise.all(selectedLeads.map(lead => mockApiClient.deleteLead(lead.id)));
+      await Promise.all(selectedLeads.map(lead => apiService.deleteLead(lead.id)));
       setSelectedLeads([]);
-      setLeads(leads.filter((l) => !selectedLeads.find((s) => s.id === l.id)));
+      // Refresh leads
+      const result = await apiService.getLeads(filters, { page, limit: 20 });
+      setLeads(result.data);
+      setTotal(result.total);
     } catch (error) {
       console.error("Failed to delete leads:", error);
+      alert("Failed to delete some leads.");
+    } finally {
+      setLoading(false);
     }
   };
 

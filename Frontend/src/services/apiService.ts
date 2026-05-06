@@ -1,38 +1,37 @@
 import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
+import type { 
+  Lead, 
+  LeadFilters, 
+  LeadListResponse, 
+  LeadWithDetails,
+  CreateLeadFormData,
+  AnalyticsMetrics
+} from '../types';
 
-// ==================== TYPES & INTERFACES ====================
+// ==================== ADDITIONAL TYPES ====================
 
-// --- Leads ---
-export interface Lead {
+export interface BatchUploadResponse {
+  created: number;
+  duplicates: number;
+  errors: number;
+  error_details: Array<{
+    row?: number;
+    index?: number;
+    phone: string;
+    error: string;
+  }>;
+}
+
+// --- RM Management ---
+export interface RMQueueLeadResponse {
   id: string;
   phone: string;
   name: string | null;
   email: string | null;
   language: string;
   status: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface LeadCreate {
-  phone: string;
-  name?: string;
-  email?: string;
-  language?: string;
-}
-
-export interface LeadUpdate {
-  name?: string;
-  email?: string;
-  language?: string;
-  status?: string;
-}
-
-export interface LeadListResponse {
-  total: number;
-  limit: number;
-  offset: number;
-  leads: Lead[];
+  latest_score: number | null;
+  assigned_at: string;
 }
 
 export interface BatchUploadResponse {
@@ -178,22 +177,36 @@ class ApiService {
   }
 
   // --- Leads Endpoints ---
-  public async getLeads(params?: { status?: string; limit?: number; offset?: number }): Promise<LeadListResponse> {
-    const response: AxiosResponse<LeadListResponse> = await this.api.get('/api/leads', { params });
+  public async getLeads(filters?: LeadFilters, pagination?: { page?: number; limit?: number }): Promise<LeadListResponse> {
+    const params = {
+      ...filters,
+      limit: pagination?.limit,
+      offset: pagination?.page ? (pagination.page - 1) * (pagination.limit || 20) : undefined,
+    };
+    const response: AxiosResponse<any> = await this.api.get('/api/leads', { params });
+    
+    // Transform backend response to frontend LeadListResponse if necessary
+    // Backend returns: { total, limit, offset, leads }
+    // Frontend expects: { data: Lead[], total, page, limit }
+    return {
+      data: response.data.leads,
+      total: response.data.total,
+      page: pagination?.page || 1,
+      limit: response.data.limit || 20
+    };
+  }
+
+  public async getLead(id: string): Promise<LeadWithDetails> {
+    const response: AxiosResponse<LeadWithDetails> = await this.api.get(`/api/leads/${id}`);
     return response.data;
   }
 
-  public async getLead(id: string): Promise<Lead> {
-    const response: AxiosResponse<Lead> = await this.api.get(`/api/leads/${id}`);
-    return response.data;
-  }
-
-  public async createLead(lead: LeadCreate): Promise<Lead> {
+  public async createLead(lead: CreateLeadFormData): Promise<Lead> {
     const response: AxiosResponse<Lead> = await this.api.post('/api/leads', lead);
     return response.data;
   }
 
-  public async updateLead(id: string, lead: LeadUpdate): Promise<Lead> {
+  public async updateLead(id: string, lead: Partial<CreateLeadFormData> & { status?: string }): Promise<Lead> {
     const response: AxiosResponse<Lead> = await this.api.put(`/api/leads/${id}`, lead);
     return response.data;
   }
@@ -248,6 +261,40 @@ class ApiService {
 
   public async getRMLeaderboard(params?: { days?: number; limit?: number }): Promise<RMLeaderboardResponse> {
     const response: AxiosResponse<RMLeaderboardResponse> = await this.api.get('/api/rm/leaderboard', { params });
+    return response.data;
+  }
+
+  // --- Knowledge Base (Admin) Endpoints ---
+  public async uploadDocument(file: File, docType: string = 'appendix_a', language: string = 'hi'): Promise<any> {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response: AxiosResponse<any> = await this.api.post('/admin/kb/upload', formData, {
+      params: { doc_type: docType, language },
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return response.data;
+  }
+
+  public async listDocuments(): Promise<any[]> {
+    const response: AxiosResponse<any[]> = await this.api.get('/admin/kb/documents');
+    return response.data;
+  }
+
+  public async deleteDocument(docId: string): Promise<void> {
+    await this.api.delete(`/admin/kb/documents/${docId}`);
+  }
+
+  public async searchKB(query: string, params?: { top_k?: number; language?: string }): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.get('/admin/kb/search', {
+      params: { query, ...params },
+    });
+    return response.data;
+  }
+
+  public async getKBEffectiveness(days: number = 7): Promise<any> {
+    const response: AxiosResponse<any> = await this.api.get('/admin/kb/analytics/effectiveness', {
+      params: { limit_days: days },
+    });
     return response.data;
   }
 }

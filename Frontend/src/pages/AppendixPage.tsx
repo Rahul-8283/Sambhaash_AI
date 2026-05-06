@@ -5,15 +5,7 @@
 import React, { useState, useEffect } from "react";
 import { FileText, Download, Trash2, Calendar } from "lucide-react";
 import FileUpload from "../components/FileUpload";
-import type { AppendixFile } from "../utils/appendixStorage";
-import {
-  uploadFile,
-  saveFile,
-  getAllFiles,
-  deleteFile as deleteFileFromStorage,
-  downloadFile,
-  clearAll,
-} from "../utils/appendixStorage";
+import { apiService } from "../services/apiService";
 
 const AppendixPage: React.FC = () => {
   const [files, setFiles] = useState<AppendixFile[]>([]);
@@ -25,12 +17,15 @@ const AppendixPage: React.FC = () => {
     loadFiles();
   }, []);
 
-  const loadFiles = () => {
+  const loadFiles = async () => {
+    setIsLoading(true);
     try {
-      const storedFiles = getAllFiles();
+      const storedFiles = await apiService.listDocuments();
       setFiles(storedFiles);
     } catch (err) {
-      setError("Failed to load files");
+      setError("Failed to load documents from server");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -52,10 +47,9 @@ const AppendixPage: React.FC = () => {
         throw new Error("Invalid file type. Please upload PDF, DOC, DOCX, or TXT files only.");
       }
 
-      const appendixFile = await uploadFile(file);
-      saveFile(appendixFile);
-      setFiles([...files, appendixFile]);
-      setSuccessMessage(`Successfully uploaded: ${file.name}`);
+      await apiService.uploadDocument(file);
+      setSuccessMessage(`Successfully uploaded and indexed: ${file.name}`);
+      loadFiles(); // Refresh list
 
       // Clear success message after 5 seconds
       setTimeout(() => setSuccessMessage(null), 5000);
@@ -66,42 +60,35 @@ const AppendixPage: React.FC = () => {
     }
   };
 
-  const handleDeleteFile = (id: string) => {
-    if (window.confirm("Are you sure you want to delete this file?")) {
+  const handleDeleteFile = async (id: string) => {
+    if (window.confirm("Are you sure you want to delete this document and its AI indexing?")) {
+      setIsLoading(true);
       try {
-        deleteFileFromStorage(id);
-        setFiles(files.filter((f) => f.id !== id));
-        setSuccessMessage("File deleted successfully");
+        await apiService.deleteDocument(id);
+        setFiles(files.filter((f) => (f as any).document_id !== id));
+        setSuccessMessage("Document deleted successfully");
         setTimeout(() => setSuccessMessage(null), 3000);
+        loadFiles();
       } catch (err) {
-        setError("Failed to delete file");
+        setError("Failed to delete document from server");
+      } finally {
+        setIsLoading(false);
       }
     }
   };
 
-  const handleDownloadFile = (appendixFile: AppendixFile) => {
-    try {
-      downloadFile(appendixFile);
-    } catch (err) {
-      setError("Failed to download file");
+  const handleDownloadFile = (file: any) => {
+    // Backend doesn't have a direct download endpoint in the router we saw,
+    // but typically it would be a link to storage
+    if (file.storage_url) {
+      window.open(file.storage_url, "_blank");
+    } else {
+      alert("Download link not available for this document");
     }
   };
 
   const handleClearAll = () => {
-    if (
-      window.confirm(
-        "Are you sure you want to delete all appendix files? This cannot be undone."
-      )
-    ) {
-      try {
-        clearAll();
-        setFiles([]);
-        setSuccessMessage("All files deleted successfully");
-        setTimeout(() => setSuccessMessage(null), 3000);
-      } catch (err) {
-        setError("Failed to clear files");
-      }
-    }
+    alert("Please delete documents individually for safety.");
   };
 
   const formatFileSize = (bytes: number): string => {
@@ -198,22 +185,22 @@ const AppendixPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {files.map((file) => (
-                  <tr key={file.id} className="border-b border-gray-200 hover:bg-gray-50">
+                {files.map((file: any) => (
+                  <tr key={file.document_id} className="border-b border-gray-200 hover:bg-gray-50">
                     <td className="px-6 py-4 text-sm font-medium text-gray-900">
                       <div className="flex items-center gap-2">
                         <FileText size={18} className="text-blue-600" />
-                        <span className="truncate max-w-xs">{file.name}</span>
+                        <span className="truncate max-w-xs">{file.file_name}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{file.type || "N/A"}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">{file.document_type || "N/A"}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">
-                      {formatFileSize(file.size)}
+                      {file.chunk_count} chunks
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-600">
                       <div className="flex items-center gap-1">
                         <Calendar size={14} className="text-gray-400" />
-                        {formatDate(file.uploadedAt)}
+                        {file.uploaded_at}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm">
@@ -221,12 +208,12 @@ const AppendixPage: React.FC = () => {
                         <button
                           onClick={() => handleDownloadFile(file)}
                           className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                          title="Download"
+                          title="View"
                         >
                           <Download size={18} />
                         </button>
                         <button
-                          onClick={() => handleDeleteFile(file.id)}
+                          onClick={() => handleDeleteFile(file.document_id)}
                           className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
                           title="Delete"
                         >
