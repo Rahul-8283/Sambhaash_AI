@@ -11,6 +11,7 @@ import LeadDetailPage from "./pages/LeadDetailPage";
 import CallsPage from "./pages/CallsPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import CampaignsPage from "./pages/CampaignsPage";
+import AppendixPage from "./pages/AppendixPage";
 import PromptSettingsPage from "./pages/PromptSettingsPage";
 import LanguageSettingsPage from "./pages/LanguageSettingsPage";
 import RetrySettingsPage from "./pages/RetrySettingsPage";
@@ -28,6 +29,7 @@ function App() {
           <Route path="calls" element={<CallsPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
           <Route path="campaigns" element={<CampaignsPage />} />
+          <Route path="appendix" element={<AppendixPage />} />
           <Route path="settings/prompt" element={<PromptSettingsPage />} />
           <Route path="settings/language" element={<LanguageSettingsPage />} />
           <Route path="settings/retry" element={<RetrySettingsPage />} />
