@@ -271,13 +271,27 @@ async def recording_webhook(request: Request) -> Response:
                 queue_manager = QueueManager()
                 
                 # Get call session info
-                session_info = call_sessions.get(call_sid)
-                if not session_info or not session_info.get("session_id"):
-                        logger.error(f"No session info for call_sid {call_sid}")
-                        return Response(
-                                content=client.build_say_twiml("Sorry, we lost the call session. Please call again."),
-                                media_type="application/xml",
-                        )
+                session_info = call_sessions.get(call_sid, {})
+                if not session_info.get("session_id"):
+                        logger.info(f"No session found for inbound call {call_sid}, creating new lead and session on the fly.")
+                        try:
+                                lead = await repository.create_lead(
+                                        phone=from_number or "unknown",
+                                        source="inbound_call",
+                                )
+                                new_session = await repository.create_call_session(
+                                        lead_id=lead["id"],
+                                        language_detected="english"
+                                )
+                                session_info["session_id"] = str(new_session["id"])
+                                session_info["lead_id"] = str(lead["id"])
+                                call_sessions[call_sid] = session_info
+                        except Exception as e:
+                                logger.error(f"Failed to create inbound session: {e}")
+                                return Response(
+                                        content=client.build_say_twiml("Sorry, we lost the call session. Please call again."),
+                                        media_type="application/xml",
+                                )
                 
                 session_id = session_info.get("session_id")
                 lead_id = session_info.get("lead_id")
