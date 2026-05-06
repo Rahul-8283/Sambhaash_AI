@@ -35,6 +35,8 @@ audio_cache: dict[str, bytes] = {}
 call_sessions: dict[str, dict] = {}
 
 def _xml_response(xml: str) -> Response:
+        if not xml.strip().startswith("<?xml"):
+                xml = f'<?xml version="1.0" encoding="UTF-8"?>\n{xml}'
         return Response(content=xml, media_type="application/xml")
 
 
@@ -341,15 +343,16 @@ async def recording_webhook(request: Request) -> Response:
 
                 logger.info(f"AI response: {reply_text} (Target Lang: {target_lang})")
 
-                # 3. Save conversation turn to database
-                await _save_conversation_turn(
+                # 3. Save conversation turn to database (in background so we don't delay TTS)
+                import asyncio
+                asyncio.create_task(_save_conversation_turn(
                         session_id=session_id,
                         call_sid=call_sid,
                         user_text=transcript,
                         ai_response=reply_text,
                         detected_lang=detected_lang,
                         repository=repository
-                )
+                ))
 
                 # 4. TTS Generation
                 audio_bytes = await manager.generate_tts(text=reply_text, language=target_lang)
