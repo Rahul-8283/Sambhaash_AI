@@ -1,10 +1,6 @@
-/**
- * Main layout wrapper with sidebar, top nav, and content area
- */
-
 import { useState } from "react";
 import type { ReactNode, FC } from "react";
-import Sidebar from "./Sidebar";
+import ModernSidebar from "./ModernSidebar";
 import TopNav from "./TopNav";
 
 interface MainLayoutProps {
@@ -19,18 +15,26 @@ export const MainLayout: FC<MainLayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      {/* Sidebar */}
-      <Sidebar isOpen={isSidebarOpen} onToggle={toggleSidebar} />
+    <div className="min-h-screen bg-[#f8fafc] flex">
+      {/* Modern Floating Sidebar */}
+      <ModernSidebar isOpen={isSidebarOpen} onToggle={toggleSidebar} />
 
       {/* Main content area */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {/* Top navigation */}
-        <TopNav onMenuClick={toggleSidebar} />
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Top navigation - Optional, can be integrated into content or sidebar */}
+        <header className="h-20 flex items-center justify-between px-8 bg-transparent">
+          <div>
+            <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider">Sambhaash Admin</h2>
+            <p className="text-lg font-bold text-gray-900">Dashboard Intelligence</p>
+          </div>
+          <TopNav onMenuClick={toggleSidebar} hideMenuButton={true} />
+        </header>
 
-        {/* Content */}
-        <main className="flex-1 overflow-auto">
-          <div className="h-full">{children}</div>
+        {/* Content Area */}
+        <main className="flex-1 p-6 lg:p-8 overflow-auto">
+          <div className="max-w-7xl mx-auto">
+            {children}
+          </div>
         </main>
       </div>
     </div>

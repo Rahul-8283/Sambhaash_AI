@@ -1,11 +1,8 @@
-/**
- * App.tsx - Main application with routing
- */
-
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "./components/Layout/MainLayout";
 
 // Pages
+import LandingPage from "./pages/LandingPage";
 import LeadsPage from "./pages/LeadsPage";
 import LeadDetailPage from "./pages/LeadDetailPage";
 import CallsPage from "./pages/CallsPage";
@@ -23,7 +20,7 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/" element={<Navigate to="/dashboard/leads" replace />} />
+        <Route path="/" element={<LandingPage />} />
         <Route path="/dashboard/*" element={<MainLayout><Routes>
           <Route path="leads" element={<LeadsPage />} />
           <Route path="leads/:id" element={<LeadDetailPage />} />
@@ -39,9 +36,10 @@ function App() {
           <Route path="users" element={<UsersPage />} />
           <Route path="*" element={<Navigate to="/dashboard/leads" replace />} />
         </Routes></MainLayout>} />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
 }
 
-export default App;
+export default App;
