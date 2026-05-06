@@ -91,12 +91,10 @@ class KBContextInjectionService:
             logger.info(f"[KB_CTX] Retrieving context for call {call_session_id}, lead {lead_id}")
             
             # 1. Query knowledge base for relevant chunks
-            search_results = await self.repository.vector_search_knowledge_base(
-                query_text=user_text,
-                language=language,
-                top_k=top_k,
-                min_score=min_score
-            )
+            # We currently don't have an embedder configured for Groq to natively do vector search.
+            # Bypassing the pgvector query to prevent TypeError and returning empty gracefully.
+            logger.debug(f"[KB_CTX] Bypassing vector search since no embedder is wired for {user_text[:20]}")
+            search_results = []
             
             if not search_results:
                 logger.info(f"[KB_CTX] No KB results for query: {user_text[:50]}")

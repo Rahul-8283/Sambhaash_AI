@@ -371,8 +371,7 @@ class Orchestrator:
             prompt_bundle=bundle.to_dict(),
             parsed_ok=parsed_ok,
             error=None if parsed_ok else "LLM output could not be parsed; fallback response used.",
-        ).to_dict()
-
+        )
     def summarize_call(
         self,
         lead_id: str,
