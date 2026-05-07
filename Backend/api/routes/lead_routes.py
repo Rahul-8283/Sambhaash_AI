@@ -73,6 +73,8 @@ class LeadResponse(BaseModel):
     status: str
     created_at: str
     updated_at: str
+    currentScore: Optional[Dict[str, Any]] = None
+    rmAssignment: Optional[Dict[str, Any]] = None
     
     class Config:
         example = {
@@ -636,6 +638,29 @@ def _format_lead_response(lead: Dict[str, Any]) -> Dict[str, Any]:
     if not lead:
         return {}
     
+    current_score = None
+    if lead.get("score_classification"):
+        current_score = {
+            "id": "",
+            "leadId": str(lead.get("id", "")),
+            "interestScore": lead.get("interest_score", 0.0),
+            "engagementScore": lead.get("engagement_score", 0.0),
+            "sentimentScore": lead.get("sentiment_score", 0.0),
+            "compositeScore": lead.get("composite_score", 0.0),
+            "classification": lead.get("score_classification"),
+            "timestamp": _format_datetime(lead.get("score_timestamp"))
+        }
+
+    rm_assignment = None
+    if lead.get("rm_name"):
+        rm_assignment = {
+            "id": "",
+            "leadId": str(lead.get("id", "")),
+            "rmName": lead.get("rm_name"),
+            "assignedAt": _format_datetime(lead.get("rm_assigned_at")),
+            "converted": lead.get("rm_converted", False)
+        }
+
     return {
         "id": str(lead.get("id", "")),
         "phone": lead.get("phone", ""),
@@ -645,6 +670,8 @@ def _format_lead_response(lead: Dict[str, Any]) -> Dict[str, Any]:
         "status": lead.get("status", "NEW"),
         "created_at": _format_datetime(lead.get("created_at")),
         "updated_at": _format_datetime(lead.get("updated_at")),
+        "currentScore": current_score,
+        "rmAssignment": rm_assignment
     }
 
 

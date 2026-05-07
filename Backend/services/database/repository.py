@@ -115,14 +115,31 @@ class Repository:
         offset: int = 0,
     ) -> Tuple[List[Dict[str, Any]], int]:
         """
-        List all leads with pagination.
+        List all leads with pagination, including latest score classification and RM assignment.
         
         Returns:
             Tuple of (leads, total_count)
         """
         query = """
-        SELECT * FROM leads
-        ORDER BY created_at DESC
+        SELECT l.*, 
+               ls.classification as score_classification, 
+               ls.composite_score, 
+               ls.interest_score, 
+               ls.engagement_score, 
+               ls.sentiment_score,
+               ls.timestamp as score_timestamp,
+               ra.rm_name,
+               ra.assigned_at as rm_assigned_at,
+               ra.converted as rm_converted
+        FROM leads l
+        LEFT JOIN LATERAL (
+            SELECT * FROM lead_scores
+            WHERE lead_id = l.id
+            ORDER BY timestamp DESC
+            LIMIT 1
+        ) ls ON true
+        LEFT JOIN rm_assignments ra ON ra.lead_id = l.id
+        ORDER BY l.created_at DESC
         LIMIT $1 OFFSET $2
         """
         leads = await self.db.execute_query(query, (limit, offset))
@@ -139,12 +156,29 @@ class Repository:
         offset: int = 0,
     ) -> Tuple[List[Dict[str, Any]], int]:
         """
-        List leads by status.
+        List leads by status including latest score classification and RM assignment.
         """
         query = """
-        SELECT * FROM leads
-        WHERE status = $1
-        ORDER BY created_at DESC
+        SELECT l.*, 
+               ls.classification as score_classification, 
+               ls.composite_score, 
+               ls.interest_score, 
+               ls.engagement_score, 
+               ls.sentiment_score,
+               ls.timestamp as score_timestamp,
+               ra.rm_name,
+               ra.assigned_at as rm_assigned_at,
+               ra.converted as rm_converted
+        FROM leads l
+        LEFT JOIN LATERAL (
+            SELECT * FROM lead_scores
+            WHERE lead_id = l.id
+            ORDER BY timestamp DESC
+            LIMIT 1
+        ) ls ON true
+        LEFT JOIN rm_assignments ra ON ra.lead_id = l.id
+        WHERE l.status = $1
+        ORDER BY l.created_at DESC
         LIMIT $2 OFFSET $3
         """
         leads = await self.db.execute_query(query, (status, limit, offset))

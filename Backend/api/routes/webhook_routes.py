@@ -169,13 +169,17 @@ async def _score_and_assign_lead(
                 
                 elif classification == "WARM":
                         # Schedule WhatsApp follow-up
+                        lead = await repository.get_lead(lead_id)
+                        lead_lang = lead.get("language", "hi") if lead else "hi"
                         job = {
                                 "lead_id": str(lead_id),
-                                "phone": (await repository.get_lead(lead_id)).get("phone"),
+                                "phone": lead.get("phone") if lead else None,
+                                "message_type": "warm_follow_up",
+                                "language": lead_lang,
                                 "message": "Thanks for chatting with us! We'll be in touch soon."
                         }
                         await queue_manager.enqueue_job(JobType.SEND_WHATSAPP.value, job)
-                        logger.info("[SCORE] Scheduled WhatsApp follow-up for WARM lead")
+                        logger.info(f"[SCORE] Scheduled WhatsApp follow-up for WARM lead in language '{lead_lang}'")
         
         except Exception as e:
                 logger.error(f"Error scoring lead: {e}")
