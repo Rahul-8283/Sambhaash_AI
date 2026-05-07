@@ -128,11 +128,6 @@ export const SIDEBAR_CONFIG = [
       { id: "integrations", label: "Integrations", path: "/dashboard/settings/integrations" },
     ],
   },
-  {
-    id: "users",
-    label: "Users",
-    path: "/dashboard/users",
-  },
 ];
 
 // Toast duration (ms)

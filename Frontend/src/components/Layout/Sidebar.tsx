@@ -78,12 +78,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
         { label: "Integrations", path: "/dashboard/settings/integrations" },
       ],
     },
-    {
-      id: "users",
-      label: "Users",
-      path: "/dashboard/users",
-      icon: Users,
-    },
   ];
 
   return (

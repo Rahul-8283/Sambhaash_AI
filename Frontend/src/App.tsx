@@ -14,7 +14,6 @@ import PromptSettingsPage from "./pages/PromptSettingsPage";
 import LanguageSettingsPage from "./pages/LanguageSettingsPage";
 import RetrySettingsPage from "./pages/RetrySettingsPage";
 import IntegrationSettingsPage from "./pages/IntegrationSettingsPage";
-import UsersPage from "./pages/UsersPage";
 
 function App() {
   return (
@@ -33,7 +32,6 @@ function App() {
           <Route path="settings/language" element={<LanguageSettingsPage />} />
           <Route path="settings/retry" element={<RetrySettingsPage />} />
           <Route path="settings/integrations" element={<IntegrationSettingsPage />} />
-          <Route path="users" element={<UsersPage />} />
           <Route path="*" element={<Navigate to="/dashboard/leads" replace />} />
         </Routes></MainLayout>} />
         <Route path="*" element={<Navigate to="/" replace />} />

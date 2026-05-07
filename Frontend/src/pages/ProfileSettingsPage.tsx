@@ -4,9 +4,9 @@ import toast from "react-hot-toast";
 
 export const ProfileSettingsPage: React.FC = () => {
   const [profile, setProfile] = useState({
-    name: "Sambhaash ADMIN",
+    name: "ADMIN",
     email: "admin@sambhaash.ai",
-    role: "CAMPAIGN MANAGER",
+    role: "sambhaash ai",
   });
 
   const [saving, setSaving] = useState(false);
@@ -60,8 +60,8 @@ export const ProfileSettingsPage: React.FC = () => {
             {profile.name ? profile.name.charAt(0).toUpperCase() : "S"}
           </div>
           
-          <h2 className="text-xl font-bold text-gray-900">{profile.name || "Sambhaash ADMIN"}</h2>
-          <p className="text-xs text-blue-600 uppercase font-bold tracking-widest mt-1 bg-blue-50 px-3 py-1 rounded-full">{profile.role || "CAMPAIGN MANAGER"}</p>
+          <h2 className="text-xl font-bold text-gray-900">{profile.name || "ADMIN"}</h2>
+          <p className="text-xs text-blue-600 uppercase font-bold tracking-widest mt-1 bg-blue-50 px-3 py-1 rounded-full">{profile.role || "sambhaash ai"}</p>
           <p className="text-sm text-gray-400 mt-2 break-all">{profile.email || "admin@sambhaash.ai"}</p>
         </div>
 

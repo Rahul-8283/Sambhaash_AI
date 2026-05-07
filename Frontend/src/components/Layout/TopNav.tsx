@@ -18,9 +18,9 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick, hideMenuButton }) =
       } catch (e) {}
     }
     return {
-      name: "Sambhaash ADMIN",
+      name: "ADMIN",
       email: "admin@sambhaash.ai",
-      role: "CAMPAIGN MANAGER",
+      role: "sambhaash ai",
     };
   });
 

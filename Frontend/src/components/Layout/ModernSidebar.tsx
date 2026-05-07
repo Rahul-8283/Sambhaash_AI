@@ -38,7 +38,6 @@ const ModernSidebar: React.FC<ModernSidebarProps> = ({ isOpen, onToggle }) => {
       path: "/dashboard/settings/profile", 
       icon: Settings,
     },
-    { id: "users", label: "Users", path: "/dashboard/users", icon: Users },
   ];
 
   return (
