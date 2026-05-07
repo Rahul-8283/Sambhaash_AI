@@ -14,7 +14,7 @@ import uvicorn
 from config import get_config
 from services.database.supabase_client import get_db_client, close_db_client
 from services.ngrok_setup import initialize_ngrok
-from api.routes import lead_routes, rm_routes, admin_routes, kb_analytics_routes, call_recordings_routes
+from api.routes import lead_routes, rm_routes, admin_routes, kb_analytics_routes, call_recordings_routes, call_routes, webhook_routes
 
 # ==================== LOGGING SETUP ====================
 
@@ -114,6 +114,8 @@ def create_app() -> FastAPI:
     app.include_router(admin_routes.router)
     app.include_router(kb_analytics_routes.router)
     app.include_router(call_recordings_routes.router)
+    app.include_router(call_routes.router)
+    app.include_router(webhook_routes.router)
     
     # ==================== ROOT ENDPOINT ====================
     

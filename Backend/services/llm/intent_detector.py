@@ -85,9 +85,11 @@ class IntentDetector:
         self,
         model_name: str = "model name",
         api_key: str = "your api key",
+        llm_callable: Optional[Any] = None,
     ) -> None:
         self.model_name = model_name
         self.api_key = api_key
+        self.llm_callable = llm_callable
 
     def detect(
         self,
@@ -232,15 +234,15 @@ Rules:
 
         The prompt above is already strict enough for structured output.
         """
-        # Example integration placeholder:
-        # client = ...
-        # response = client.generate(
-        #     model=self.model_name,
-        #     api_key=self.api_key,
-        #     prompt=prompt,
-        #     temperature=0.0,
-        # )
-        # return response.text
+        if getattr(self, "llm_callable", None):
+            from services.llm.prompt_builder import PromptBundle
+            bundle = PromptBundle(
+                system_prompt="You are an intent detection module for a multilingual sales-call orchestration system.",
+                user_prompt=prompt,
+                response_format="Return strict JSON only.",
+                metadata={"mode": "intent"}
+            )
+            return self.llm_callable(bundle)
 
         raise NotImplementedError("LLM client is not wired yet.")
 

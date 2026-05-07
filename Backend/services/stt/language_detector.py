@@ -18,10 +18,7 @@ HINGLISH_HINTS = {
 	"kya",
 	"kyun",
 	"kaise",
-	"please",
 	"bhai",
-	"sir",
-	"madam",
 	"mera",
 	"meri",
 	"mein",
@@ -30,8 +27,6 @@ HINGLISH_HINTS = {
 	"abhi",
 	"thoda",
 	"jaldi",
-	"call",
-	"program",
 }
 
 

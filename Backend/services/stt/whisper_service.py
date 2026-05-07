@@ -14,23 +14,26 @@ logger = logging.getLogger(__name__)
 
 
 class WhisperService:
-	"""Speech-to-text service using OpenAI Whisper."""
+	"""Speech-to-text service using Groq Whisper."""
 
 	def __init__(self, api_key: str | None = None) -> None:
 		self.settings = get_config()
-		resolved_key = api_key or self.settings.openai_api_key
-		if not resolved_key:
-			raise ValueError("OPENAI_API_KEY is missing in the backend env file.")
-		self.client = OpenAI(api_key=resolved_key)
+		resolved_key = api_key or self.settings.groq_api_key
+		if not resolved_key or resolved_key == "sk-test-default":
+			raise ValueError("GROQ_API_KEY is missing in the backend env file.")
+		self.client = OpenAI(
+			api_key=resolved_key,
+			base_url="https://api.groq.com/openai/v1"
+		)
 
 	def transcribe_audio_bytes(self, audio_bytes: bytes, filename: str = "recording.mp3", language: Optional[str] = None) -> str:
-		"""Transcribe raw audio bytes using Whisper."""
+		"""Transcribe raw audio bytes using Groq Whisper."""
 
 		audio_file = BytesIO(audio_bytes)
 		audio_file.name = filename
 
 		kwargs: dict[str, object] = {
-			"model": "whisper-1",
+			"model": "whisper-large-v3",
 			"file": audio_file,
 		}
 

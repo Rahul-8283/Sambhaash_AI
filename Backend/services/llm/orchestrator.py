@@ -116,7 +116,11 @@ class Orchestrator:
     ) -> None:
         self.state_machine = state_machine or StateMachine()
         self.memory_manager = memory_manager or MemoryManager()
-        self.intent_detector = intent_detector or IntentDetector(model_name=model_name, api_key=api_key)
+        self.intent_detector = intent_detector or IntentDetector(
+            model_name=model_name, 
+            api_key=api_key,
+            llm_callable=llm_callable
+        )
         self.objection_handler = objection_handler or ObjectionHandler(model_name=model_name, api_key=api_key)
         self.rag_engine = rag_engine or RAGEngine(model_name=model_name, api_key=api_key)
         self.prompt_builder = prompt_builder or PromptBuilder()
@@ -367,8 +371,7 @@ class Orchestrator:
             prompt_bundle=bundle.to_dict(),
             parsed_ok=parsed_ok,
             error=None if parsed_ok else "LLM output could not be parsed; fallback response used.",
-        ).to_dict()
-
+        )
     def summarize_call(
         self,
         lead_id: str,

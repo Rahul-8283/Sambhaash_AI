@@ -202,7 +202,7 @@ async def upload_knowledge_base(
             document_type=file_ext.upper(),
             upload_user_id="admin"
         )
-        document_id = UUID(doc_record["id"])
+        document_id = UUID(str(doc_record["id"]))
         
         # ==================== STEP 5: GENERATE EMBEDDINGS ====================
         

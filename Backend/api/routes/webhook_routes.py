@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import logging
 import json
@@ -35,6 +35,8 @@ audio_cache: dict[str, bytes] = {}
 call_sessions: dict[str, dict] = {}
 
 def _xml_response(xml: str) -> Response:
+        if not xml.strip().startswith("<?xml"):
+                xml = f'<?xml version="1.0" encoding="UTF-8"?>\n{xml}'
         return Response(content=xml, media_type="application/xml")
 
 
@@ -187,25 +189,32 @@ async def voice_webhook(request: Request) -> Response:
         caller = _form_value(dict(form), "From", "unknown")
         call_sid = _form_value(dict(form), "CallSid", "unknown")
         
+        session_id = request.query_params.get("session_id")
+        lead_id = request.query_params.get("lead_id")
+        
         logger.info(f"Inbound voice webhook received from {caller} (CallSid: {call_sid})")
 
         # Initialize call session in cache
-        # The lead_id and session_id will be set by call_initiator when it creates the session
         if call_sid not in call_sessions:
                 call_sessions[call_sid] = {
                         "call_sid": call_sid,
                         "from_number": caller,
-                        "session_id": None,  # Will be set by call_initiator
-                        "lead_id": None,     # Will be set by call_initiator
+                        "session_id": session_id,
+                        "lead_id": lead_id,
                         "turn_count": 0,
                         "started_at": str(datetime.utcnow())
                 }
                 logger.info(f"Created call session cache for {call_sid}")
 
         client = TwilioClient()
+        
+        callback_path = "/api/webhook/twilio/recording"
+        if session_id and lead_id:
+                callback_path += f"?session_id={session_id}&lead_id={lead_id}"
+                
         twiml = client.build_voice_entry_twiml(
                 greeting_text="Hello, welcome to Sambhaash AI. Please speak after the beep.",
-                recording_callback_path="/api/webhook/twilio/recording",
+                recording_callback_path=callback_path,
         )
         return Response(content=twiml, media_type="application/xml")
 
@@ -239,6 +248,20 @@ async def recording_webhook(request: Request) -> Response:
                         media_type="application/xml",
                 )
 
+        session_id = request.query_params.get("session_id")
+        lead_id = request.query_params.get("lead_id")
+
+        if call_sid not in call_sessions:
+            call_sessions[call_sid] = {
+                "call_sid": call_sid,
+                "from_number": from_number,
+                "session_id": session_id,
+                "lead_id": lead_id,
+                "turn_count": 0,
+                "started_at": str(datetime.utcnow())
+            }
+            logger.info(f"Created late call session cache for {call_sid}")
+
         db_client = None
         repository = None
         
@@ -250,13 +273,27 @@ async def recording_webhook(request: Request) -> Response:
                 queue_manager = QueueManager()
                 
                 # Get call session info
-                session_info = call_sessions.get(call_sid)
-                if not session_info:
-                        logger.error(f"No session info for call_sid {call_sid}")
-                        return Response(
-                                content=client.build_say_twiml("Sorry, we lost the call session. Please call again."),
-                                media_type="application/xml",
-                        )
+                session_info = call_sessions.get(call_sid, {})
+                if not session_info.get("session_id"):
+                        logger.info(f"No session found for inbound call {call_sid}, creating new lead and session on the fly.")
+                        try:
+                                lead = await repository.create_lead(
+                                        phone=from_number or "unknown",
+                                        source="inbound_call",
+                                )
+                                new_session = await repository.create_call_session(
+                                        lead_id=lead["id"],
+                                        language_detected="english"
+                                )
+                                session_info["session_id"] = str(new_session["id"])
+                                session_info["lead_id"] = str(lead["id"])
+                                call_sessions[call_sid] = session_info
+                        except Exception as e:
+                                logger.error(f"Failed to create inbound session: {e}")
+                                return Response(
+                                        content=client.build_say_twiml("Sorry, we lost the call session. Please call again."),
+                                        media_type="application/xml",
+                                )
                 
                 session_id = session_info.get("session_id")
                 lead_id = session_info.get("lead_id")
@@ -306,15 +343,16 @@ async def recording_webhook(request: Request) -> Response:
 
                 logger.info(f"AI response: {reply_text} (Target Lang: {target_lang})")
 
-                # 3. Save conversation turn to database
-                await _save_conversation_turn(
+                # 3. Save conversation turn to database (in background so we don't delay TTS)
+                import asyncio
+                asyncio.create_task(_save_conversation_turn(
                         session_id=session_id,
                         call_sid=call_sid,
                         user_text=transcript,
                         ai_response=reply_text,
                         detected_lang=detected_lang,
                         repository=repository
-                )
+                ))
 
                 # 4. TTS Generation
                 audio_bytes = await manager.generate_tts(text=reply_text, language=target_lang)
