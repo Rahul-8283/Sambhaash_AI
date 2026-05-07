@@ -305,6 +305,12 @@ You must produce a natural, persuasive, context-aware response that follows the 
 ### BEHAVIOR RULES
 {behavior_block}
 
+### LENGTH CONSTRAINT (CRITICAL FOR TELEPHONY)
+- Your responses will be spoken by a Text-to-Speech engine.
+- To prevent phone call timeouts, your response MUST be extremely short.
+- Maximum 2 sentences. Maximum 25 words total.
+- Be punchy, conversational, and direct.
+
 ### STAGE-SPECIFIC INSTRUCTIONS
 {stage_block}
 
