@@ -69,10 +69,13 @@ class CallInitiator:
         """
         logger.info(f"[CALL_INIT] Scheduler started (poll_interval={poll_interval}s)")
         
-        try:
-            await self.startup()
-        except Exception as e:
-            logger.warning(f"[CALL_INIT] Initial startup database connection failed ({e}). Will retry dynamically in main loop.")
+        # Safe serial connection retry loop on boot to avoid parallel race conditions
+        while not self.repository:
+            try:
+                await self.startup()
+            except Exception as e:
+                logger.warning(f"[CALL_INIT] Database connection failed ({e}). Retrying in 3 seconds...")
+                await asyncio.sleep(3)
         
         try:
             while True:
@@ -95,7 +98,8 @@ class CallInitiator:
         """
         if not self.repository:
             try:
-                await self.startup()
+                self.db_client = await get_db_client()
+                self.repository = Repository(self.db_client)
             except Exception as e:
                 logger.warning(f"[CALL_INIT] Connection retry failed: {e}. Waiting for network...")
                 return
