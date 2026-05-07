@@ -5,8 +5,6 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
-  BarChart3,
-  Phone,
   Users,
   Settings,
   ChevronDown,
@@ -40,18 +38,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
       label: "Leads",
       path: "/dashboard/leads",
       icon: Users,
-    },
-    {
-      id: "calls",
-      label: "Calls",
-      path: "/dashboard/calls",
-      icon: Phone,
-    },
-    {
-      id: "analytics",
-      label: "Analytics",
-      path: "/dashboard/analytics",
-      icon: BarChart3,
     },
     {
       id: "rm",

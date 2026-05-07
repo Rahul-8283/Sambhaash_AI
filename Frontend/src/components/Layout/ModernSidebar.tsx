@@ -2,8 +2,6 @@ import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  BarChart3,
-  Phone,
   Users,
   Zap,
   Settings,
@@ -28,8 +26,6 @@ const ModernSidebar: React.FC<ModernSidebarProps> = ({ isOpen, onToggle }) => {
 
   const menuItems = [
     { id: "leads", label: "Leads", path: "/dashboard/leads", icon: Users },
-    { id: "calls", label: "Calls", path: "/dashboard/calls", icon: Phone },
-    { id: "analytics", label: "Analytics", path: "/dashboard/analytics", icon: BarChart3 },
     { id: "rm", label: "RM Desk", path: "/dashboard/rm", icon: Target },
     { id: "appendix", label: "Appendix", path: "/dashboard/appendix", icon: FileText },
     { 
