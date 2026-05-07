@@ -9,6 +9,7 @@ import { apiService } from "../services/apiService";
 import type { LeadWithDetails } from "../types";
 import Badge from "../components/Badge";
 import { formatDateTime, formatPhoneNumber, formatDuration } from "../utils/formatters";
+import { LANGUAGE_MAP } from "../utils/constants";
 import MetricCard from "../components/MetricCard";
 
 export const LeadDetailPage: React.FC = () => {
@@ -99,7 +100,9 @@ export const LeadDetailPage: React.FC = () => {
           <div className="space-y-3">
             <div>
               <p className="text-sm text-gray-600">Language</p>
-              <p className="font-medium">{lead.language}</p>
+              <p className="font-medium">
+                {Object.entries(LANGUAGE_MAP).find(([_, val]) => val === lead.language)?.[0] || lead.language}
+              </p>
             </div>
             <div>
               <p className="text-sm text-gray-600">Created</p>

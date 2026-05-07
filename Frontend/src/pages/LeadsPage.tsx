@@ -12,6 +12,7 @@ import DataTable from "../components/DataTable";
 import Badge from "../components/Badge";
 import Modal from "../components/Modal";
 import { formatDateTime, formatPhoneNumber } from "../utils/formatters";
+import { LANGUAGE_MAP } from "../utils/constants";
 
 export const LeadsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -26,7 +27,7 @@ export const LeadsPage: React.FC = () => {
   const [fileInputRef, setFileInputRef] = useState<HTMLInputElement | null>(null);
 
   // Create Lead form state
-  const [createForm, setCreateForm] = useState({ name: "", phone: "", email: "", language: "English" });
+  const [createForm, setCreateForm] = useState({ name: "", phone: "", email: "", language: "en" });
 
   // Filters
   const [filters, setFilters] = useState<LeadFilters>({});
@@ -103,7 +104,7 @@ export const LeadsPage: React.FC = () => {
         language: createForm.language,
       });
       
-      setCreateForm({ name: "", phone: "", email: "", language: "English" });
+      setCreateForm({ name: "", phone: "", email: "", language: "en" });
       setShowCreateModal(false);
       
       // Refresh leads
@@ -240,12 +241,14 @@ export const LeadsPage: React.FC = () => {
               <select
                 value={filters.language || ""}
                 onChange={(e) => handleFilterChange("language", e.target.value || undefined)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
               >
                 <option value="">All</option>
-                <option value="English">English</option>
-                <option value="Hindi">Hindi</option>
-                <option value="Hinglish">Hinglish</option>
+                {Object.entries(LANGUAGE_MAP).map(([name, code]) => (
+                  <option key={code} value={code}>
+                    {name}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -366,6 +369,11 @@ export const LeadsPage: React.FC = () => {
                   key: "language",
                   label: "Language",
                   sortable: true,
+                  render: (value) => {
+                    const code = value as string;
+                    const entry = Object.entries(LANGUAGE_MAP).find(([_, val]) => val === code);
+                    return <span className="text-sm font-medium">{entry ? entry[0] : code}</span>;
+                  },
                 },
                 {
                   key: "rmAssignment",
@@ -521,11 +529,13 @@ export const LeadsPage: React.FC = () => {
             <select
               value={createForm.language}
               onChange={(e) => setCreateForm({ ...createForm, language: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             >
-              <option>English</option>
-              <option>Hindi</option>
-              <option>Hinglish</option>
+              {Object.entries(LANGUAGE_MAP).map(([name, code]) => (
+                <option key={code} value={code}>
+                  {name}
+                </option>
+              ))}
             </select>
           </div>
         </div>

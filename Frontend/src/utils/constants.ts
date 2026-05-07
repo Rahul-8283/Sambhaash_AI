@@ -46,15 +46,31 @@ export const SENTIMENT_COLORS: Record<string, string> = {
 // Tone options for prompt settings
 export const TONE_OPTIONS = ["Formal", "Friendly", "Salesy"] as const;
 
-// Language options
+// Language options and mapping
+export const LANGUAGE_MAP = {
+  "English": "en",
+  "Hindi": "hi",
+  "Tamil": "ta",
+  "Telugu": "te",
+  "Kannada": "kn",
+  "Malayalam": "ml",
+  "Bengali": "bn",
+  "Marathi": "mr",
+  "Gujarati": "gu",
+  "Punjabi": "pa",
+} as const;
+
 export const LANGUAGE_OPTIONS = [
   "English",
   "Hindi",
-  "Hinglish",
-  "Spanish",
-  "French",
-  "German",
-  "Portuguese",
+  "Tamil",
+  "Telugu",
+  "Kannada",
+  "Malayalam",
+  "Bengali",
+  "Marathi",
+  "Gujarati",
+  "Punjabi",
 ] as const;
 
 // Lead source options
