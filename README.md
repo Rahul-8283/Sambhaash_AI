@@ -37,6 +37,9 @@ Sambhaash AI leverages a modern, cutting-edge full-stack architecture to ensure 
 ![Ngrok](https://img.shields.io/badge/Ngrok-1F1F1F?style=for-the-badge&logo=ngrok&logoColor=white)
 
 ---
+**Live Production FrontEnd** [https://sambhaash-ai.vercel.app/](https://sambhaash-ai.vercel.app/)
+**Live Production BackEnd Server:** [https://sambhaash-api.onrender.com/](https://sambhaash-api.onrender.com/)
+
 
 ## 📐 Architecture & Flowchart
 
