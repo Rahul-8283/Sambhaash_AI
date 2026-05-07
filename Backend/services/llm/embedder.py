@@ -8,9 +8,10 @@ sentence-transformers completely, dropping local RAM usage to almost 0MB!
 
 import os
 import logging
-import requests
 from typing import List, Optional, Tuple
 import numpy as np
+from huggingface_hub import InferenceClient
+from config import get_config
 
 logger = logging.getLogger(__name__)
 
@@ -21,15 +22,12 @@ class EmbedderService:
     for both development and production to completely avoid local PyTorch RAM usage.
     """
 
-    MODEL_NAME = "all-MiniLM-L6-v2"
+    MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
     EMBEDDING_DIM = 384
 
     def __init__(self, model_name: Optional[str] = None):
         """
         Initialize embedder.
-        
-        Args:
-            model_name: Optional model name. Defaults to all-MiniLM-L6-v2
         """
         self.model_name = model_name or self.MODEL_NAME
         # We always use the Cloud API to save local RAM and disk space
@@ -37,44 +35,12 @@ class EmbedderService:
         self.model = None
         
         logger.info(f"[EMBEDDER] Initialized — using Hugging Face Cloud Inference API for 384-dim embeddings ({self.model_name})")
-        # Grab Hugging Face API key/token
-        self.hf_token = os.environ.get("HF_API_KEY") or os.environ.get("HUGGINGFACE_API_KEY")
-
-    def _query_hf_api(self, texts: List[str]) -> Optional[List[List[float]]]:
-        """
-        Query Hugging Face Inference API for text feature extraction.
-        """
-        url = f"https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/{self.model_name}"
-        headers = {}
-        if self.hf_token:
-            headers["Authorization"] = f"Bearer {self.hf_token}"
-            
-        try:
-            response = requests.post(
-                url, 
-                json={"inputs": texts, "options": {"wait_for_model": True}}, 
-                headers=headers, 
-                timeout=12
-            )
-            if response.status_code == 200:
-                result = response.json()
-                if isinstance(result, list) and len(result) > 0:
-                    # If it's a list of floats (for a single input), wrap it in a list
-                    if isinstance(result[0], float):
-                        return [result]
-                    # If it's 3D (due to raw model output instead of pooled sentence-transformers), mean-pool it
-                    if isinstance(result[0], list) and len(result[0]) > 0 and isinstance(result[0][0], list):
-                        pooled = []
-                        for doc in result:
-                            doc_arr = np.array(doc)
-                            pooled.append(np.mean(doc_arr, axis=0).tolist())
-                        return pooled
-                    return result
-            else:
-                logger.error(f"[EMBEDDER] HuggingFace API returned error {response.status_code}: {response.text}")
-        except Exception as e:
-            logger.error(f"[EMBEDDER] HuggingFace API request failed: {e}")
-        return None
+        # Grab Hugging Face API key/token from central config
+        self.settings = get_config()
+        self.hf_token = self.settings.hf_api_key
+        
+        # Initialize official Hugging Face Inference Client
+        self.client = InferenceClient(api_key=self.hf_token)
 
     def get_embedding_dimension(self) -> int:
         """Get embedding vector dimension"""
@@ -88,9 +54,20 @@ class EmbedderService:
             logger.warning("[EMBEDDER] Invalid text input")
             return [0.0] * self.EMBEDDING_DIM
 
-        res = self._query_hf_api([text])
-        if res and len(res) > 0:
-            vector = res[0]
+        try:
+            emb = self.client.feature_extraction(
+                model=self.model_name,
+                text=text
+            )
+            # The client returns a numpy array. Let's process it
+            vector = emb.tolist() if hasattr(emb, "tolist") else list(emb)
+            
+            # If it's a 2D or 3D list (e.g. [[val, val, ...]]), mean-pool or extract the sentence embedding
+            if isinstance(vector, list) and len(vector) > 0 and isinstance(vector[0], list):
+                vector_arr = np.array(vector)
+                if len(vector_arr.shape) > 1:
+                    vector = np.mean(vector_arr, axis=0).tolist()
+            
             if len(vector) == self.EMBEDDING_DIM:
                 if normalize:
                     vec_arr = np.array(vector)
@@ -103,7 +80,9 @@ class EmbedderService:
                 if len(vector) < self.EMBEDDING_DIM:
                     return vector + [0.0] * (self.EMBEDDING_DIM - len(vector))
                 return vector[:self.EMBEDDING_DIM]
-                
+        except Exception as e:
+            logger.error(f"[EMBEDDER] Cloud encoding failed: {e}")
+            
         # Safety fallback to prevent crashes on API outages
         return [0.0] * self.EMBEDDING_DIM
 
@@ -115,28 +94,37 @@ class EmbedderService:
             logger.warning("[EMBEDDER] Empty text list provided")
             return []
 
-        all_embeddings = []
-        for i in range(0, len(texts), batch_size):
-            batch = texts[i : i + batch_size]
-            res = self._query_hf_api(batch)
-            if res and len(res) == len(batch):
-                for vector in res:
-                    if len(vector) == self.EMBEDDING_DIM:
-                        if normalize:
-                            vec_arr = np.array(vector)
-                            norm = np.linalg.norm(vec_arr)
-                            if norm > 0:
-                                vector = (vec_arr / norm).tolist()
-                        all_embeddings.append(vector)
+        try:
+            # huggingface_hub client.feature_extraction natively supports list of inputs and handles batches!
+            embs = self.client.feature_extraction(
+                model=self.model_name,
+                text=texts
+            )
+            # Process result array
+            embs_arr = np.array(embs)
+            
+            all_embeddings = []
+            for i, emb in enumerate(embs_arr):
+                vector = emb.tolist() if hasattr(emb, "tolist") else list(emb)
+                if len(vector) == self.EMBEDDING_DIM:
+                    if normalize:
+                        vec_arr = np.array(vector)
+                        norm = np.linalg.norm(vec_arr)
+                        if norm > 0:
+                            vector = (vec_arr / norm).tolist()
+                    all_embeddings.append(vector)
+                else:
+                    if len(vector) < self.EMBEDDING_DIM:
+                        vector = vector + [0.0] * (self.EMBEDDING_DIM - len(vector))
                     else:
-                        if len(vector) < self.EMBEDDING_DIM:
-                            vector = vector + [0.0] * (self.EMBEDDING_DIM - len(vector))
-                        else:
-                            vector = vector[:self.EMBEDDING_DIM]
-                        all_embeddings.append(vector)
-            else:
-                all_embeddings.extend([[0.0] * self.EMBEDDING_DIM for _ in batch])
-        return all_embeddings
+                        vector = vector[:self.EMBEDDING_DIM]
+                    all_embeddings.append(vector)
+            return all_embeddings
+        except Exception as e:
+            logger.error(f"[EMBEDDER] Cloud batch encoding failed: {e}")
+            
+        # Fallback to zero vectors in case of exception
+        return [[0.0] * self.EMBEDDING_DIM for _ in texts]
 
     def similarity(
         self,
