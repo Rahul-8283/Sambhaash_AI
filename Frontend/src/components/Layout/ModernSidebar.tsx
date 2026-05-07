@@ -1,0 +1,162 @@
+import React, { useState } from "react";
+import { Link, useLocation } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  BarChart3,
+  Phone,
+  Users,
+  Zap,
+  Settings,
+  X,
+  FileText,
+  Target,
+  Home,
+  ChevronRight,
+  LogOut
+} from "lucide-react";
+import clsx from "clsx";
+
+interface ModernSidebarProps {
+  isOpen: boolean;
+  onToggle: () => void;
+}
+
+const ModernSidebar: React.FC<ModernSidebarProps> = ({ isOpen, onToggle }) => {
+  const location = useLocation();
+  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+
+  const isActive = (path: string) => location.pathname.startsWith(path);
+
+  const menuItems = [
+    { id: "leads", label: "Leads", path: "/dashboard/leads", icon: Users },
+    { id: "calls", label: "Calls", path: "/dashboard/calls", icon: Phone },
+    { id: "analytics", label: "Analytics", path: "/dashboard/analytics", icon: BarChart3 },
+    { id: "campaigns", label: "Campaigns", path: "/dashboard/campaigns", icon: Zap },
+    { id: "rm", label: "RM Desk", path: "/dashboard/rm", icon: Target },
+    { id: "appendix", label: "Appendix", path: "/dashboard/appendix", icon: FileText },
+    { 
+      id: "settings", 
+      label: "Settings", 
+      path: "/dashboard/settings/prompt", 
+      icon: Settings,
+    },
+    { id: "users", label: "Users", path: "/dashboard/users", icon: Users },
+  ];
+
+  return (
+    <>
+      {/* Sidebar Container */}
+      <motion.aside
+        initial={false}
+        animate={{ width: isOpen ? 260 : 80 }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        className="fixed left-4 top-4 bottom-4 z-50 bg-white/80 backdrop-blur-2xl border border-white/20 rounded-[2rem] shadow-2xl flex flex-col overflow-hidden"
+      >
+        {/* Header */}
+        <div className="p-6 flex items-center">
+          <Link to="/" className="flex items-center gap-4 group">
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white shrink-0 shadow-lg shadow-blue-500/30 group-hover:scale-105 transition-transform duration-200">
+              <Zap size={22} fill="white" className="drop-shadow-sm" />
+            </div>
+            <AnimatePresence mode="wait">
+              {isOpen && (
+                <motion.span
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="font-bold text-2xl text-gray-900 whitespace-nowrap tracking-tight"
+                >
+                  Sambhaash
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </Link>
+        </div>
+
+        {/* Navigation */}
+        <nav className="flex-1 px-3 space-y-1 py-4 overflow-y-auto overflow-x-hidden">
+          {menuItems.map((item) => (
+            <Link
+              key={item.id}
+              to={item.path}
+              onMouseEnter={() => setHoveredItem(item.id)}
+              onMouseLeave={() => setHoveredItem(null)}
+              className={clsx(
+                "relative flex items-center gap-4 px-3 py-3 rounded-2xl transition-colors duration-200",
+                isActive(item.path)
+                  ? "bg-blue-600 text-white shadow-lg shadow-blue-500/20"
+                  : "text-gray-500 hover:bg-gray-100 hover:text-gray-900"
+              )}
+            >
+              <div className="shrink-0 w-6 flex justify-center">
+                <item.icon size={22} />
+              </div>
+              
+              <AnimatePresence mode="wait">
+                {isOpen && (
+                  <motion.span
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    transition={{ duration: 0.15 }}
+                    className="font-semibold whitespace-nowrap text-[15px]"
+                  >
+                    {item.label}
+                  </motion.span>
+                )}
+              </AnimatePresence>
+
+              {!isOpen && hoveredItem === item.id && (
+                <div className="fixed left-24 px-3 py-2 bg-gray-900 text-white text-xs font-semibold rounded-lg shadow-xl pointer-events-none z-[60]">
+                  {item.label}
+                </div>
+              )}
+              
+              {isActive(item.path) && isOpen && (
+                <motion.div
+                  layoutId="active-indicator"
+                  className="ml-auto"
+                >
+                  <ChevronRight size={16} />
+                </motion.div>
+              )}
+            </Link>
+          ))}
+        </nav>
+
+        {/* Footer Actions */}
+        <div className="p-3 border-t border-gray-100 space-y-1">
+          <Link
+            to="/"
+            className="flex items-center gap-4 px-3 py-3 rounded-2xl text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-200"
+          >
+            <div className="shrink-0 w-6 flex justify-center">
+              <Home size={22} />
+            </div>
+            {isOpen && <span className="font-semibold text-[15px]">Home</span>}
+          </Link>
+          <button
+            onClick={onToggle}
+            className="w-full flex items-center gap-4 px-3 py-3 rounded-2xl text-gray-500 hover:bg-gray-100 hover:text-gray-900 transition-colors duration-200"
+          >
+            <div className={clsx("shrink-0 w-6 flex justify-center transition-transform duration-300", !isOpen && "rotate-180")}>
+              <LogOut size={22} className="rotate-180" />
+            </div>
+            {isOpen && <span className="font-semibold text-[15px]">Collapse</span>}
+          </button>
+        </div>
+      </motion.aside>
+
+      {/* Synchronized Spacer */}
+      <motion.div 
+        initial={false}
+        animate={{ width: isOpen ? 260 : 80 }}
+        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+        className="shrink-0"
+      />
+    </>
+  );
+};
+
+export default ModernSidebar;

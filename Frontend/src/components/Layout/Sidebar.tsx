@@ -13,6 +13,8 @@ import {
   ChevronDown,
   ChevronRight,
   X,
+  FileText,
+  Target,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -57,6 +59,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
       label: "Campaigns",
       path: "/dashboard/campaigns",
       icon: Zap,
+    },
+    {
+      id: "rm",
+      label: "RM",
+      path: "/dashboard/rm",
+      icon: Target,
+    },
+    {
+      id: "appendix",
+      label: "Appendix",
+      path: "/dashboard/appendix",
+      icon: FileText,
     },
     {
       id: "settings",

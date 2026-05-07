@@ -1,15 +1,12 @@
-/**
- * Top navigation bar with user menu and notifications
- */
-
 import React, { useState } from "react";
 import { Menu, Bell, LogOut, Settings, User } from "lucide-react";
 
 interface TopNavProps {
   onMenuClick: () => void;
+  hideMenuButton?: boolean;
 }
 
-export const TopNav: React.FC<TopNavProps> = ({ onMenuClick }) => {
+export const TopNav: React.FC<TopNavProps> = ({ onMenuClick, hideMenuButton }) => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [notifications] = useState(3);
 
@@ -20,9 +17,9 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick }) => {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+    <div className="flex items-center gap-4">
       {/* Left side - Menu button */}
-      <div className="flex items-center gap-4">
+      {!hideMenuButton && (
         <button
           onClick={onMenuClick}
           aria-label="Open menu"
@@ -30,10 +27,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick }) => {
         >
           <Menu size={20} />
         </button>
-        <h2 className="text-lg font-semibold text-gray-900 hidden md:block">
-          Dashboard
-        </h2>
-      </div>
+      )}
 
       {/* Right side - Notifications and User menu */}
       <div className="flex items-center gap-4">
@@ -41,10 +35,10 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick }) => {
         <div className="relative">
           <button 
             aria-label="Show notifications"
-            className="p-2 hover:bg-gray-100 rounded-lg transition-colors relative">
+            className="p-2.5 hover:bg-white/80 rounded-xl transition-colors relative border border-transparent hover:border-gray-100 shadow-sm">
             <Bell size={20} className="text-gray-600" />
             {notifications > 0 && (
-              <span className="absolute top-1 right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+              <span className="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center border-2 border-white">
                 {notifications}
               </span>
             )}
@@ -57,16 +51,16 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick }) => {
             onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
             aria-haspopup="menu"
             aria-expanded={isUserMenuOpen}
-            className="flex items-center gap-3 px-3 py-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="flex items-center gap-3 px-3 py-1.5 hover:bg-white/80 rounded-xl transition-colors border border-transparent hover:border-gray-100 shadow-sm"
           >
-            <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+            <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold shadow-md shadow-blue-500/20">
               {currentUser.name.charAt(0)}
             </div>
             <div className="hidden sm:block text-left">
-              <p className="text-sm font-medium text-gray-900">
+              <p className="text-sm font-bold text-gray-900 leading-tight">
                 {currentUser.name}
               </p>
-              <p className="text-xs text-gray-500">{currentUser.role}</p>
+              <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">{currentUser.role}</p>
             </div>
           </button>
 
@@ -77,31 +71,33 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick }) => {
                 className="fixed inset-0 z-30"
                 onClick={() => setIsUserMenuOpen(false)}
               />
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-40 overflow-hidden">
-                <div className="px-4 py-3 border-b border-gray-100">
-                  <p className="text-sm font-medium text-gray-900">
+              <div className="absolute right-0 mt-2 w-56 bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-100 z-40 overflow-hidden py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="px-4 py-3 mb-2 border-b border-gray-50">
+                  <p className="text-sm font-bold text-gray-900">
                     {currentUser.name}
                   </p>
                   <p className="text-xs text-gray-500">{currentUser.email}</p>
                 </div>
-                <button className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-colors">
                   <User size={16} />
-                  Profile
+                  Profile Details
                 </button>
-                <button className="w-full flex items-center gap-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors">
+                <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-colors">
                   <Settings size={16} />
-                  Settings
+                  Account Settings
                 </button>
-                <button className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors border-t border-gray-100">
-                  <LogOut size={16} />
-                  Logout
-                </button>
+                <div className="px-2 mt-2 pt-2 border-t border-gray-50">
+                  <button className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-500 hover:bg-red-50 rounded-xl transition-colors">
+                    <LogOut size={16} />
+                    Sign Out
+                  </button>
+                </div>
               </div>
             </>
           )}
         </div>
       </div>
-    </header>
+    </div>
   );
 };
 

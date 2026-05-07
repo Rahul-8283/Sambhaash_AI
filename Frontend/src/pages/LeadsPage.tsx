@@ -159,7 +159,7 @@ export const LeadsPage: React.FC = () => {
       </div>
 
       {/* Search & Filters */}
-      <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-4">
+      <div className="glass rounded-3xl p-6 space-y-6">
         <div className="flex items-center gap-3">
           <input
             type="text"
@@ -297,7 +297,7 @@ export const LeadsPage: React.FC = () => {
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+      <div className="glass rounded-3xl overflow-hidden">
         {loading ? (
           <div className="p-8 text-center text-gray-500">Loading leads...</div>
         ) : leads.length === 0 ? (
