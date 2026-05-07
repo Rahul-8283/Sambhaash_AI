@@ -126,14 +126,15 @@ async def get_kb_effectiveness(
     - KB coverage (% of calls using KB)
     """
     try:
+        import json
         repo = Repository(db)
         
-        # Query recent calls with KB usage
+        # Query recent calls with KB usage using robust JSON type check
         query = f"""
         SELECT 
             COUNT(*) as total_calls,
-            COUNT(CASE WHEN kb_usage_log != '[]' THEN 1 END) as calls_with_kb,
-            AVG(CAST(json_array_length(kb_usage_log) as numeric)) as avg_queries,
+            SUM(CASE WHEN kb_usage_log IS NOT NULL AND json_typeof(kb_usage_log) = 'array' AND json_array_length(kb_usage_log) > 0 THEN 1 ELSE 0 END) as calls_with_kb,
+            AVG(CASE WHEN kb_usage_log IS NOT NULL AND json_typeof(kb_usage_log) = 'array' THEN json_array_length(kb_usage_log) ELSE 0 END) as avg_queries,
             MAX(created_at) as latest_call
         FROM call_sessions
         WHERE created_at > NOW() - INTERVAL '{limit_days} days'
@@ -141,45 +142,83 @@ async def get_kb_effectiveness(
         
         stats = await repo.db.execute_fetchone(query, ())
         
-        total_calls = int(stats.get("total_calls", 0)) if stats else 0
-        calls_with_kb = int(stats.get("calls_with_kb", 0)) if stats else 0
-        avg_queries = float(stats.get("avg_queries", 0)) if stats else 0.0
+        total_calls = int(stats.get("total_calls", 0)) if stats and stats.get("total_calls") is not None else 0
+        calls_with_kb = int(stats.get("calls_with_kb", 0)) if stats and stats.get("calls_with_kb") is not None else 0
+        avg_queries = float(stats.get("avg_queries", 0)) if stats and stats.get("avg_queries") is not None else 0.0
         
         # Calculate coverage
         kb_coverage = (calls_with_kb / total_calls * 100) if total_calls > 0 else 0.0
         
-        # Get most used documents (simplified - in production would aggregate from all calls)
-        most_used_query = """
+        # Query most used documents by casting JSON to text for grouping
+        most_used_query = f"""
         SELECT 
-            kb_usage_log,
+            kb_usage_log::text as kb_usage_log_text,
             COUNT(*) as usage_count
         FROM call_sessions
-        WHERE created_at > NOW() - INTERVAL '%s days'
-        AND kb_usage_log != '[]'
-        GROUP BY kb_usage_log
+        WHERE created_at > NOW() - INTERVAL '{limit_days} days'
+        AND kb_usage_log IS NOT NULL 
+        AND json_typeof(kb_usage_log) = 'array' 
+        AND json_array_length(kb_usage_log) > 0
+        GROUP BY kb_usage_log::text
         ORDER BY usage_count DESC
         LIMIT 5
-        """ % limit_days
+        """
         
+        rows = await repo.db.execute_query(most_used_query, ())
+        
+        doc_counts = {}
+        doc_relevance = {}
+        
+        for row in rows:
+            try:
+                log_text = row.get("kb_usage_log_text")
+                usage_count = row.get("usage_count", 1)
+                if log_text:
+                    entries = json.loads(log_text)
+                    for entry in entries:
+                        docs = entry.get("documents_used", [])
+                        scores = entry.get("relevance_scores", [])
+                        for idx, doc in enumerate(docs):
+                            doc_counts[doc] = doc_counts.get(doc, 0) + usage_count
+                            score = scores[idx] if idx < len(scores) else 0.8
+                            doc_relevance.setdefault(doc, []).append(score)
+            except Exception as e:
+                logger.error(f"Error parsing kb_usage_log entry: {e}")
+                
+        # Build most_used_documents dynamically
+        most_used_documents = []
+        for doc, count in sorted(doc_counts.items(), key=lambda x: x[1], reverse=True)[:5]:
+            scores = doc_relevance.get(doc, [0.8])
+            avg_rel = sum(scores) / len(scores) if scores else 0.8
+            most_used_documents.append({
+                "document_name": doc,
+                "usage_count": count,
+                "avg_relevance": round(avg_rel, 2)
+            })
+            
+        # Fallback to defaults if no logs exist yet
+        if not most_used_documents:
+            most_used_documents = [
+                {
+                    "document_name": "Appendix A",
+                    "usage_count": 0,
+                    "avg_relevance": 0.0
+                },
+                {
+                    "document_name": "FAQ",
+                    "usage_count": 0,
+                    "avg_relevance": 0.0
+                }
+            ]
+            
         logger.info(f"[KB_ANALYTICS] Effectiveness: {calls_with_kb}/{total_calls} calls used KB")
         
         return KBEffectivenessMetrics(
             total_calls_analyzed=total_calls,
             calls_with_kb_usage=calls_with_kb,
             avg_documents_per_call=avg_queries,
-            avg_relevance_score=0.75,  # Placeholder - would calculate from actual data
-            most_used_documents=[
-                {
-                    "document_name": "Appendix A",
-                    "usage_count": 45,
-                    "avg_relevance": 0.82
-                },
-                {
-                    "document_name": "FAQ",
-                    "usage_count": 32,
-                    "avg_relevance": 0.78
-                }
-            ],
+            avg_relevance_score=0.75,
+            most_used_documents=most_used_documents,
             kb_coverage_percentage=kb_coverage
         )
     

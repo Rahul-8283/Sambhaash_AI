@@ -108,6 +108,11 @@ export const SIDEBAR_CONFIG = [
     path: "/dashboard/leads",
   },
   {
+    id: "analytics",
+    label: "Analytics",
+    path: "/dashboard/analytics",
+  },
+  {
     id: "settings",
     label: "Settings",
     children: [

@@ -9,7 +9,8 @@ import {
   Target,
   Home,
   ChevronRight,
-  LogOut
+  LogOut,
+  BarChart3
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -26,6 +27,7 @@ const ModernSidebar: React.FC<ModernSidebarProps> = ({ isOpen, onToggle }) => {
 
   const menuItems = [
     { id: "leads", label: "Leads", path: "/dashboard/leads", icon: Users },
+    { id: "analytics", label: "Analytics", path: "/dashboard/analytics", icon: BarChart3 },
     { id: "rm", label: "RM Desk", path: "/dashboard/rm", icon: Target },
     { id: "appendix", label: "Appendix", path: "/dashboard/appendix", icon: FileText },
     { 

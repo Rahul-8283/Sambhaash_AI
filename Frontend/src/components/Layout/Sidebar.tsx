@@ -12,6 +12,7 @@ import {
   X,
   FileText,
   Target,
+  BarChart3,
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -38,6 +39,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
       label: "Leads",
       path: "/dashboard/leads",
       icon: Users,
+    },
+    {
+      id: "analytics",
+      label: "Analytics",
+      path: "/dashboard/analytics",
+      icon: BarChart3,
     },
     {
       id: "rm",
