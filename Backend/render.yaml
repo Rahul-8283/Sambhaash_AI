@@ -1,0 +1,90 @@
+services:
+  # 1. Redis Instance
+  - type: redis
+    name: sambhaash-redis
+    plan: free
+    ipAllowList: [] # empty means only other services in the same Render team can connect (secure)
+
+  # 2. FastAPI Web Service
+  - type: web
+    name: sambhaash-api
+    env: docker
+    plan: free
+    dockerfilePath: Dockerfile
+    dockerContext: Backend
+    dockerTarget: production
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: sambhaash-redis
+          property: connectionString
+      - key: DATABASE_URL
+        sync: false # User will provide this in Render dashboard
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_BUCKET_NAME
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_PHONE_NUMBER
+        sync: false
+      - key: TWILIO_WHATSAPP_FROM
+        sync: false
+      - key: TWILIO_WEBHOOK_BASE_URL
+        sync: false
+      - key: SARVAM_API_KEY
+        sync: false
+      - key: MODE
+        value: production
+
+  # 3. Background Worker
+  - type: worker
+    name: sambhaash-worker
+    env: docker
+    plan: free
+    dockerfilePath: Dockerfile
+    dockerContext: Backend
+    dockerTarget: worker
+    envVars:
+      - key: REDIS_URL
+        fromService:
+          type: redis
+          name: sambhaash-redis
+          property: connectionString
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        sync: false
+      - key: SUPABASE_BUCKET_NAME
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+      - key: TWILIO_ACCOUNT_SID
+        sync: false
+      - key: TWILIO_AUTH_TOKEN
+        sync: false
+      - key: TWILIO_PHONE_NUMBER
+        sync: false
+      - key: TWILIO_WHATSAPP_FROM
+        sync: false
+      - key: TWILIO_WEBHOOK_BASE_URL
+        sync: false
+      - key: SARVAM_API_KEY
+        sync: false
+      - key: MODE
+        value: production
