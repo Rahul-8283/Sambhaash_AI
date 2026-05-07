@@ -8,7 +8,6 @@ import {
   BarChart3,
   Phone,
   Users,
-  Zap,
   Settings,
   ChevronDown,
   ChevronRight,
