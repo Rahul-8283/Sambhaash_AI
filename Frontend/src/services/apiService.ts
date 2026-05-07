@@ -135,10 +135,17 @@ class ApiService {
   private constructor() {
     // Determine base URL based on Vite's mode
     const isDev = import.meta.env.MODE === 'development';
-    const baseURL = isDev ? import.meta.env.VITE_API_BASE_URL_DEV : import.meta.env.VITE_API_BASE_URL_PRO;
+    let baseURL = isDev ? import.meta.env.VITE_API_BASE_URL_DEV : import.meta.env.VITE_API_BASE_URL_PRO;
+
+    // Dynamic production fallback if VITE_API_BASE_URL_PRO is undefined in environment
+    if (!baseURL && typeof window !== 'undefined') {
+      const protocol = window.location.protocol;
+      const hostname = window.location.hostname;
+      baseURL = `${protocol}//${hostname}:8000`;
+    }
 
     this.api = axios.create({
-      baseURL,
+      baseURL: baseURL || 'http://localhost:8000',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -194,10 +201,10 @@ class ApiService {
     // Backend returns: { total, limit, offset, leads }
     // Frontend expects: { data: Lead[], total, page, limit }
     return {
-      data: response.data.leads,
-      total: response.data.total,
+      data: response.data?.leads || [],
+      total: response.data?.total || 0,
       page: pagination?.page || 1,
-      limit: response.data.limit || 20
+      limit: response.data?.limit || 20
     };
   }
 
