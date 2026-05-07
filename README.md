@@ -20,6 +20,7 @@ Sambhaash AI leverages a modern, cutting-edge full-stack architecture to ensure 
 ### Database & Auth
 ![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![pgvector](https://img.shields.io/badge/pgvector-316192?style=for-the-badge&logo=postgresql&logoColor=white)
 
 ### LLM Brain & Conversational AI
 ![Meta Llama 3.3](https://img.shields.io/badge/Meta_Llama_3.3-040D21?style=for-the-badge&logo=meta&logoColor=white)
@@ -152,9 +153,17 @@ MODE=development
 ENVIRONMENT=development
 ```
 
-5. Run the server:
+5. Start Redis (required for async task queue processing) using Docker:
+   ```bash
+   docker run -d --name sambhaash-redis -p 6379:6379 redis:alpine
+   ```
+6. Start the FastAPI API Server:
    ```bash
    python -m uvicorn main:app --reload
+   ```
+7. Start the Async Background Worker (processes leads scoring, CRM operations, and automated WhatsApp replies):
+   ```bash
+   python run_worker.py
    ```
 
 ---
