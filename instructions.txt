@@ -1,0 +1,87 @@
+======================================================================
+SAMBHAASH AI - SYSTEM RUN & SETUP CHECKLIST (FRONTEND + BACKEND)
+======================================================================
+
+----------------------------------------------------------------------
+1. PREREQUISITES & SERVICES
+----------------------------------------------------------------------
+Ensure you have the following installed on your host system:
+- Node.js (v18 or higher)
+- Python (v3.10 or higher)
+- Docker Desktop (for starting Redis)
+- Git (optional, for code sync)
+
+----------------------------------------------------------------------
+2. FRONTEND (FE) SETUP & RUNNING
+----------------------------------------------------------------------
+Navigate to the Frontend workspace:
+$ cd Frontend
+
+Step A: Install required node dependency packages
+$ npm install
+
+Step B: Create active local environment configurations
+$ cp .env.example .env
+
+Double-check the keys inside Frontend/.env:
+VITE_API_BASE_URL_DEV=http://127.0.0.1:8000
+VITE_API_BASE_URL_PRO=https://your-production-api-domain.com
+MODE=development
+
+Step C: Run the Vite live reloading development server
+$ npm run dev
+
+* Your Frontend web portal will launch at: http://localhost:5173
+
+----------------------------------------------------------------------
+3. BACKEND (BE) SETUP & RUNNING
+----------------------------------------------------------------------
+Navigate to the Backend workspace:
+$ cd Backend
+
+Step A: Create and activate a clean python virtual environment
+$ python -m venv venv
+
+- Activate on Windows (CMD/PowerShell):
+$ venv\Scripts\activate
+
+- Activate on Linux / macOS (Bash/Zsh):
+$ source venv/bin/activate
+
+Step B: Install all package requirements
+$ pip install -r requirements.txt
+
+Step C: Create active local environment configurations
+$ cp .env.example .env
+
+Ensure you populate Backend/.env with active keys:
+- Supabase details (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, DATABASE_URL)
+- LLM Provider API details (GROQ_API_KEY, SARVAM_API_KEY, HF_API_KEY)
+- Telephony Credentials (TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER)
+
+Step D: Run a local Redis container instance (Required for task processing queues)
+$ docker run -d --name sambhaash-redis -p 6379:6379 redis:alpine
+
+Step E: Start the FastAPI API Web Application Server
+$ python -m uvicorn main:app --reload
+
+* The FastAPI server is active at: http://127.0.0.1:8000
+* Swagger API Documentation is active at: http://127.0.0.1:8000/docs
+
+Step F: Start the asynchronous background queue task worker
+$ python run_worker.py
+
+----------------------------------------------------------------------
+4. TUNNELING WEBHOOKS FOR TELEPHONY & WHATSAPP
+----------------------------------------------------------------------
+If you want to receive active inbound Twilio calls or WhatsApp webhooks locally:
+Step A: Spin up an ngrok http tunnel on port 8000
+$ ngrok http 8000
+
+Step B: Copy the resulting ngrok free URL (e.g. https://xxxx.ngrok-free.app) 
+Step C: Update your Twilio voice and messaging settings with this webhook destination.
+Step D: Set TWILIO_WEBHOOK_BASE_URL inside your Backend/.env file to this URL.
+
+======================================================================
+Development setup is fully complete. Happy showcase!
+======================================================================
