@@ -25,5 +25,5 @@ USER sambhaash
 # Expose port (Render defaults to 10000 for web services, but will bind to PORT)
 EXPOSE 10000
 
-# Default: Run FastAPI server
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "10000"]
+# Default: Run start_all.py process manager
+CMD ["python", "start_all.py"]
