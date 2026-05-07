@@ -262,22 +262,41 @@ async def list_knowledge_documents(
         repo = Repository(db)
         documents = await repo.list_documents()
         
-        results = [
-            DocumentInfo(
-                document_id=str(doc["id"]),
-                file_name=doc["file_name"],
-                document_type=doc["document_type"],
-                chunk_count=doc.get("chunk_count", 0),
-                uploaded_at=str(doc.get("uploaded_at", ""))
-            )
-            for doc in documents
-        ]
+        results = []
+        for doc in documents:
+            try:
+                # Safely parse chunk count (fall back to 0 if None or missing)
+                chunk_count = doc.get("chunk_count")
+                if chunk_count is None:
+                    chunk_count = 0
+                
+                # Safely format uploaded_at
+                uploaded_at_val = doc.get("uploaded_at")
+                if hasattr(uploaded_at_val, "isoformat"):
+                    uploaded_at_str = uploaded_at_val.isoformat()
+                elif uploaded_at_val is not None:
+                    uploaded_at_str = str(uploaded_at_val)
+                else:
+                    uploaded_at_str = ""
+                
+                results.append(
+                    DocumentInfo(
+                        document_id=str(doc.get("id") or ""),
+                        file_name=doc.get("file_name") or "Unknown File",
+                        document_type=doc.get("document_type") or "UNKNOWN",
+                        chunk_count=chunk_count,
+                        uploaded_at=uploaded_at_str
+                    )
+                )
+            except Exception as item_err:
+                logger.error(f"[ADMIN] Error parsing document record {doc}: {item_err}")
+                continue
         
         logger.info(f"[ADMIN] Listed {len(results)} documents")
         return results
     except Exception as e:
         logger.error(f"[ADMIN] List error: {e}")
-        raise HTTPException(status_code=500, detail="Failed to list documents")
+        raise HTTPException(status_code=500, detail=f"Failed to list documents: {str(e)}")
 
 
 @router.get(
@@ -312,13 +331,27 @@ async def get_document_details(
         
         logger.info(f"[ADMIN] Retrieved details for document {doc_id}")
         
+        # Safely parse chunk count
+        chunk_count = doc.get("chunk_count")
+        if chunk_count is None:
+            chunk_count = 0
+            
+        # Safely format uploaded_at
+        uploaded_at_val = doc.get("uploaded_at")
+        if hasattr(uploaded_at_val, "isoformat"):
+            uploaded_at_str = uploaded_at_val.isoformat()
+        elif uploaded_at_val is not None:
+            uploaded_at_str = str(uploaded_at_val)
+        else:
+            uploaded_at_str = ""
+
         return {
             "document": {
-                "id": str(doc["id"]),
-                "file_name": doc["file_name"],
-                "document_type": doc["document_type"],
-                "chunk_count": doc.get("chunk_count", 0),
-                "uploaded_at": str(doc.get("uploaded_at", ""))
+                "id": str(doc.get("id") or ""),
+                "file_name": doc.get("file_name") or "Unknown File",
+                "document_type": doc.get("document_type") or "UNKNOWN",
+                "chunk_count": chunk_count,
+                "uploaded_at": uploaded_at_str
             },
             "sample_chunks": [
                 {
