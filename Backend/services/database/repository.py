@@ -59,6 +59,22 @@ class Repository:
         Raises:
             SupabaseClientError: If phone already exists or DB error
         """
+        # Normalize language to ISO code if user sent full name (e.g. "English" -> "en")
+        lang_normalized = (language or "hi").strip().lower()
+        lang_mapping = {
+            "english": "en",
+            "hindi": "hi",
+            "tamil": "ta",
+            "telugu": "te",
+            "kannada": "kn",
+            "malayalam": "ml",
+            "bengali": "bn",
+            "marathi": "mr",
+            "gujarati": "gu",
+            "punjabi": "pa",
+        }
+        language = lang_mapping.get(lang_normalized, lang_normalized)
+
         try:
             query = """
             INSERT INTO leads (id, phone, name, email, language, status, created_at, updated_at)
