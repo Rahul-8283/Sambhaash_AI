@@ -7,9 +7,9 @@ import LeadsPage from "./pages/LeadsPage";
 import LeadDetailPage from "./pages/LeadDetailPage";
 import CallsPage from "./pages/CallsPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
-import CampaignsPage from "./pages/CampaignsPage";
 import AppendixPage from "./pages/AppendixPage";
 import RMPage from "./pages/RMPage";
+import ProfileSettingsPage from "./pages/ProfileSettingsPage";
 import PromptSettingsPage from "./pages/PromptSettingsPage";
 import LanguageSettingsPage from "./pages/LanguageSettingsPage";
 import RetrySettingsPage from "./pages/RetrySettingsPage";
@@ -26,9 +26,9 @@ function App() {
           <Route path="leads/:id" element={<LeadDetailPage />} />
           <Route path="calls" element={<CallsPage />} />
           <Route path="analytics" element={<AnalyticsPage />} />
-          <Route path="campaigns" element={<CampaignsPage />} />
           <Route path="appendix" element={<AppendixPage />} />
           <Route path="rm" element={<RMPage />} />
+          <Route path="settings/profile" element={<ProfileSettingsPage />} />
           <Route path="settings/prompt" element={<PromptSettingsPage />} />
           <Route path="settings/language" element={<LanguageSettingsPage />} />
           <Route path="settings/retry" element={<RetrySettingsPage />} />

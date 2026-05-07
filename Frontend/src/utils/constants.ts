@@ -118,14 +118,10 @@ export const SIDEBAR_CONFIG = [
     path: "/dashboard/analytics",
   },
   {
-    id: "campaigns",
-    label: "Campaigns",
-    path: "/dashboard/campaigns",
-  },
-  {
     id: "settings",
     label: "Settings",
     children: [
+      { id: "profile", label: "Profile", path: "/dashboard/settings/profile" },
       { id: "prompt", label: "Prompt", path: "/dashboard/settings/prompt" },
       { id: "language", label: "Language", path: "/dashboard/settings/language" },
       { id: "retry", label: "Retry Logic", path: "/dashboard/settings/retry" },

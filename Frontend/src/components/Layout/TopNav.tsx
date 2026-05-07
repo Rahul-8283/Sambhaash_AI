@@ -10,11 +10,36 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick, hideMenuButton }) =
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [notifications] = useState(3);
 
-  const currentUser = {
-    name: "Alice Manager",
-    email: "alice@example.com",
-    role: "Campaign Manager",
-  };
+  const [currentUser, setCurrentUser] = React.useState(() => {
+    const saved = localStorage.getItem("user_profile");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {}
+    }
+    return {
+      name: "Sambhaash ADMIN",
+      email: "admin@sambhaash.ai",
+      role: "CAMPAIGN MANAGER",
+    };
+  });
+
+  React.useEffect(() => {
+    const handleProfileChange = () => {
+      const saved = localStorage.getItem("user_profile");
+      if (saved) {
+        try {
+          setCurrentUser(JSON.parse(saved));
+        } catch (e) {}
+      }
+    };
+    window.addEventListener("user-profile-updated", handleProfileChange);
+    window.addEventListener("storage", handleProfileChange);
+    return () => {
+      window.removeEventListener("user-profile-updated", handleProfileChange);
+      window.removeEventListener("storage", handleProfileChange);
+    };
+  }, []);
 
   return (
     <div className="flex items-center gap-4">

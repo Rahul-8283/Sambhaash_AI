@@ -55,12 +55,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
       icon: BarChart3,
     },
     {
-      id: "campaigns",
-      label: "Campaigns",
-      path: "/dashboard/campaigns",
-      icon: Zap,
-    },
-    {
       id: "rm",
       label: "RM",
       path: "/dashboard/rm",
@@ -77,6 +71,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
       label: "Settings",
       icon: Settings,
       submenu: [
+        { label: "Profile", path: "/dashboard/settings/profile" },
         { label: "Prompt", path: "/dashboard/settings/prompt" },
         { label: "Language", path: "/dashboard/settings/language" },
         { label: "Retry Logic", path: "/dashboard/settings/retry" },
