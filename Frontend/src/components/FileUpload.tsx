@@ -8,7 +8,7 @@ import { Upload, AlertCircle } from "lucide-react";
 interface FileUploadProps {
   onFileSelected: (file: File) => void;
   isLoading?: boolean;
-  error?: string;
+  error?: string | null;
 }
 
 export const FileUpload: React.FC<FileUploadProps> = ({

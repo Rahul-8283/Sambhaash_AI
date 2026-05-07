@@ -75,7 +75,7 @@ export const AnalyticsPage: React.FC = () => {
                 <YAxis type="category" dataKey="document_name" width={100} />
                 <Tooltip />
                 <Bar dataKey="usage_count" radius={[0, 4, 4, 0]}>
-                  {metrics.most_used_documents.map((entry: any, index: number) => (
+                  {metrics.most_used_documents.map((_entry: any, index: number) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Bar>

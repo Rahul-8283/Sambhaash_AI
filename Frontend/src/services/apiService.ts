@@ -9,8 +9,7 @@ import type {
   LeadFilters, 
   LeadListResponse, 
   LeadWithDetails,
-  CreateLeadFormData,
-  AnalyticsMetrics
+  CreateLeadFormData
 } from '../types';
 
 // ==================== ADDITIONAL TYPES ====================

@@ -7,7 +7,6 @@ import {
   Users,
   Zap,
   Settings,
-  X,
   FileText,
   Target,
   Home,

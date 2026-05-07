@@ -6,6 +6,7 @@ import React, { useState, useEffect } from "react";
 import { FileText, Download, Trash2, Calendar } from "lucide-react";
 import FileUpload from "../components/FileUpload";
 import { apiService } from "../services/apiService";
+import type { AppendixFile } from "../utils/appendixStorage";
 
 const AppendixPage: React.FC = () => {
   const [files, setFiles] = useState<AppendixFile[]>([]);
@@ -91,13 +92,6 @@ const AppendixPage: React.FC = () => {
     alert("Please delete documents individually for safety.");
   };
 
-  const formatFileSize = (bytes: number): string => {
-    if (bytes === 0) return "0 Bytes";
-    const k = 1024;
-    const sizes = ["Bytes", "KB", "MB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + " " + sizes[i];
-  };
 
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -200,7 +194,7 @@ const AppendixPage: React.FC = () => {
                     <td className="px-6 py-4 text-sm text-gray-600">
                       <div className="flex items-center gap-1">
                         <Calendar size={14} className="text-gray-400" />
-                        {file.uploaded_at}
+                        {formatDate(file.uploaded_at)}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm">
