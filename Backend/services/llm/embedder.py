@@ -1,22 +1,24 @@
 # services/llm/embedder.py
 """
-Local Embedding Service using sentence-transformers
-No API key required — uses free, local all-MiniLM-L6-v2 model
-384-dimensional vectors optimized for semantic similarity
+Lightweight Cloud Embedding Service (0MB Local RAM!)
+Uses Hugging Face Free Inference API to extract 384-dimensional vectors 
+for both development and production. This eliminates local PyTorch and 
+sentence-transformers completely, dropping local RAM usage to almost 0MB!
 """
 
-from typing import List, Optional, Tuple
+import os
 import logging
+import requests
+from typing import List, Optional, Tuple
 import numpy as np
-from sentence_transformers import SentenceTransformer, util
 
 logger = logging.getLogger(__name__)
 
 
 class EmbedderService:
     """
-    Local embedding service using sentence-transformers.
-    Converts text to 384-dimensional vectors for pgvector storage.
+    Lightweight embedding service that uses Hugging Face cloud endpoints
+    for both development and production to completely avoid local PyTorch RAM usage.
     """
 
     MODEL_NAME = "all-MiniLM-L6-v2"
@@ -24,19 +26,55 @@ class EmbedderService:
 
     def __init__(self, model_name: Optional[str] = None):
         """
-        Initialize embedder with local model.
+        Initialize embedder.
         
         Args:
             model_name: Optional model name. Defaults to all-MiniLM-L6-v2
         """
         self.model_name = model_name or self.MODEL_NAME
+        # We always use the Cloud API to save local RAM and disk space
+        self.use_cloud = True
+        self.model = None
+        
+        logger.info(f"[EMBEDDER] Initialized — using Hugging Face Cloud Inference API for 384-dim embeddings ({self.model_name})")
+        # Grab Hugging Face API key/token
+        self.hf_token = os.environ.get("HF_API_KEY") or os.environ.get("HUGGINGFACE_API_KEY")
+
+    def _query_hf_api(self, texts: List[str]) -> Optional[List[List[float]]]:
+        """
+        Query Hugging Face Inference API for text feature extraction.
+        """
+        url = f"https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/{self.model_name}"
+        headers = {}
+        if self.hf_token:
+            headers["Authorization"] = f"Bearer {self.hf_token}"
+            
         try:
-            logger.info(f"[EMBEDDER] Loading model: {self.model_name}")
-            self.model = SentenceTransformer(self.model_name)
-            logger.info(f"[EMBEDDER] Model loaded successfully. Dimension: {self.get_embedding_dimension()}")
+            response = requests.post(
+                url, 
+                json={"inputs": texts, "options": {"wait_for_model": True}}, 
+                headers=headers, 
+                timeout=12
+            )
+            if response.status_code == 200:
+                result = response.json()
+                if isinstance(result, list) and len(result) > 0:
+                    # If it's a list of floats (for a single input), wrap it in a list
+                    if isinstance(result[0], float):
+                        return [result]
+                    # If it's 3D (due to raw model output instead of pooled sentence-transformers), mean-pool it
+                    if isinstance(result[0], list) and len(result[0]) > 0 and isinstance(result[0][0], list):
+                        pooled = []
+                        for doc in result:
+                            doc_arr = np.array(doc)
+                            pooled.append(np.mean(doc_arr, axis=0).tolist())
+                        return pooled
+                    return result
+            else:
+                logger.error(f"[EMBEDDER] HuggingFace API returned error {response.status_code}: {response.text}")
         except Exception as e:
-            logger.error(f"[EMBEDDER] Failed to load model: {e}")
-            raise
+            logger.error(f"[EMBEDDER] HuggingFace API request failed: {e}")
+        return None
 
     def get_embedding_dimension(self) -> int:
         """Get embedding vector dimension"""
@@ -45,58 +83,60 @@ class EmbedderService:
     def embed_text(self, text: str, normalize: bool = True) -> List[float]:
         """
         Convert single text to embedding vector.
-
-        Args:
-            text: Text to embed
-            normalize: Whether to normalize vector (L2 norm)
-
-        Returns:
-            384-dimensional embedding vector
         """
         if not text or not isinstance(text, str):
             logger.warning("[EMBEDDER] Invalid text input")
             return [0.0] * self.EMBEDDING_DIM
 
-        try:
-            embedding = self.model.encode(
-                text,
-                convert_to_numpy=True,
-                normalize_embeddings=normalize
-            )
-            return embedding.tolist()
-        except Exception as e:
-            logger.error(f"[EMBEDDER] Error embedding text: {e}")
-            return [0.0] * self.EMBEDDING_DIM
+        res = self._query_hf_api([text])
+        if res and len(res) > 0:
+            vector = res[0]
+            if len(vector) == self.EMBEDDING_DIM:
+                if normalize:
+                    vec_arr = np.array(vector)
+                    norm = np.linalg.norm(vec_arr)
+                    if norm > 0:
+                        vector = (vec_arr / norm).tolist()
+                return vector
+            else:
+                # Padding or truncating to expected size
+                if len(vector) < self.EMBEDDING_DIM:
+                    return vector + [0.0] * (self.EMBEDDING_DIM - len(vector))
+                return vector[:self.EMBEDDING_DIM]
+                
+        # Safety fallback to prevent crashes on API outages
+        return [0.0] * self.EMBEDDING_DIM
 
     def embed_texts(self, texts: List[str], normalize: bool = True, batch_size: int = 32) -> List[List[float]]:
         """
-        Convert multiple texts to embedding vectors (batch processing).
-
-        Args:
-            texts: List of texts to embed
-            normalize: Whether to normalize vectors
-            batch_size: Batch size for efficient processing
-
-        Returns:
-            List of 384-dimensional embedding vectors
+        Convert multiple texts to embedding vectors.
         """
         if not texts:
             logger.warning("[EMBEDDER] Empty text list provided")
             return []
 
-        try:
-            logger.debug(f"[EMBEDDER] Embedding batch of {len(texts)} texts")
-            embeddings = self.model.encode(
-                texts,
-                convert_to_numpy=True,
-                normalize_embeddings=normalize,
-                batch_size=batch_size,
-                show_progress_bar=False
-            )
-            return embeddings.tolist()
-        except Exception as e:
-            logger.error(f"[EMBEDDER] Error embedding batch: {e}")
-            return [[0.0] * self.EMBEDDING_DIM for _ in texts]
+        all_embeddings = []
+        for i in range(0, len(texts), batch_size):
+            batch = texts[i : i + batch_size]
+            res = self._query_hf_api(batch)
+            if res and len(res) == len(batch):
+                for vector in res:
+                    if len(vector) == self.EMBEDDING_DIM:
+                        if normalize:
+                            vec_arr = np.array(vector)
+                            norm = np.linalg.norm(vec_arr)
+                            if norm > 0:
+                                vector = (vec_arr / norm).tolist()
+                        all_embeddings.append(vector)
+                    else:
+                        if len(vector) < self.EMBEDDING_DIM:
+                            vector = vector + [0.0] * (self.EMBEDDING_DIM - len(vector))
+                        else:
+                            vector = vector[:self.EMBEDDING_DIM]
+                        all_embeddings.append(vector)
+            else:
+                all_embeddings.extend([[0.0] * self.EMBEDDING_DIM for _ in batch])
+        return all_embeddings
 
     def similarity(
         self,
@@ -105,29 +145,25 @@ class EmbedderService:
         top_k: Optional[int] = None
     ) -> List[Tuple[int, float]]:
         """
-        Compute cosine similarity between query and documents.
-
-        Args:
-            query_embedding: Query embedding vector
-            document_embeddings: List of document embeddings
-            top_k: Return only top-k results
-
-        Returns:
-            List of (index, similarity_score) tuples sorted by similarity
+        Compute cosine similarity between query and documents using NumPy.
         """
         if not document_embeddings:
             return []
 
         try:
-            query_emb = np.array(query_embedding)
-            doc_embs = np.array(document_embeddings)
+            q = np.array(query_embedding)
+            d = np.array(document_embeddings)
 
-            # Compute cosine similarity
-            similarities = util.cos_sim(query_emb, doc_embs)[0].numpy()
+            # Cosine similarity formula via NumPy
+            q_norm = np.linalg.norm(q)
+            if q_norm == 0:
+                similarities = np.zeros(len(d))
+            else:
+                d_norms = np.linalg.norm(d, axis=1)
+                d_norms[d_norms == 0] = 1.0  # Avoid division by zero
+                similarities = np.dot(d, q) / (q_norm * d_norms)
 
-            # Get indices sorted by similarity (descending)
             sorted_indices = np.argsort(-similarities)
-
             if top_k:
                 sorted_indices = sorted_indices[:top_k]
 
@@ -148,39 +184,23 @@ class EmbedderService:
     ) -> List[dict]:
         """
         Semantic search: find most relevant corpus texts for query.
-
-        Args:
-            query: Search query
-            corpus: List of candidate texts
-            top_k: Number of top results
-
-        Returns:
-            List of dicts with 'index', 'corpus_id', 'score', 'text'
         """
         if not corpus:
             logger.warning("[EMBEDDER] Empty corpus provided")
             return []
 
         try:
-            # Embed query and corpus
-            query_emb = self.model.encode(query, convert_to_numpy=True, normalize_embeddings=True)
-            corpus_embs = self.model.encode(
-                corpus,
-                convert_to_numpy=True,
-                normalize_embeddings=True,
-                batch_size=32
-            )
+            query_emb = self.embed_text(query, normalize=True)
+            corpus_embs = self.embed_texts(corpus, normalize=True, batch_size=32)
 
-            # Find top-k matches
-            hits = util.semantic_search(query_emb, corpus_embs, top_k=min(top_k, len(corpus)))
+            similarities = self.similarity(query_emb, corpus_embs, top_k=top_k)
 
             results = []
-            for hit in hits[0]:  # semantic_search returns list of lists
-                idx = hit['corpus_id']
+            for idx, score in similarities:
                 results.append({
                     'index': idx,
                     'corpus_id': idx,
-                    'score': float(hit['score']),
+                    'score': score,
                     'text': corpus[idx]
                 })
             return results
@@ -193,8 +213,8 @@ class EmbedderService:
         return {
             "model_name": self.model_name,
             "embedding_dimension": self.EMBEDDING_DIM,
-            "max_seq_length": self.model.get_max_seq_length(),
-            "device": str(self.model.device)
+            "max_seq_length": 512,
+            "device": "cloud-api"
         }
 
 

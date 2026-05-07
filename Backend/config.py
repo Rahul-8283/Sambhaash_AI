@@ -140,7 +140,6 @@ def _validate_config(config: Settings) -> None:
     """
     required_fields = [
         ("database_url", "DATABASE_URL"),
-        ("openai_api_key", "OPENAI_API_KEY"),
         ("groq_api_key", "GROQ_API_KEY"),
     ]
     
@@ -148,7 +147,7 @@ def _validate_config(config: Settings) -> None:
         if not getattr(config, field):
             raise ValueError(f"Missing required environment variable: {env_name}")
     
-    print(f"✅ Configuration validated (environment: {config.environment})")
+    print(f"[CONFIG] Configuration validated (environment: {config.environment})")
 
 
 # ==================== MODULE LEVEL INSTANCE ====================

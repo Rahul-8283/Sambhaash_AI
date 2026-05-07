@@ -28,7 +28,7 @@ services:
         sync: false
       - key: SUPABASE_BUCKET_NAME
         sync: false
-      - key: OPENAI_API_KEY
+      - key: HF_API_KEY
         sync: false
       - key: GROQ_API_KEY
         sync: false
@@ -45,6 +45,8 @@ services:
       - key: SARVAM_API_KEY
         sync: false
       - key: MODE
+        value: production
+      - key: ENVIRONMENT
         value: production
 
 
