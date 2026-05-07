@@ -22,8 +22,11 @@ COPY . .
 RUN useradd -m -u 1000 sambhaash && chown -R sambhaash:sambhaash /app
 USER sambhaash
 
+# Force unbuffered stdout/stderr logging
+ENV PYTHONUNBUFFERED=1
+
 # Expose port (Render defaults to 10000 for web services, but will bind to PORT)
 EXPOSE 10000
 
-# Default: Run start_all.py process manager
-CMD ["python", "start_all.py"]
+# Default: Start worker in background and uvicorn in foreground
+CMD ["sh", "-c", "python run_worker.py & uvicorn main:app --host 0.0.0.0 --port ${PORT:-10000}"]
