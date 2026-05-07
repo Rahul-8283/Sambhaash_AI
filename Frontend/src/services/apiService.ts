@@ -1,4 +1,9 @@
-import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
+import axios from 'axios';
+import type {
+  AxiosInstance,
+  AxiosResponse,
+  AxiosError,
+} from 'axios';
 import type { 
   Lead, 
   LeadFilters, 
@@ -129,8 +134,9 @@ class ApiService {
   private static instance: ApiService;
 
   private constructor() {
-    // Determine base URL - can be moved to environment variables later
-    const baseURL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+    // Determine base URL based on Vite's mode
+    const isDev = import.meta.env.MODE === 'development';
+    const baseURL = isDev ? import.meta.env.VITE_API_BASE_URL_DEV : import.meta.env.VITE_API_BASE_URL_PRO;
 
     this.api = axios.create({
       baseURL,
