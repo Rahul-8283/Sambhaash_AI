@@ -289,7 +289,7 @@ _client: Optional[SupabaseClient] = None
 
 async def get_db_client() -> SupabaseClient:
     """
-    Get or create global database client instance.
+    Get or create global database client instance with automatic retry if uninitialized.
     """
     global _client
     if _client is None:
@@ -297,7 +297,15 @@ async def get_db_client() -> SupabaseClient:
         if not database_url:
             raise SupabaseClientError("DATABASE_URL not set in environment variables")
         
-        _client = SupabaseClient(database_url)
+        client_inst = SupabaseClient(database_url)
+        try:
+            await client_inst.connect()
+            _client = client_inst
+        except Exception as e:
+            logger.error(f"[DATABASE] Initial connection failed: {e}. Will retry on next request.")
+            raise e
+    elif _client.pool is None:
+        logger.warning("[DATABASE] Pool is uninitialized, retrying connection...")
         await _client.connect()
     
     return _client

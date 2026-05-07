@@ -79,7 +79,10 @@ class BackgroundWorker:
         """
         logger.info(f"[WORKER] Starting worker (poll_interval={poll_interval}s, max_workers={max_workers})")
         
-        await self.startup()
+        try:
+            await self.startup()
+        except Exception as e:
+            logger.warning(f"[WORKER] Initial startup database connection failed ({e}). Will retry dynamically in job loops.")
         
         try:
             tasks = [
@@ -108,6 +111,15 @@ class BackgroundWorker:
         logger.info(f"Worker started for {job_type.value}")
         
         while True:
+            # Self-healing database connection retry
+            if not self.repository:
+                try:
+                    await self.startup()
+                except Exception as e:
+                    logger.warning(f"[WORKER] Connection retry failed for loop {job_type.value}: {e}. Waiting for network...")
+                    await asyncio.sleep(poll_interval)
+                    continue
+
             try:
                 # Poll for next job
                 job = await self.queue_manager.dequeue_job(job_type.value)
