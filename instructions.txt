@@ -82,6 +82,23 @@ Step B: Copy the resulting ngrok free URL (e.g. https://xxxx.ngrok-free.app)
 Step C: Update your Twilio voice and messaging settings with this webhook destination.
 Step D: Set TWILIO_WEBHOOK_BASE_URL inside your Backend/.env file to this URL.
 
+----------------------------------------------------------------------
+5. TWILIO FREE TRIAL ACCOUNT LIMITATION & PHONE VERIFICATION
+----------------------------------------------------------------------
+Note: If using Twilio Free Trial, calls and WhatsApp follow-up messages will
+fail unless the testing phone number is verified inside your Twilio Console.
+
+How to verify phone numbers:
+1. Log in to your Twilio Account (https://www.twilio.com/console)
+2. Go to Phone Numbers -> Verified Caller IDs
+3. Click "Add a new Caller ID"
+4. Enter your phone number (with country code, e.g., +91 for India)
+5. Choose verification method:
+   - SMS (you'll receive a code via text)
+   - Voice call (automated call gives you the code)
+6. Enter the verification code in the Twilio console
+7. Done — your testing number is now verified and ready! ✅
+
 ======================================================================
 Development setup is fully complete. Happy showcase!
 ======================================================================

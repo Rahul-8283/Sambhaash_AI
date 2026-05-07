@@ -166,6 +166,20 @@ ENVIRONMENT=development
    python run_worker.py
    ```
 
+> [!IMPORTANT]
+> **⚠️ Twilio Free Tier Verification Note:**
+> If you are using a Twilio Free Trial account, calls and automated WhatsApp messages will *only* be successfully received by phone numbers that have been explicitly verified inside your Twilio Console.
+> 
+> **How to Verify Your Testing Phone Numbers in Twilio:**
+> 1. Log in to your [Twilio Console](https://www.twilio.com/console).
+> 2. Navigate to **Phone Numbers** ➔ **Verified Caller IDs**.
+> 3. Click the **"Add a new Caller ID"** button.
+> 4. Enter your personal phone number (including country code, e.g., `+91` for India).
+> 5. Choose your preferred verification method:
+>    * **SMS:** Enter the numeric code sent via text.
+>    * **Voice Call:** Enter the code provided by the automated voice caller.
+> 6. Complete the verification. Your phone number is now verified ✅ and ready to receive calls and messages from the Sambhaash AI Agent!
+
 ---
 
 ## 📡 API Endpoints Documentation
