@@ -10,7 +10,7 @@ services:
     name: sambhaash-api
     runtime: docker
     plan: free
-    dockerfilePath: Dockerfile
+    dockerfilePath: Backend/Dockerfile
     dockerContext: Backend
     envVars:
       - key: PORT
