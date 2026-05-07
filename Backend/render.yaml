@@ -8,11 +8,10 @@ services:
   # 2. FastAPI Web Service
   - type: web
     name: sambhaash-api
-    env: docker
+    runtime: docker
     plan: free
     dockerfilePath: Dockerfile
     dockerContext: Backend
-    dockerTarget: production
     envVars:
       - key: PORT
         value: 10000
@@ -51,11 +50,11 @@ services:
   # 3. Background Worker
   - type: worker
     name: sambhaash-worker
-    env: docker
+    runtime: docker
     plan: free
     dockerfilePath: Dockerfile
     dockerContext: Backend
-    dockerTarget: worker
+    dockerCommand: "python run_worker.py"
     envVars:
       - key: REDIS_URL
         fromService:
