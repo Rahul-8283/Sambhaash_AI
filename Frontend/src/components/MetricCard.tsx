@@ -37,16 +37,16 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   return (
     <div
       className={clsx(
-        "bg-white rounded-lg border border-gray-200 shadow-sm",
+        "bg-[#faedcd]/20 border border-[#faedcd] shadow-premium rounded-3xl backdrop-blur-md",
         sizeClasses[size]
       )}
     >
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <p className="text-sm text-gray-600 font-medium">{label}</p>
+          <p className="text-xs text-[#3d2b1f]/70 font-bold uppercase tracking-wider">{label}</p>
           <p
             className={clsx(
-              "font-bold text-gray-900 mt-2",
+              "font-black text-[#2d1e18] mt-2 font-display",
               valueSizeClasses[size]
             )}
           >
@@ -54,10 +54,10 @@ export const MetricCard: React.FC<MetricCardProps> = ({
           </p>
           {trendValue && (
             <p
-              className={clsx("text-xs mt-2 font-medium", {
-                "text-green-600": trend === "up",
-                "text-red-600": trend === "down",
-                "text-gray-600": trend === "neutral",
+              className={clsx("text-xs mt-2 font-semibold", {
+                "text-emerald-700": trend === "up",
+                "text-rose-700": trend === "down",
+                "text-[#3d2b1f]/70": trend === "neutral",
               })}
             >
               {trend === "up" && "↑"} {trend === "down" && "↓"}{" "}
@@ -65,7 +65,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
             </p>
           )}
         </div>
-        {icon && <div className="text-gray-400 ml-4">{icon}</div>}
+        {icon && <div className="text-[#d4a373] ml-4">{icon}</div>}
       </div>
     </div>
   );

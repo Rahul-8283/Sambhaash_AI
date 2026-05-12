@@ -10,10 +10,6 @@ import AnalyticsPage from "./pages/AnalyticsPage";
 import AppendixPage from "./pages/AppendixPage";
 import RMPage from "./pages/RMPage";
 import ProfileSettingsPage from "./pages/ProfileSettingsPage";
-import PromptSettingsPage from "./pages/PromptSettingsPage";
-import LanguageSettingsPage from "./pages/LanguageSettingsPage";
-import RetrySettingsPage from "./pages/RetrySettingsPage";
-import IntegrationSettingsPage from "./pages/IntegrationSettingsPage";
 
 function App() {
   return (
@@ -28,10 +24,6 @@ function App() {
           <Route path="appendix" element={<AppendixPage />} />
           <Route path="rm" element={<RMPage />} />
           <Route path="settings/profile" element={<ProfileSettingsPage />} />
-          <Route path="settings/prompt" element={<PromptSettingsPage />} />
-          <Route path="settings/language" element={<LanguageSettingsPage />} />
-          <Route path="settings/retry" element={<RetrySettingsPage />} />
-          <Route path="settings/integrations" element={<IntegrationSettingsPage />} />
           <Route path="*" element={<Navigate to="/dashboard/leads" replace />} />
         </Routes></MainLayout>} />
         <Route path="*" element={<Navigate to="/" replace />} />

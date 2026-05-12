@@ -141,24 +141,24 @@ export const LeadsPage: React.FC = () => {
   };
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 pt-2 space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Leads</h1>
-          <p className="text-gray-600">Manage and track {total} leads</p>
+          <h1 className="text-3xl font-black text-[#2d1e18] font-display">Leads Queue</h1>
+          <p className="text-sm font-semibold text-[#3d2b1f]/70">Track, manage, and engage {total} system leads</p>
         </div>
         <div className="flex items-center gap-3">
           <button
             onClick={() => setShowUploadModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-[#faedcd] border border-[#d4a373]/30 text-[#3d2b1f] font-bold rounded-2xl hover:bg-[#faedcd]/80 transition-all shadow-sm"
           >
-            <Upload size={20} />
+            <Upload size={20} className="text-[#3d2b1f]/80" />
             Upload CSV
           </button>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            className="flex items-center gap-2 px-4 py-2 bg-[#d4a373] text-white font-bold rounded-2xl hover:bg-[#b5835a] transition-all shadow-lg shadow-[#d4a373]/20"
           >
             <Plus size={20} />
             Add Lead
@@ -167,30 +167,30 @@ export const LeadsPage: React.FC = () => {
       </div>
 
       {/* Search & Filters */}
-      <div className="glass rounded-3xl p-6 space-y-6">
+      <div className="glass rounded-3xl p-6 space-y-6 border border-[#faedcd]/60">
         <div className="flex items-center gap-3">
           <input
             type="text"
             placeholder="Search by name, phone, or email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-4 py-2.5 bg-white/70 border border-[#faedcd] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d4a373]/30 focus:border-[#d4a373] text-[#3d2b1f] placeholder-[#3d2b1f]/40 font-medium"
           />
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#faedcd] text-[#3d2b1f] font-bold rounded-xl hover:bg-[#f5e3b8] transition-all shadow-sm"
           >
-            <Filter size={20} />
+            <Filter size={20} className="text-[#3d2b1f]/80" />
             Filters
           </button>
         </div>
 
         {/* Filter Panel */}
         {showFilters && (
-          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 pt-4 border-t border-gray-200">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4 pt-6 border-t border-[#faedcd]/80">
             {/* Status Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-bold text-[#3d2b1f]/80 uppercase tracking-wider mb-2">
                 Status
               </label>
               <select
@@ -198,9 +198,9 @@ export const LeadsPage: React.FC = () => {
                 onChange={(e) =>
                   handleFilterChange("status", e.target.value ? [e.target.value] : undefined)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-white/70 border border-[#faedcd] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d4a373]/30 focus:border-[#d4a373] text-[#3d2b1f] font-medium"
               >
-                <option value="">All</option>
+                <option value="">All Statuses</option>
                 <option value="Not Called">Not Called</option>
                 <option value="Calling">Calling</option>
                 <option value="Connected">Connected</option>
@@ -212,7 +212,7 @@ export const LeadsPage: React.FC = () => {
 
             {/* Score Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-bold text-[#3d2b1f]/80 uppercase tracking-wider mb-2">
                 Score
               </label>
               <select
@@ -223,9 +223,9 @@ export const LeadsPage: React.FC = () => {
                     e.target.value ? [e.target.value] : undefined
                   )
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-white/70 border border-[#faedcd] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d4a373]/30 focus:border-[#d4a373] text-[#3d2b1f] font-medium"
               >
-                <option value="">All</option>
+                <option value="">All Scores</option>
                 <option value="Hot">Hot 🔥</option>
                 <option value="Warm">Warm 🟡</option>
                 <option value="Cold">Cold ❄️</option>
@@ -235,15 +235,15 @@ export const LeadsPage: React.FC = () => {
 
             {/* Language Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-bold text-[#3d2b1f]/80 uppercase tracking-wider mb-2">
                 Language
               </label>
               <select
                 value={filters.language || ""}
                 onChange={(e) => handleFilterChange("language", e.target.value || undefined)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                className="w-full px-3 py-2 bg-white/70 border border-[#faedcd] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d4a373]/30 focus:border-[#d4a373] text-[#3d2b1f] font-medium"
               >
-                <option value="">All</option>
+                <option value="">All Languages</option>
                 {Object.entries(LANGUAGE_MAP).map(([name, code]) => (
                   <option key={code} value={code}>
                     {name}
@@ -254,7 +254,7 @@ export const LeadsPage: React.FC = () => {
 
             {/* RM Assignment Filter */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-xs font-bold text-[#3d2b1f]/80 uppercase tracking-wider mb-2">
                 RM Assigned
               </label>
               <select
@@ -262,9 +262,9 @@ export const LeadsPage: React.FC = () => {
                 onChange={(e) =>
                   handleFilterChange("rmAssignment", e.target.value || undefined)
                 }
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 bg-white/70 border border-[#faedcd] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d4a373]/30 focus:border-[#d4a373] text-[#3d2b1f] font-medium"
               >
-                <option value="">All</option>
+                <option value="">All RMs</option>
                 <option value="Rajesh Kumar">Rajesh Kumar</option>
                 <option value="Priya Singh">Priya Singh</option>
                 <option value="Amit Patel">Amit Patel</option>
@@ -280,7 +280,7 @@ export const LeadsPage: React.FC = () => {
                   setSearchQuery("");
                   setPage(1);
                 }}
-                className="w-full px-3 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition-colors"
+                className="w-full px-3 py-2 bg-[#faedcd] text-[#3d2b1f] font-bold rounded-xl hover:bg-[#f5e3b8] transition-colors shadow-sm"
               >
                 Clear All
               </button>
@@ -290,14 +290,14 @@ export const LeadsPage: React.FC = () => {
 
         {/* Bulk Actions */}
         {selectedLeads.length > 0 && (
-          <div className="flex items-center justify-between pt-4 border-t border-gray-200 bg-blue-50 p-4 rounded-lg">
-            <p className="text-sm font-medium text-blue-900">
+          <div className="flex items-center justify-between pt-4 border-t border-[#faedcd] bg-[#faedcd]/30 p-4 rounded-2xl border border-[#faedcd]/40">
+            <p className="text-sm font-bold text-[#3d2b1f]">
               {selectedLeads.length} selected
             </p>
             <div className="flex items-center gap-2">
               <button
                 onClick={handleBulkDelete}
-                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
+                className="px-4 py-2 bg-rose-600 text-white font-bold rounded-xl hover:bg-rose-700 transition-colors text-sm shadow-sm"
               >
                 Delete Selected
               </button>
@@ -307,11 +307,11 @@ export const LeadsPage: React.FC = () => {
       </div>
 
       {/* Table */}
-      <div className="glass rounded-3xl overflow-hidden">
+      <div className="glass rounded-3xl overflow-hidden border border-[#faedcd]/60 shadow-xl bg-white/40">
         {loading ? (
-          <div className="p-8 text-center text-gray-500">Loading leads...</div>
+          <div className="p-8 text-center text-[#3d2b1f]/60 font-bold">Loading leads...</div>
         ) : leads.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
+          <div className="p-8 text-center text-[#3d2b1f]/60 font-bold">
             No leads found. Try adjusting your filters.
           </div>
         ) : (
@@ -329,8 +329,8 @@ export const LeadsPage: React.FC = () => {
                   sortable: true,
                   render: (value, row) => (
                     <div>
-                      <p className="font-medium text-gray-900">{value as string}</p>
-                      <p className="text-sm text-gray-500">
+                      <p className="font-bold text-[#2d1e18]">{value as string}</p>
+                      <p className="text-sm font-semibold text-[#3d2b1f]/60">
                         {(row as Lead).email}
                       </p>
                     </div>
@@ -340,7 +340,7 @@ export const LeadsPage: React.FC = () => {
                   key: "phone",
                   label: "Phone",
                   sortable: true,
-                  render: (value) => <span>{formatPhoneNumber(value as string)}</span>,
+                  render: (value) => <span className="font-semibold text-[#3d2b1f]/80">{formatPhoneNumber(value as string)}</span>,
                 },
                 {
                   key: "status",
@@ -372,7 +372,7 @@ export const LeadsPage: React.FC = () => {
                   render: (value) => {
                     const code = value as string;
                     const entry = Object.entries(LANGUAGE_MAP).find(([_, val]) => val === code);
-                    return <span className="text-sm font-medium">{entry ? entry[0] : code}</span>;
+                    return <span className="text-sm font-bold text-[#3d2b1f]/85">{entry ? entry[0] : code}</span>;
                   },
                 },
                 {
@@ -381,9 +381,9 @@ export const LeadsPage: React.FC = () => {
                   render: (value) => {
                     const rm = value as any;
                     return rm?.rmName ? (
-                      <span className="text-sm text-gray-700">{rm.rmName}</span>
+                      <span className="text-sm font-bold text-[#3d2b1f]/90">{rm.rmName}</span>
                     ) : (
-                      <span className="text-sm text-gray-400">—</span>
+                      <span className="text-sm font-semibold text-[#3d2b1f]/40">—</span>
                     );
                   },
                 },
@@ -392,7 +392,7 @@ export const LeadsPage: React.FC = () => {
                   label: "Added",
                   sortable: true,
                   render: (value) => (
-                    <span className="text-sm text-gray-600">
+                    <span className="text-sm font-semibold text-[#3d2b1f]/70">
                       {formatDateTime(value as string)}
                     </span>
                   ),
@@ -401,23 +401,23 @@ export const LeadsPage: React.FC = () => {
             />
 
             {/* Pagination */}
-            <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
-              <p className="text-sm text-gray-600">
+            <div className="flex items-center justify-between px-6 py-4 border-t border-[#faedcd]/60 bg-[#faedcd]/20">
+              <p className="text-sm font-semibold text-[#3d2b1f]/70">
                 Showing {total === 0 ? 0 : (page - 1) * 20 + 1} to {Math.min(page * 20, total)} of {total} leads
               </p>
               <div className="flex items-center gap-2">
                 <button
                   disabled={page === 1}
                   onClick={() => setPage(page - 1)}
-                  className="px-4 py-2 bg-white border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  className="px-4 py-2 bg-[#faedcd] border border-[#d4a373]/20 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#faedcd]/70 text-[#3d2b1f] font-bold transition-all shadow-sm cursor-pointer"
                 >
                   Previous
                 </button>
-                <span className="px-4 py-2">Page {page}</span>
+                <span className="px-4 py-2 text-sm font-bold text-[#3d2b1f]">Page {page}</span>
                 <button
                   disabled={page * 20 >= total}
                   onClick={() => setPage(page + 1)}
-                  className="px-4 py-2 bg-white border border-gray-300 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                  className="px-4 py-2 bg-[#faedcd] border border-[#d4a373]/20 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#faedcd]/70 text-[#3d2b1f] font-bold transition-all shadow-sm cursor-pointer"
                 >
                   Next
                 </button>

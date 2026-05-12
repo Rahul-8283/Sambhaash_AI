@@ -15,7 +15,7 @@ export const MainLayout: FC<MainLayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="min-h-screen bg-[#f8fafc] flex">
+    <div className="min-h-screen bg-[#fefae0] ambient-glow flex">
       {/* Modern Floating Sidebar */}
       <ModernSidebar isOpen={isSidebarOpen} onToggle={toggleSidebar} />
 
@@ -24,8 +24,8 @@ export const MainLayout: FC<MainLayoutProps> = ({ children }) => {
         {/* Top navigation - Optional, can be integrated into content or sidebar */}
         <header className="h-20 flex items-center justify-between px-8 bg-transparent">
           <div>
-            <h2 className="text-sm font-medium text-gray-400 uppercase tracking-wider">Sambhaash Admin</h2>
-            <p className="text-lg font-bold text-gray-900">Dashboard Intelligence</p>
+            <h2 className="text-sm font-semibold text-[#3d2b1f]/60 uppercase tracking-wider">Sambhaash Admin</h2>
+            <p className="text-xl font-extrabold text-[#2d1e18] font-display">Dashboard Intelligence</p>
           </div>
           <TopNav onMenuClick={toggleSidebar} hideMenuButton={true} />
         </header>

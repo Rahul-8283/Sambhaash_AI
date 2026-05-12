@@ -13,6 +13,7 @@
     "@headlessui/react": "^2.1.8",
     "@hookform/resolvers": "^3.4.2",
     "@tailwindcss/vite": "^4.2.4",
+    "@vercel/analytics": "^2.0.1",
     "axios": "^1.16.0",
     "clsx": "^2.1.1",
     "date-fns": "^3.3.1",

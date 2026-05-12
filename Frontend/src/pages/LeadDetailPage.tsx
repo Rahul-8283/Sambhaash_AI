@@ -58,7 +58,7 @@ export const LeadDetailPage: React.FC = () => {
       <div className="flex items-start justify-between">
         <button
           onClick={() => navigate("/dashboard/leads")}
-          className="flex items-center gap-2 text-blue-600 hover:text-blue-700 mb-4"
+          className="flex items-center gap-2 text-[#d4a373] hover:text-[#b5835a] font-bold mb-4 bg-[#faedcd]/40 px-4 py-2 rounded-xl border border-[#faedcd] transition-all cursor-pointer shadow-sm"
         >
           <ArrowLeft size={20} />
           Back to Leads
@@ -66,67 +66,69 @@ export const LeadDetailPage: React.FC = () => {
       </div>
 
       {/* Lead Info Card */}
-      <div className="glass rounded-3xl p-8">
+      <div className="glass rounded-3xl p-8 border border-[#faedcd]/60 shadow-xl">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">{lead.name}</h1>
-            <p className="text-gray-600 mt-1">Lead ID: {lead.id}</p>
+            <h1 className="text-3xl font-black text-[#2d1e18] font-display">{lead.name}</h1>
+            <p className="text-sm font-semibold text-[#3d2b1f]/60 mt-1">Lead ID: {lead.id}</p>
           </div>
           <Badge variant="status" value={lead.status} size="lg" />
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 pt-6 border-t border-gray-200">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 pt-6 border-t border-[#faedcd]">
           {/* Contact Info */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="flex items-center gap-3">
-              <Phone size={20} className="text-gray-400" />
+              <Phone size={20} className="text-[#d4a373]" />
               <div>
-                <p className="text-sm text-gray-600">Phone</p>
-                <p className="font-medium">{formatPhoneNumber(lead.phone)}</p>
+                <p className="text-xs font-bold text-[#3d2b1f]/60 uppercase tracking-wider">Phone</p>
+                <p className="font-bold text-[#2d1e18] mt-0.5">{formatPhoneNumber(lead.phone)}</p>
               </div>
             </div>
             {lead.email && (
               <div className="flex items-center gap-3">
-                <Mail size={20} className="text-gray-400" />
+                <Mail size={20} className="text-[#d4a373]" />
                 <div>
-                  <p className="text-sm text-gray-600">Email</p>
-                  <p className="font-medium">{lead.email}</p>
+                  <p className="text-xs font-bold text-[#3d2b1f]/60 uppercase tracking-wider">Email</p>
+                  <p className="font-bold text-[#2d1e18] mt-0.5">{lead.email}</p>
                 </div>
               </div>
             )}
           </div>
 
           {/* Meta Info */}
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div>
-              <p className="text-sm text-gray-600">Language</p>
-              <p className="font-medium">
+              <p className="text-xs font-bold text-[#3d2b1f]/60 uppercase tracking-wider">Language Preference</p>
+              <p className="font-bold text-[#2d1e18] mt-0.5">
                 {Object.entries(LANGUAGE_MAP).find(([_, val]) => val === lead.language)?.[0] || lead.language}
               </p>
             </div>
             <div>
-              <p className="text-sm text-gray-600">Created</p>
-              <p className="font-medium">{formatDateTime(lead.createdAt)}</p>
+              <p className="text-xs font-bold text-[#3d2b1f]/60 uppercase tracking-wider">Added to System</p>
+              <p className="font-bold text-[#2d1e18] mt-0.5">{formatDateTime(lead.createdAt)}</p>
             </div>
           </div>
         </div>
 
         {/* RM Assignment */}
         {lead.rmAssignment && (
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <p className="text-sm text-gray-600 mb-2">Assigned to</p>
-            <p className="font-medium">{lead.rmAssignment.rmName}</p>
-            {lead.rmAssignment.converted && (
-              <Badge variant="custom" customBgColor="bg-green-100" customTextColor="text-green-800" value="Converted" size="sm" />
-            )}
+          <div className="mt-6 pt-6 border-t border-[#faedcd]">
+            <p className="text-xs font-bold text-[#3d2b1f]/60 uppercase tracking-wider mb-2">Relationship Manager Assigned</p>
+            <div className="flex items-center gap-3">
+              <p className="font-bold text-[#2d1e18]">{lead.rmAssignment.rmName}</p>
+              {lead.rmAssignment.converted && (
+                <Badge variant="custom" customBgColor="bg-emerald-100/50" customTextColor="text-emerald-800 border border-emerald-200/50" value="Converted" size="sm" />
+              )}
+            </div>
           </div>
         )}
       </div>
 
       {/* Scoring Metrics */}
       {latestScore && (
-        <div>
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Lead Score</h2>
+        <div className="space-y-4">
+          <h2 className="text-xl font-black text-[#2d1e18] font-display">Lead Score Indicators</h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <MetricCard
               label="Overall Score"
@@ -163,7 +165,7 @@ export const LeadDetailPage: React.FC = () => {
       {/* Call History */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-bold text-gray-900">Call History</h2>
+          <h2 className="text-xl font-black text-[#2d1e18] font-display">Call Timeline</h2>
           <button
             onClick={() => {
               if (lead.phone) {
@@ -171,35 +173,35 @@ export const LeadDetailPage: React.FC = () => {
               }
             }}
             disabled={!lead.phone}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-2 px-4 py-2 bg-[#d4a373] text-white font-bold rounded-2xl hover:bg-[#b5835a] disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-[#d4a373]/25 cursor-pointer transition-all active:scale-95 text-sm"
           >
-            <Phone size={20} />
+            <Phone size={18} />
             Call Now
           </button>
         </div>
 
         {lead.callSessions.length === 0 ? (
-          <div className="bg-gray-50 rounded-lg border border-gray-200 p-8 text-center text-gray-500">
-            No calls yet
+          <div className="bg-[#faedcd]/15 rounded-3xl border border-[#faedcd]/60 p-8 text-center text-[#3d2b1f]/60 font-semibold shadow-inner">
+            No call records available
           </div>
         ) : (
           <div className="space-y-3">
             {lead.callSessions.map((session) => (
               <div
                 key={session.id}
-                className="bg-white rounded-lg border border-gray-200 p-4 hover:shadow-md transition-shadow cursor-pointer"
+                className="bg-white/50 backdrop-blur-sm rounded-3xl border border-[#faedcd]/60 p-5 hover:shadow-premium-glow hover:border-[#d4a373]/40 transition-all cursor-pointer shadow-sm"
               >
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="font-medium text-gray-900">
-                      {formatDuration(session.durationSeconds)}
+                    <p className="font-bold text-[#2d1e18]">
+                      Duration: {formatDuration(session.durationSeconds)}
                     </p>
-                    <p className="text-sm text-gray-600 mt-1">
-                      {formatDateTime(session.createdAt)}
+                    <p className="text-xs font-semibold text-[#3d2b1f]/60 mt-1">
+                      Called on {formatDateTime(session.createdAt)}
                     </p>
                     {session.languageDetected && (
-                      <p className="text-sm text-gray-500 mt-1">
-                        Detected: {session.languageDetected}
+                      <p className="text-xs font-semibold text-[#3d2b1f]/50 mt-1">
+                        Detected language: {session.languageDetected}
                       </p>
                     )}
                   </div>
@@ -208,30 +210,30 @@ export const LeadDetailPage: React.FC = () => {
                       variant="custom"
                       customBgColor={
                         lead.currentScore.classification === "Hot"
-                          ? "bg-red-100"
+                          ? "bg-rose-100/50"
                           : lead.currentScore.classification === "Warm"
-                            ? "bg-yellow-100"
+                            ? "bg-amber-100/50"
                             : lead.currentScore.classification === "Cold"
-                              ? "bg-blue-100"
-                              : "bg-gray-100"
+                              ? "bg-blue-100/50"
+                              : "bg-[#faedcd]/40"
                       }
                       customTextColor={
                         lead.currentScore.classification === "Hot"
-                          ? "text-red-800"
+                          ? "text-rose-800 border border-rose-200/50"
                           : lead.currentScore.classification === "Warm"
-                            ? "text-yellow-800"
+                            ? "text-amber-800 border border-amber-200/50"
                             : lead.currentScore.classification === "Cold"
-                              ? "text-blue-800"
-                              : "text-gray-800"
+                              ? "text-blue-800 border border-blue-200/50"
+                              : "text-[#3d2b1f]/70 border border-[#faedcd]"
                       }
                       value={lead.currentScore.classification}
                       size="sm"
                     />
                   )}
                 </div>
-                <div className="mt-3 pt-3 border-t border-gray-100">
-                  <p className="text-sm text-gray-600 line-clamp-2">
-                    {session.conversationHistory[session.conversationHistory.length - 1]?.text}
+                <div className="mt-3 pt-3 border-t border-[#faedcd]">
+                  <p className="text-sm font-semibold text-[#3d2b1f]/75 line-clamp-2 italic font-sans">
+                    {session.conversationHistory[session.conversationHistory.length - 1]?.text || "No speech recorded."}
                   </p>
                 </div>
               </div>
@@ -242,37 +244,37 @@ export const LeadDetailPage: React.FC = () => {
 
       {/* Objections */}
       {lead.objections.length > 0 && (
-        <div>
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Objections Logged</h2>
+        <div className="space-y-4">
+          <h2 className="text-xl font-black text-[#2d1e18] font-display">Objections Logged</h2>
           <div className="space-y-3">
             {lead.objections.map((objection) => (
               <div
                 key={objection.id}
-                className="bg-white rounded-lg border border-gray-200 p-4"
+                className="bg-white/50 backdrop-blur-sm rounded-3xl border border-[#faedcd]/60 p-5 shadow-sm"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <p className="font-medium text-gray-900 capitalize">
+                    <p className="font-bold text-[#2d1e18] capitalize font-display">
                       {objection.objectionType}
                     </p>
-                    <p className="text-sm text-gray-600 mt-1">
+                    <p className="text-sm font-semibold text-[#3d2b1f]/80 mt-1">
                       {objection.objectionText}
                     </p>
                   </div>
                   <Badge
                     variant="custom"
                     customBgColor={
-                      objection.resolved ? "bg-green-100" : "bg-red-100"
+                      objection.resolved ? "bg-emerald-100/50" : "bg-rose-100/50"
                     }
                     customTextColor={
-                      objection.resolved ? "text-green-800" : "text-red-800"
+                      objection.resolved ? "text-emerald-800 border border-emerald-200/50" : "text-rose-800 border border-rose-200/50"
                     }
                     value={objection.resolved ? "Resolved" : "Unresolved"}
                     size="sm"
                   />
                 </div>
-                <p className="text-xs text-gray-500 mt-3">
-                  {formatDateTime(objection.timestamp)}
+                <p className="text-[10px] font-bold text-[#3d2b1f]/50 mt-3 uppercase tracking-wider">
+                  Logged on {formatDateTime(objection.timestamp)}
                 </p>
               </div>
             ))}
@@ -281,14 +283,14 @@ export const LeadDetailPage: React.FC = () => {
       )}
 
       {/* Notes */}
-      <div>
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Notes</h2>
+      <div className="space-y-4">
+        <h2 className="text-xl font-black text-[#2d1e18] font-display">Internal Notes</h2>
         <textarea
           placeholder="Add internal notes about this lead..."
-          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-4 py-3 bg-white/70 border border-[#faedcd] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#d4a373]/30 focus:border-[#d4a373] text-[#3d2b1f] font-medium placeholder-[#3d2b1f]/30"
           rows={4}
         />
-        <button className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+        <button className="mt-2 px-6 py-2.5 bg-[#d4a373] text-white font-bold rounded-xl hover:bg-[#b5835a] transition-all cursor-pointer shadow-sm active:scale-95 text-sm">
           Save Notes
         </button>
       </div>
