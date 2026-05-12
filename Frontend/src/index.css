@@ -1,10 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Cause:wght@100..900&family=Iosevka+Charon:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&family=Varela+Round&display=swap');
+
 @import "tailwindcss";
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Outfit:wght@400;500;600;700;800;900&display=swap');
-
 @theme {
-  --font-sans: "Inter", sans-serif;
-  --font-display: "Outfit", sans-serif;
+  --font-sans: "Cause", "Varela Round", sans-serif;
+  --font-display: "Cause", "Varela Round", sans-serif;
+  --font-mono: "Iosevka Charon", monospace;
 
   /* Brand Theme Colors */
   --color-brand-blue: #2563eb;
@@ -31,12 +32,21 @@
 }
 
 @layer base {
+  body, input, textarea, button, select, option, span, p, div, a, li, label {
+    font-family: "Cause", "Varela Round", "Inter", sans-serif !important;
+  }
+
   body {
-    @apply antialiased font-sans text-slate-800 bg-[#fafbfe];
+    @apply bg-[#fafbfe];
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-display tracking-tight;
+    font-family: "Cause", "Varela Round", "Outfit", sans-serif !important;
+    @apply tracking-tight;
+  }
+
+  code, pre {
+    font-family: "Iosevka Charon", monospace !important;
   }
 }
 
