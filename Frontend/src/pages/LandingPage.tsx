@@ -14,6 +14,7 @@ import {
   FileText,
   Activity
 } from "lucide-react";
+import Footer from "../components/Layout/Footer";
 
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -194,9 +195,7 @@ export const LandingPage: React.FC = () => {
         </motion.div>
       </div>
 
-      <footer className="relative z-10 py-16 text-center border-t border-[#faedcd]">
-        <p className="text-[#3d2b1f]/60 font-semibold font-display">© 2026 Sambhaash AI. All rights reserved.</p>
-      </footer>
+      <Footer />
     </div>
   );
 };
