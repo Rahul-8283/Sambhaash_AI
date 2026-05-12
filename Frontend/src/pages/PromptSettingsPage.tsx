@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Sparkles, Save, Code, Play } from "lucide-react";
+import { motion } from "framer-motion";
 import toast from "react-hot-toast";
 
 const PRESETS = [
@@ -62,13 +63,13 @@ export const PromptSettingsPage: React.FC = () => {
   const handleSimulateCall = () => {
     const compiled = getCompiledPrompt();
     setSimulatedDialog(
-      `AI: "Namaste ${customerName}, main Sambhaash AI baat kar rahi hoon Bharat Finance se. Aapki account manager ${rmName} ne aapko ₹1.5 Lakhs ki pre-approved credit line allocate ki hai. Kya aap isko check karne mein interested hain?"\n\nSimulated Confidence Score: 98% | Primary Tone Detected: Friendly, Salesy`
+      `Compiled System Instructions:\n"${compiled}"\n\nSimulated Voice Greeting:\n"Hello ${customerName}, this is Sambhaash AI calling on behalf of Bharat Finance. Your relationship manager ${rmName} has pre-approved a credit line of ${loanAmount} for your account. Would you like to proceed with the activation?"\n\nSimulated Confidence Score: 98% | Primary Tone Detected: Friendly, Salesy`
     );
     toast.success("Simulating voice greeting context...");
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-5xl mx-auto">
+    <div className="p-6 pt-2 space-y-6 max-w-5xl mx-auto">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-black text-[#2d1e18] font-display flex items-center gap-2">

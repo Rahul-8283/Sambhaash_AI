@@ -35,7 +35,7 @@ export const LanguageSettingsPage: React.FC = () => {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-5xl mx-auto">
+    <div className="p-6 pt-2 space-y-6 max-w-5xl mx-auto">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-black text-[#2d1e18] font-display flex items-center gap-2">

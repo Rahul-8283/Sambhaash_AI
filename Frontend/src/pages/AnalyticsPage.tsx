@@ -42,7 +42,7 @@ export const AnalyticsPage: React.FC = () => {
   const COLORS = ['#d4a373', '#b5835a', '#faedcd', '#e6ccb2', '#9c6644'];
 
   return (
-    <div className="p-6 space-y-8 max-w-7xl mx-auto">
+    <div className="p-6 pt-2 space-y-8 max-w-7xl mx-auto">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-black text-[#2d1e18] font-display">System Analytics</h1>
