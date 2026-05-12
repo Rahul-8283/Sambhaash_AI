@@ -45,16 +45,16 @@ export const Footer: React.FC = () => {
           <h4 className="text-xs font-black text-[#2d1e18] uppercase tracking-wider">AI Config Workspace</h4>
           <ul className="space-y-2 text-xs font-bold text-[#3d2b1f]/70">
             <li>
-              <button onClick={() => navigate('/dashboard/settings/prompt')} className="hover:text-[#d4a373] transition-colors cursor-pointer bg-transparent border-none p-0">Prompt Guidelines</button>
+              <button className="hover:text-[#d4a373] transition-colors cursor-pointer bg-transparent border-none p-0">Prompt Guidelines</button>
             </li>
             <li>
-              <button onClick={() => navigate('/dashboard/settings/language')} className="hover:text-[#d4a373] transition-colors cursor-pointer bg-transparent border-none p-0">Language Routing</button>
+              <button className="hover:text-[#d4a373] transition-colors cursor-pointer bg-transparent border-none p-0">Language Routing</button>
             </li>
             <li>
-              <button onClick={() => navigate('/dashboard/settings/retry')} className="hover:text-[#d4a373] transition-colors cursor-pointer bg-transparent border-none p-0">Retry Policies</button>
+              <button className="hover:text-[#d4a373] transition-colors cursor-pointer bg-transparent border-none p-0">Retry Policies</button>
             </li>
             <li>
-              <button onClick={() => navigate('/dashboard/settings/integrations')} className="hover:text-[#d4a373] transition-colors cursor-pointer bg-transparent border-none p-0">Webhooks & API Keys</button>
+              <button className="hover:text-[#d4a373] transition-colors cursor-pointer bg-transparent border-none p-0">Webhooks & API Keys</button>
             </li>
           </ul>
         </div>
