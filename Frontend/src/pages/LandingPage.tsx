@@ -141,15 +141,15 @@ export const LandingPage: React.FC = () => {
       {/* Stats/About Section */}
       <section className="relative z-10 py-20 px-6 max-w-7xl mx-auto border-t border-[#d4a373]/20">
         <div className="grid md:grid-cols-3 gap-12 text-center">
-          <div className="space-y-2 bg-[#faedcd]/40 rounded-3xl p-6 border border-[#faedcd] shadow-sm hover:scale-[1.02] transition-transform">
+          <div className="space-y-2 bg-[#faedcd] rounded-3xl p-6 border border-[#faedcd] shadow-sm hover:scale-[1.02] transition-transform relative z-10">
             <div className="text-5xl font-black text-[#d4a373] font-display">98%</div>
             <p className="text-[#3d2b1f]/80 font-bold">Language accuracy in Hinglish</p>
           </div>
-          <div className="space-y-2 bg-[#faedcd]/40 rounded-3xl p-6 border border-[#faedcd] shadow-sm hover:scale-[1.02] transition-transform">
+          <div className="space-y-2 bg-[#faedcd] rounded-3xl p-6 border border-[#faedcd] shadow-sm hover:scale-[1.02] transition-transform relative z-10">
             <div className="text-5xl font-black text-[#d4a373] font-display">&lt;200ms</div>
             <p className="text-[#3d2b1f]/80 font-bold">Response latency for human-like flow</p>
           </div>
-          <div className="space-y-2 bg-[#faedcd]/40 rounded-3xl p-6 border border-[#faedcd] shadow-sm hover:scale-[1.02] transition-transform">
+          <div className="space-y-2 bg-[#faedcd] rounded-3xl p-6 border border-[#faedcd] shadow-sm hover:scale-[1.02] transition-transform relative z-10">
             <div className="text-5xl font-black text-[#d4a373] font-display">10x</div>
             <p className="text-[#3d2b1f]/80 font-bold">Increase in lead engagement rates</p>
           </div>
@@ -173,9 +173,9 @@ export const LandingPage: React.FC = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ delay: idx * 0.05 }}
               viewport={{ once: true }}
-              className="p-8 rounded-3xl bg-[#faedcd]/30 border border-[#faedcd] hover:border-[#d4a373]/50 hover:bg-[#faedcd]/50 transition-all duration-300 group shadow-sm flex flex-col relative"
+              className="p-8 rounded-3xl bg-[#faedcd] border border-[#faedcd] hover:border-[#d4a373]/50 hover:scale-[1.03] transition-all duration-300 group shadow-sm flex flex-col relative z-10"
             >
-              <div className="absolute inset-0 bg-[#fefae0]/40 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+              <div className="absolute inset-0 bg-[#fefae0]/40 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-0" />
               <div className="w-12 h-12 rounded-2xl bg-[#d4a373]/20 flex items-center justify-center text-[#d4a373] mb-6 group-hover:scale-110 transition-all duration-300 shadow-inner shrink-0 relative z-10">
                 <step.icon size={24} />
               </div>

@@ -6,7 +6,7 @@ export const Footer: React.FC = () => {
   const navigate = useNavigate();
 
   return (
-    <footer className="relative z-10 bg-[#faedcd]/30 border-t border-[#faedcd] pt-16 pb-12 px-6">
+    <footer className="relative z-20 bg-[#faedcd] border-t border-[#faedcd] pt-16 pb-12 px-6">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-12 mb-12 text-left">
         {/* Brand Column */}
         <div className="space-y-4">
@@ -78,8 +78,14 @@ export const Footer: React.FC = () => {
       <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-semibold text-[#3d2b1f]/60">
         <p>© 2026 Sambhaash AI. Built for Team Batmans. All rights reserved.</p>
         <div className="flex items-center gap-4">
-          <a href="https://github.com/Rahul-8283/Sambhaash_AI" target="_blank" rel="noopener noreferrer" className="hover:text-[#d4a373] transition-colors flex items-center gap-1.5">
-            <Github size={14} /> GitHub Repository
+          <a 
+            href="https://github.com/Rahul-8283/Sambhaash_AI" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#3d2b1f]/15 bg-white/40 hover:bg-[#d4a373] hover:border-[#d4a373] text-[#3d2b1f]/80 hover:text-white transition-all duration-300 shadow-sm hover:shadow-md hover:scale-[1.03] active:scale-95 cursor-pointer font-bold"
+          >
+            <Github size={14} /> 
+            <span>GitHub Repository</span>
           </a>
         </div>
       </div>
