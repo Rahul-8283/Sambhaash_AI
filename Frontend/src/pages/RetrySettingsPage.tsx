@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { PhoneCall, Save, AlertTriangle, ShieldCheck } from "lucide-react";
 import toast from "react-hot-toast";
+import SettingsTabs from "../components/Layout/SettingsTabs";
 
 export const RetrySettingsPage: React.FC = () => {
   const [maxRetries, setMaxRetries] = useState(3);
@@ -30,6 +31,8 @@ export const RetrySettingsPage: React.FC = () => {
         </h1>
         <p className="text-sm font-semibold text-[#3d2b1f]/70 mt-1">Configure automated dialer retry frequencies, triggers for busy states, and regional call-time compliance rules.</p>
       </div>
+
+      <SettingsTabs />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Retry Rules Panel */}

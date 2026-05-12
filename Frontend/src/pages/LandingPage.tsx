@@ -7,12 +7,9 @@ import {
   Globe, 
   Database, 
   Zap, 
-  BarChart3, 
   MessageSquare, 
   ShieldCheck, 
-  UserCheck,
-  FileText,
-  Activity
+  UserCheck
 } from "lucide-react";
 import Footer from "../components/Layout/Footer";
 

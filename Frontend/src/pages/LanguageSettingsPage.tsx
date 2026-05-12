@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Globe, Save, HelpCircle } from "lucide-react";
 import toast from "react-hot-toast";
+import SettingsTabs from "../components/Layout/SettingsTabs";
 
 const LANGUAGES = [
   { code: "en", name: "English", native: "English", status: "Primary" },
@@ -43,6 +44,8 @@ export const LanguageSettingsPage: React.FC = () => {
         </h1>
         <p className="text-sm font-semibold text-[#3d2b1f]/70 mt-1">Configure active customer call languages, primary speech fallbacks, and regional voice synthesis models.</p>
       </div>
+
+      <SettingsTabs />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Active Languages Checklist */}

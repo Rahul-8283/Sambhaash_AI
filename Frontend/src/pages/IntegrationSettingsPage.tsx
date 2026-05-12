@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Link2, Save, RefreshCw, Eye, EyeOff } from "lucide-react";
 import toast from "react-hot-toast";
+import SettingsTabs from "../components/Layout/SettingsTabs";
 
 export const IntegrationSettingsPage: React.FC = () => {
   const [webhookUrl, setWebhookUrl] = useState("https://crm.yourcompany.com/v1/webhooks/sambhaash");
@@ -57,6 +58,8 @@ export const IntegrationSettingsPage: React.FC = () => {
         </h1>
         <p className="text-sm font-semibold text-[#3d2b1f]/70 mt-1">Connect your active CRM systems, configure automated webhook events, and manage API keys for system data syncs.</p>
       </div>
+
+      <SettingsTabs />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Core Integration Forms */}

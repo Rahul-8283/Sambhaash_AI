@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { User, Mail, Shield, Save, CheckCircle } from "lucide-react";
 import toast from "react-hot-toast";
+import SettingsTabs from "../components/Layout/SettingsTabs";
 
 export const ProfileSettingsPage: React.FC = () => {
   const [profile, setProfile] = useState({
@@ -50,6 +51,8 @@ export const ProfileSettingsPage: React.FC = () => {
         <h1 className="text-3xl font-black text-[#2d1e18] font-display">Account Settings</h1>
         <p className="text-sm font-semibold text-[#3d2b1f]/70 mt-1">Manage your personal profile and system access credentials.</p>
       </div>
+
+      <SettingsTabs />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Side: Avatar Card */}

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Sparkles, Save, Code, Play } from "lucide-react";
 import { motion } from "framer-motion";
 import toast from "react-hot-toast";
+import SettingsTabs from "../components/Layout/SettingsTabs";
 
 const PRESETS = [
   {
@@ -77,6 +78,8 @@ export const PromptSettingsPage: React.FC = () => {
         </h1>
         <p className="text-sm font-semibold text-[#3d2b1f]/70 mt-1">Configure LLM prompts, setup custom variables, and test AI greetings live.</p>
       </div>
+
+      <SettingsTabs />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Presets and Editor */}
