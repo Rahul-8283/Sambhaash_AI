@@ -26,72 +26,44 @@ export const LandingPage: React.FC = () => {
 
   const steps = [
     { 
-      title: "Lead Input", 
-      desc: "CSV or manual entry with automated priority scoring.",
-      icon: Database,
-      color: "bg-[#d4a373]",
-      textColor: "text-[#d4a373]"
-    },
-    { 
-      title: "Instant Trigger", 
-      desc: "AI initiates calls the moment a lead is added.",
-      icon: Zap,
-      color: "bg-[#d4a373]",
-      textColor: "text-[#d4a373]"
-    },
-    { 
-      title: "Conversation Engine", 
-      desc: "Dynamic flow with proactive objection handling.",
-      icon: MessageSquare,
-      color: "bg-[#d4a373]",
-      textColor: "text-[#d4a373]"
-    },
-    { 
-      title: "Language Detection", 
-      desc: "Seamless switching between Hindi, English, and Hinglish.",
-      icon: Globe,
-      color: "bg-[#d4a373]",
-      textColor: "text-[#d4a373]"
-    },
-    { 
-      title: "AI Pipeline", 
-      desc: "High-fidelity STT → LLM → TTS architecture.",
+      title: "Multilingual Speech Engine", 
+      desc: "Whisper STT, Groq LLaMA, and Sarvam Bulbul TTS pipeline optimized for sub-second, natural phone conversations.",
       icon: Cpu,
       color: "bg-[#d4a373]",
       textColor: "text-[#d4a373]"
     },
     { 
-      title: "Contextual Memory", 
-      desc: "Remembers past interactions for personalized conversations.",
-      icon: Activity,
+      title: "Dynamic RAG Knowledge Base", 
+      desc: "Indexes custom guidelines, sales scripts, and objection manuals to answer complex queries contextually.",
+      icon: Database,
       color: "bg-[#d4a373]",
       textColor: "text-[#d4a373]"
     },
     { 
-      title: "Lead Classification", 
-      desc: "Smart scoring: Hot, Warm, or Cold status.",
+      title: "Real-Time Language Switching", 
+      desc: "Seamlessly detects and transitions between English, Hindi, Hinglish, and other major regional Indian languages.",
+      icon: Globe,
+      color: "bg-[#d4a373]",
+      textColor: "text-[#d4a373]"
+    },
+    { 
+      title: "Intelligent Lead Scoring", 
+      desc: "Analyzes conversation sentiments and intents dynamically to segregate leads into Hot, Warm, or Cold status.",
       icon: UserCheck,
       color: "bg-[#d4a373]",
       textColor: "text-[#d4a373]"
     },
     { 
-      title: "Follow-up System", 
-      desc: "Automated WhatsApp alerts and RM assignments.",
+      title: "Relationship Manager Desk", 
+      desc: "Instantly alerts and routes High-Intent (Hot) leads to human agents alongside rich call transcripts and summaries.",
       icon: ShieldCheck,
       color: "bg-[#d4a373]",
       textColor: "text-[#d4a373]"
     },
     { 
-      title: "Post-Call Summary", 
-      desc: "Instant transcripts and action-oriented summaries.",
-      icon: FileText,
-      color: "bg-[#d4a373]",
-      textColor: "text-[#d4a373]"
-    },
-    { 
-      title: "Real-time Analytics", 
-      desc: "Complete funnel visibility and conversion tracking.",
-      icon: BarChart3,
+      title: "WhatsApp Follow-up Agent", 
+      desc: "Nurtures warm leads via automated, context-aware WhatsApp chat interactions driven by the core LLM brain.",
+      icon: MessageSquare,
       color: "bg-[#d4a373]",
       textColor: "text-[#d4a373]"
     },
@@ -132,8 +104,7 @@ export const LandingPage: React.FC = () => {
           {...fadeIn}
           transition={{ delay: 0.2 }}
         >
-          The conversational intelligence layer that turns leads into conversions 
-          using state-of-the-art agentic voice AI.
+          Automate your outbound phone calls and WhatsApp follow-ups with a smart multilingual AI that answers questions, handles objections, and routes hot prospects directly to your team.
         </motion.p>
 
         <motion.div 
