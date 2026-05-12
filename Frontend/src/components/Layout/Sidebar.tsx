@@ -2,13 +2,11 @@
  * Sidebar navigation component
  */
 
-import React, { useState } from "react";
+import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
   Users,
   Settings,
-  ChevronDown,
-  ChevronRight,
   X,
   FileText,
   Target,
@@ -23,13 +21,6 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
   const location = useLocation();
-  const [openMenus, setOpenMenus] = useState<string[]>(["settings"]);
-
-  const toggleMenu = (id: string) => {
-    setOpenMenus((prev) =>
-      prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]
-    );
-  };
 
   const isActive = (path: string) => location.pathname.startsWith(path);
 
@@ -48,7 +39,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
     },
     {
       id: "rm",
-      label: "RM",
+      label: "RM Desk",
       path: "/dashboard/rm",
       icon: Target,
     },
@@ -61,14 +52,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
     {
       id: "settings",
       label: "Settings",
+      path: "/dashboard/settings/profile",
       icon: Settings,
-      submenu: [
-        { label: "Profile", path: "/dashboard/settings/profile" },
-        { label: "Prompt", path: "/dashboard/settings/prompt" },
-        { label: "Language", path: "/dashboard/settings/language" },
-        { label: "Retry Logic", path: "/dashboard/settings/retry" },
-        { label: "Integrations", path: "/dashboard/settings/integrations" },
-      ],
     },
   ];
 
@@ -105,63 +90,18 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
         <nav className="flex-1 overflow-y-auto p-4 space-y-2">
           {menuItems.map((item) => (
             <div key={item.id}>
-              {item.submenu ? (
-                // Submenu item
-                <button
-                  onClick={() => toggleMenu(item.id)}
-                  aria-expanded={openMenus.includes(item.id)}
-                  className={clsx(
-                    "w-full flex items-center justify-between px-4 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                    openMenus.includes(item.id)
-                      ? "bg-blue-50 text-blue-700"
-                      : "text-gray-700 hover:bg-gray-100"
-                  )}
-                >
-                  <div className="flex items-center gap-3">
-                    {item.icon && <item.icon size={18} />}
-                    {item.label}
-                  </div>
-                  {openMenus.includes(item.id) ? (
-                    <ChevronDown size={16} />
-                  ) : (
-                    <ChevronRight size={16} />
-                  )}
-                </button>
-              ) : (
-                // Regular link item
-                <Link
-                  to={item.path || "#"}
-                  className={clsx(
-                    "flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors",
-                    isActive(item.path || "/")
-                      ? "bg-blue-50 text-blue-700"
-                      : "text-gray-700 hover:bg-gray-100"
-                  )}
-                >
-                  {item.icon && <item.icon size={18} />}
-                  {item.label}
-                </Link>
-              )}
-
-              {/* Submenu items */}
-              {item.submenu && openMenus.includes(item.id) && (
-                <div className="pl-4 mt-1 space-y-1">
-                  {item.submenu.map((subitem) => (
-                    <Link
-                      key={subitem.path}
-                      to={subitem.path}
-                      className={clsx(
-                        "block px-4 py-2 rounded-lg text-sm transition-colors",
-                        isActive(subitem.path)
-                          ? "bg-blue-100 text-blue-700 font-medium"
-                          : "text-gray-600 hover:bg-gray-100"
-                      )}
-                    >
-                      {subitem.label}
-                    </Link>
-                  ))}
-                </div>
-              )}
+              <Link
+                to={item.path}
+                className={clsx(
+                  "flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                  isActive(item.path)
+                    ? "bg-blue-50 text-blue-700"
+                    : "text-gray-700 hover:bg-gray-100"
+                )}
+              >
+                {item.icon && <item.icon size={18} />}
+                {item.label}
+              </Link>
             </div>
           ))}
         </nav>
