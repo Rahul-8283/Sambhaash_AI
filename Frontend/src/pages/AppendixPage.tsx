@@ -3,7 +3,7 @@
  */
 
 import React, { useState, useEffect } from "react";
-import { FileText, Download, Trash2, Calendar } from "lucide-react";
+import { FileText, Download, Trash2, Calendar, Info } from "lucide-react";
 import FileUpload from "../components/FileUpload";
 import { apiService } from "../services/apiService";
 import type { AppendixFile } from "../utils/appendixStorage";
@@ -79,8 +79,6 @@ const AppendixPage: React.FC = () => {
   };
 
   const handleDownloadFile = (file: any) => {
-    // Backend doesn't have a direct download endpoint in the router we saw,
-    // but typically it would be a link to storage
     if (file.storage_url) {
       window.open(file.storage_url, "_blank");
     } else {
@@ -91,7 +89,6 @@ const AppendixPage: React.FC = () => {
   const handleClearAll = () => {
     alert("Please delete documents individually for safety.");
   };
-
 
   const formatDate = (dateString: string): string => {
     return new Date(dateString).toLocaleDateString("en-US", {
@@ -104,46 +101,45 @@ const AppendixPage: React.FC = () => {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-6 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Appendix Documents</h1>
-        <p className="text-gray-600 mt-2">
-          Upload and manage documents (PDF, Word, Text) that the AI agent will use to understand
-          your business details when speaking with clients
+      <div>
+        <h1 className="text-3xl font-black text-[#2d1e18] font-display">Knowledge Base Documents</h1>
+        <p className="text-sm font-semibold text-[#3d2b1f]/70 mt-2">
+          Upload and manage corporate reference files (PDF, Word, Text) that the AI agent uses to contextually query real business facts during calls.
         </p>
       </div>
 
       {/* Success Message */}
       {successMessage && (
-        <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg text-green-800">
+        <div className="p-4 bg-emerald-100/50 border border-emerald-200/50 rounded-2xl text-emerald-800 font-bold text-sm shadow-sm">
           {successMessage}
         </div>
       )}
 
       {/* Error Message */}
       {error && (
-        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800">
+        <div className="p-4 bg-rose-100/50 border border-rose-200/50 rounded-2xl text-rose-800 font-bold text-sm shadow-sm">
           {error}
         </div>
       )}
 
       {/* Upload Section */}
-      <div className="bg-white rounded-lg shadow p-6 mb-8">
-        <h2 className="text-xl font-semibold mb-4 text-gray-900">Upload New Document</h2>
+      <div className="glass rounded-3xl p-6 border border-[#faedcd]/60 shadow-xl bg-white/40">
+        <h2 className="text-xl font-black text-[#2d1e18] font-display mb-4">Upload New Resource</h2>
         <FileUpload onFileSelected={handleFileSelected} isLoading={isLoading} error={error} />
       </div>
 
       {/* Files List Section */}
-      <div className="bg-white rounded-lg shadow">
-        <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-          <h2 className="text-xl font-semibold text-gray-900">
-            Uploaded Documents ({files.length})
+      <div className="glass rounded-3xl border border-[#faedcd]/60 shadow-xl bg-white/40 overflow-hidden">
+        <div className="p-6 border-b border-[#faedcd]/60 flex justify-between items-center bg-[#faedcd]/10">
+          <h2 className="text-xl font-black text-[#2d1e18] font-display">
+            Active Assets ({files.length})
           </h2>
           {files.length > 0 && (
             <button
               onClick={handleClearAll}
-              className="px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+              className="px-4 py-2 text-sm font-bold text-rose-700 bg-rose-100/40 hover:bg-rose-100/70 border border-rose-200/40 rounded-xl transition-all cursor-pointer shadow-sm"
             >
               Clear All
             </button>
@@ -151,67 +147,57 @@ const AppendixPage: React.FC = () => {
         </div>
 
         {files.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            <FileText size={48} className="mx-auto mb-3 text-gray-300" />
-            <p>No documents uploaded yet</p>
-            <p className="text-sm mt-2">Upload documents to get started</p>
+          <div className="p-12 text-center text-[#3d2b1f]/60 font-semibold">
+            <FileText size={48} className="mx-auto mb-3 text-[#3d2b1f]/20" />
+            <p className="text-base text-[#2d1e18] font-bold">No assets uploaded yet</p>
+            <p className="text-sm text-[#3d2b1f]/50 mt-1">Upload documents to bootstrap the RAG knowledge bank.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b border-gray-200">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                    File Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                    Type
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                    Size
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                    Uploaded
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-700 uppercase">
-                    Actions
-                  </th>
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-[#faedcd]/20 border-b border-[#faedcd]/60">
+                  <th className="px-6 py-4 text-xs font-bold text-[#3d2b1f]/75 uppercase tracking-wider">File Name</th>
+                  <th className="px-6 py-4 text-xs font-bold text-[#3d2b1f]/75 uppercase tracking-wider">Type</th>
+                  <th className="px-6 py-4 text-xs font-bold text-[#3d2b1f]/75 uppercase tracking-wider">Chunks Index</th>
+                  <th className="px-6 py-4 text-xs font-bold text-[#3d2b1f]/75 uppercase tracking-wider">Uploaded</th>
+                  <th className="px-6 py-4 text-xs font-bold text-[#3d2b1f]/75 uppercase tracking-wider text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-[#faedcd]/60">
                 {files.map((file: any) => (
-                  <tr key={file.document_id} className="border-b border-gray-200 hover:bg-gray-50">
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">
+                  <tr key={file.document_id} className="border-b border-[#faedcd]/60 hover:bg-white/35 transition-colors">
+                    <td className="px-6 py-4 text-sm font-bold text-[#2d1e18]">
                       <div className="flex items-center gap-2">
-                        <FileText size={18} className="text-blue-600" />
+                        <FileText size={18} className="text-[#d4a373]" />
                         <span className="truncate max-w-xs">{file.file_name}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{file.document_type || "N/A"}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {file.chunk_count} chunks
+                    <td className="px-6 py-4 text-sm font-semibold text-[#3d2b1f]/70 uppercase text-xs">{file.document_type || "N/A"}</td>
+                    <td className="px-6 py-4 text-sm font-semibold text-[#3d2b1f]/70">
+                      {file.chunk_count} chunks indexed
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      <div className="flex items-center gap-1">
-                        <Calendar size={14} className="text-gray-400" />
+                    <td className="px-6 py-4 text-sm font-semibold text-[#3d2b1f]/70">
+                      <div className="flex items-center gap-1.5">
+                        <Calendar size={14} className="text-[#d4a373]" />
                         {formatDate(file.uploaded_at)}
                       </div>
                     </td>
-                    <td className="px-6 py-4 text-sm">
-                      <div className="flex items-center gap-2">
+                    <td className="px-6 py-4 text-sm text-right">
+                      <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleDownloadFile(file)}
-                          className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                          className="p-2 text-[#d4a373] hover:bg-[#faedcd]/50 rounded-xl border border-[#d4a373]/15 transition-all cursor-pointer shadow-sm"
                           title="View"
                         >
-                          <Download size={18} />
+                          <Download size={16} />
                         </button>
                         <button
                           onClick={() => handleDeleteFile(file.document_id)}
-                          className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
+                          className="p-2 text-rose-600 hover:bg-rose-100/50 rounded-xl border border-rose-200/20 transition-all cursor-pointer shadow-sm"
                           title="Delete"
                         >
-                          <Trash2 size={18} />
+                          <Trash2 size={16} />
                         </button>
                       </div>
                     </td>
@@ -224,14 +210,17 @@ const AppendixPage: React.FC = () => {
       </div>
 
       {/* Info Box */}
-      <div className="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-        <h3 className="font-semibold text-blue-900 mb-2">ℹ️ How it works</h3>
-        <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
-          <li>Upload company details, service descriptions, or any relevant documents</li>
-          <li>These documents are stored locally and will be used by the AI agent</li>
-          <li>The agent references this information when speaking with clients</li>
-          <li>You can update or remove documents at any time</li>
-        </ul>
+      <div className="mt-8 p-6 bg-[#faedcd]/20 border border-[#faedcd] rounded-3xl shadow-sm flex gap-3">
+        <Info size={24} className="text-[#d4a373] shrink-0 mt-0.5" />
+        <div>
+          <h3 className="font-black text-[#2d1e18] mb-1.5 font-display">How indexing works</h3>
+          <ul className="text-sm text-[#3d2b1f]/80 font-semibold space-y-1.5 list-disc list-inside">
+            <li>Upload company details, service brochures, or FAQs.</li>
+            <li>Uploaded assets get split into vector chunks instantly.</li>
+            <li>Our AI agent semantic-searches these indexed files to answer client questions in real-time.</li>
+            <li>Removing documents immediately cleanses them from the active AI knowledge pool.</li>
+          </ul>
+        </div>
       </div>
     </div>
   );

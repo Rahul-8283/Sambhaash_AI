@@ -7,7 +7,12 @@
   --font-display: "Cause", "Varela Round", sans-serif;
   --font-mono: "Iosevka Charon", monospace;
 
-  /* Brand Theme Colors */
+  /* Earth & Sand Theme Colors */
+  --color-brand-cream: #fefae0;
+  --color-brand-sand: #faedcd;
+  --color-brand-gold: #d4a373;
+  --color-brand-espresso: #3d2b1f;
+
   --color-brand-blue: #2563eb;
   --color-brand-dark: #030712;
   --color-brand-indigo: #4f46e5;
@@ -18,15 +23,15 @@
   --color-brand-rose: #f43f5e;
   
   /* Slate & Gray Overrides */
-  --color-slate-50: #f8fafc;
-  --color-slate-100: #f1f5f9;
-  --color-slate-800: #1e293b;
-  --color-slate-900: #0f172a;
-  --color-slate-950: #020617;
+  --color-slate-50: #fefae0;
+  --color-slate-100: #faedcd;
+  --color-slate-800: #3d2b1f;
+  --color-slate-900: #2d1e18;
+  --color-slate-950: #1b110b;
 
   /* Premium Box Shadows */
-  --shadow-premium: 0 12px 40px -10px rgba(0, 0, 0, 0.04);
-  --shadow-premium-glow: 0 10px 30px -5px rgba(79, 70, 229, 0.12);
+  --shadow-premium: 0 12px 40px -10px rgba(61, 43, 31, 0.06);
+  --shadow-premium-glow: 0 10px 30px -5px rgba(212, 163, 115, 0.2);
   --shadow-emerald-glow: 0 10px 30px -5px rgba(16, 185, 129, 0.12);
   --shadow-rose-glow: 0 10px 30px -5px rgba(244, 63, 94, 0.12);
 }
@@ -34,14 +39,16 @@
 @layer base {
   body, input, textarea, button, select, option, span, p, div, a, li, label {
     font-family: "Cause", "Varela Round", "Inter", sans-serif !important;
+    color: #3d2b1f;
   }
 
   body {
-    @apply bg-[#fafbfe];
+    background-color: #fefae0;
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: "Cause", "Varela Round", "Outfit", sans-serif !important;
+    color: #2d1e18;
     @apply tracking-tight;
   }
 
@@ -53,30 +60,30 @@
 @layer utilities {
   /* High-Performance Translucent Glassmorphism Cards */
   .glass {
-    @apply bg-white/75 backdrop-blur-xl border border-white/40 shadow-premium;
+    @apply bg-white/70 backdrop-blur-xl border border-[#faedcd]/40 shadow-premium;
   }
   
   .glass-dark {
-    @apply bg-slate-950/75 backdrop-blur-2xl border border-white/5 shadow-2xl;
+    @apply bg-[#1b110b]/75 backdrop-blur-2xl border border-white/5 shadow-2xl;
   }
 
   /* Vibrant Ambient Gradient Backgrounds */
   .ambient-glow {
-    background: radial-gradient(circle at 50% 50%, rgba(79, 70, 229, 0.03) 0%, rgba(250, 251, 254, 0) 50%),
-                radial-gradient(circle at 100% 0%, rgba(37, 99, 235, 0.02) 0%, rgba(250, 251, 254, 0) 40%);
+    background: radial-gradient(circle at 50% 50%, rgba(212, 163, 115, 0.08) 0%, rgba(254, 250, 224, 0) 50%),
+                radial-gradient(circle at 100% 0%, rgba(212, 163, 115, 0.04) 0%, rgba(254, 250, 224, 0) 40%);
   }
 
   /* Modern Linear Text Gradients */
   .text-gradient-primary {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#d4a373] via-[#b5835a] to-[#3d2b1f];
   }
   
   .text-gradient-dark {
-    @apply bg-clip-text text-transparent bg-gradient-to-b from-white to-slate-400;
+    @apply bg-clip-text text-transparent bg-gradient-to-b from-[#fefae0] to-[#faedcd];
   }
 
   .text-gradient-gold {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-amber-500 to-orange-600;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-[#d4a373] to-[#faedcd];
   }
 
   /* Premium Hover Card Scaling & Shimmer Glow */

@@ -15,7 +15,7 @@ import {
   Activity
 } from "lucide-react";
 
-const LandingPage: React.FC = () => {
+export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
 
   const fadeIn = {
@@ -29,69 +29,84 @@ const LandingPage: React.FC = () => {
       title: "Lead Input", 
       desc: "CSV or manual entry with automated priority scoring.",
       icon: Database,
-      color: "bg-blue-500"
+      color: "bg-[#d4a373]",
+      textColor: "text-[#d4a373]"
     },
     { 
       title: "Instant Trigger", 
       desc: "AI initiates calls the moment a lead is added.",
       icon: Zap,
-      color: "bg-yellow-500"
+      color: "bg-[#d4a373]",
+      textColor: "text-[#d4a373]"
     },
     { 
       title: "Conversation Engine", 
       desc: "Dynamic flow with proactive objection handling.",
       icon: MessageSquare,
-      color: "bg-purple-500"
+      color: "bg-[#d4a373]",
+      textColor: "text-[#d4a373]"
     },
     { 
       title: "Language Detection", 
       desc: "Seamless switching between Hindi, English, and Hinglish.",
       icon: Globe,
-      color: "bg-green-500"
+      color: "bg-[#d4a373]",
+      textColor: "text-[#d4a373]"
     },
     { 
       title: "AI Pipeline", 
       desc: "High-fidelity STT → LLM → TTS architecture.",
       icon: Cpu,
-      color: "bg-indigo-500"
+      color: "bg-[#d4a373]",
+      textColor: "text-[#d4a373]"
     },
     { 
       title: "Contextual Memory", 
       desc: "Remembers past interactions for personalized conversations.",
       icon: Activity,
-      color: "bg-pink-500"
+      color: "bg-[#d4a373]",
+      textColor: "text-[#d4a373]"
     },
     { 
       title: "Lead Classification", 
       desc: "Smart scoring: Hot, Warm, or Cold status.",
       icon: UserCheck,
-      color: "bg-orange-500"
+      color: "bg-[#d4a373]",
+      textColor: "text-[#d4a373]"
     },
     { 
       title: "Follow-up System", 
       desc: "Automated WhatsApp alerts and RM assignments.",
       icon: ShieldCheck,
-      color: "bg-cyan-500"
+      color: "bg-[#d4a373]",
+      textColor: "text-[#d4a373]"
     },
     { 
       title: "Post-Call Summary", 
       desc: "Instant transcripts and action-oriented summaries.",
       icon: FileText,
-      color: "bg-red-500"
+      color: "bg-[#d4a373]",
+      textColor: "text-[#d4a373]"
     },
     { 
       title: "Real-time Analytics", 
       desc: "Complete funnel visibility and conversion tracking.",
       icon: BarChart3,
-      color: "bg-teal-500"
+      color: "bg-[#d4a373]",
+      textColor: "text-[#d4a373]"
     },
   ];
 
   return (
-    <div className="min-h-screen bg-[#030712] text-white selection:bg-blue-500/30 overflow-x-hidden">
+    <div className="min-h-screen bg-[#fefae0] ambient-glow text-[#3d2b1f] selection:bg-[#d4a373]/20 overflow-x-hidden relative">
       {/* Grid Background */}
-      <div className="fixed inset-0 z-0 opacity-20 pointer-events-none" 
-           style={{ backgroundImage: 'radial-gradient(#1e40af 0.5px, transparent 0.5px)', backgroundSize: '24px 24px' }}></div>
+      <div 
+        className="fixed inset-0 z-0 opacity-15 pointer-events-none" 
+        style={{ 
+          backgroundImage: 'radial-gradient(#d4a373 0.6px, transparent 0.6px)', 
+          backgroundSize: '32px 32px' 
+        }}
+      />
 
       {/* Hero Section */}
       <section className="relative z-10 pt-32 pb-20 px-6 max-w-7xl mx-auto text-center">
@@ -99,21 +114,21 @@ const LandingPage: React.FC = () => {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8 }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 mb-8"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#faedcd] border border-[#d4a373]/30 text-[#a87440] mb-8 shadow-sm"
         >
-          <Zap size={16} />
-          <span className="text-sm font-medium">Enterprise AI Telephony</span>
+          <Zap size={16} fill="#d4a373" className="text-[#d4a373]" />
+          <span className="text-xs font-bold uppercase tracking-wider">Enterprise AI Telephony</span>
         </motion.div>
 
         <motion.h1 
-          className="text-6xl md:text-8xl font-bold tracking-tight mb-8 bg-gradient-to-b from-white to-gray-500 bg-clip-text text-transparent"
+          className="text-6xl md:text-8xl font-black tracking-tight mb-8 bg-gradient-to-r from-[#3d2b1f] via-[#b5835a] to-[#d4a373] bg-clip-text text-transparent font-display leading-[1.1]"
           {...fadeIn}
         >
           Sambhaash AI
         </motion.h1>
 
         <motion.p 
-          className="text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto mb-12 leading-relaxed"
+          className="text-xl md:text-2xl text-[#3d2b1f]/80 max-w-3xl mx-auto mb-12 leading-relaxed font-sans"
           {...fadeIn}
           transition={{ delay: 0.2 }}
         >
@@ -128,40 +143,40 @@ const LandingPage: React.FC = () => {
         >
           <button 
             onClick={() => navigate('/dashboard')}
-            className="group relative px-8 py-4 rounded-xl bg-blue-600 hover:bg-blue-500 transition-all font-semibold flex items-center gap-2 shadow-[0_0_20px_rgba(37,99,235,0.4)]"
+            className="group relative px-8 py-4 rounded-2xl bg-[#d4a373] text-white hover:bg-[#c39162] transition-all duration-300 font-bold flex items-center gap-2 shadow-lg shadow-[#d4a373]/20 hover:shadow-[#d4a373]/30 active:scale-95"
           >
             Go to Admin Dashboard
             <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
           </button>
-          <button className="px-8 py-4 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all font-semibold">
+          <button className="px-8 py-4 rounded-2xl bg-[#faedcd] border border-[#d4a373]/20 text-[#3d2b1f] font-bold hover:bg-[#f5e3b8] transition-all duration-300 shadow-sm active:scale-95">
             Watch Demo
           </button>
         </motion.div>
       </section>
 
       {/* Stats/About Section */}
-      <section className="relative z-10 py-20 px-6 max-w-7xl mx-auto border-t border-white/5">
+      <section className="relative z-10 py-20 px-6 max-w-7xl mx-auto border-t border-[#d4a373]/20">
         <div className="grid md:grid-cols-3 gap-12 text-center">
-          <div className="space-y-4">
-            <div className="text-4xl font-bold text-blue-500">98%</div>
-            <p className="text-gray-400">Language accuracy in Hinglish</p>
+          <div className="space-y-2 bg-[#faedcd]/40 rounded-3xl p-6 border border-[#faedcd] shadow-sm hover:scale-[1.02] transition-transform">
+            <div className="text-5xl font-black text-[#d4a373] font-display">98%</div>
+            <p className="text-[#3d2b1f]/80 font-bold">Language accuracy in Hinglish</p>
           </div>
-          <div className="space-y-4">
-            <div className="text-4xl font-bold text-purple-500">&lt;200ms</div>
-            <p className="text-gray-400">Response latency for human-like flow</p>
+          <div className="space-y-2 bg-[#faedcd]/40 rounded-3xl p-6 border border-[#faedcd] shadow-sm hover:scale-[1.02] transition-transform">
+            <div className="text-5xl font-black text-[#d4a373] font-display">&lt;200ms</div>
+            <p className="text-[#3d2b1f]/80 font-bold">Response latency for human-like flow</p>
           </div>
-          <div className="space-y-4">
-            <div className="text-4xl font-bold text-green-500">10x</div>
-            <p className="text-gray-400">Increase in lead engagement rates</p>
+          <div className="space-y-2 bg-[#faedcd]/40 rounded-3xl p-6 border border-[#faedcd] shadow-sm hover:scale-[1.02] transition-transform">
+            <div className="text-5xl font-black text-[#d4a373] font-display">10x</div>
+            <p className="text-[#3d2b1f]/80 font-bold">Increase in lead engagement rates</p>
           </div>
         </div>
       </section>
 
       {/* The Flow Section */}
-      <section className="relative z-10 py-32 px-6 max-w-7xl mx-auto">
-        <div className="text-center mb-20">
-          <h2 className="text-4xl md:text-5xl font-bold mb-6">Built for Rupazeey-Grade Performance</h2>
-          <p className="text-gray-400 max-w-2xl mx-auto text-lg">
+      <section className="relative z-10 py-24 px-6 max-w-7xl mx-auto">
+        <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-black mb-6 text-[#2d1e18] font-display leading-tight">Built for Rupazeey-Grade Performance</h2>
+          <p className="text-[#3d2b1f]/80 max-w-2xl mx-auto text-lg font-medium">
             A complete, end-to-end pipeline designed to handle every stage of the lead lifecycle automatically.
           </p>
         </div>
@@ -172,15 +187,16 @@ const LandingPage: React.FC = () => {
               key={idx}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: idx * 0.1 }}
+              transition={{ delay: idx * 0.05 }}
               viewport={{ once: true }}
-              className="p-8 rounded-2xl bg-white/5 border border-white/10 hover:border-blue-500/30 transition-all group"
+              className="p-8 rounded-3xl bg-[#faedcd]/30 border border-[#faedcd] hover:border-[#d4a373]/50 hover:bg-[#faedcd]/50 transition-all duration-300 group shadow-sm flex flex-col relative"
             >
-              <div className={`w-12 h-12 rounded-lg ${step.color} bg-opacity-20 flex items-center justify-center text-white mb-6 group-hover:scale-110 transition-transform`}>
+              <div className="absolute inset-0 bg-[#fefae0]/40 rounded-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+              <div className="w-12 h-12 rounded-2xl bg-[#d4a373]/20 flex items-center justify-center text-[#d4a373] mb-6 group-hover:scale-110 transition-all duration-300 shadow-inner shrink-0 relative z-10">
                 <step.icon size={24} />
               </div>
-              <h3 className="text-xl font-semibold mb-3">{step.title}</h3>
-              <p className="text-gray-400 leading-relaxed">{step.desc}</p>
+              <h3 className="text-xl font-bold mb-3 text-[#2d1e18] font-display relative z-10">{step.title}</h3>
+              <p className="text-[#3d2b1f]/80 leading-relaxed font-medium relative z-10">{step.desc}</p>
             </motion.div>
           ))}
         </div>
@@ -191,24 +207,24 @@ const LandingPage: React.FC = () => {
         <motion.div
           initial={{ y: 100 }}
           animate={{ y: 0 }}
-          className="px-6 py-4 rounded-2xl bg-white/5 backdrop-blur-xl border border-white/10 flex items-center gap-6 shadow-2xl"
+          className="px-6 py-4 rounded-3xl bg-[#faedcd]/90 backdrop-blur-2xl border border-[#d4a373]/30 flex items-center gap-6 shadow-2xl shadow-[#3d2b1f]/10"
         >
           <div className="flex items-center gap-3">
-            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
-            <span className="text-sm font-medium text-gray-300">System Ready</span>
+            <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-sm font-bold text-[#3d2b1f]">System Active</span>
           </div>
-          <div className="h-4 w-px bg-white/10"></div>
+          <div className="h-4 w-px bg-[#d4a373]/30" />
           <button 
             onClick={() => navigate('/dashboard')}
-            className="text-sm font-bold text-blue-400 hover:text-blue-300 transition-colors"
+            className="text-sm font-black text-[#d4a373] hover:text-[#b5835a] transition-colors"
           >
             Launch Dashboard
           </button>
         </motion.div>
       </div>
 
-      <footer className="relative z-10 py-20 text-center border-t border-white/5">
-        <p className="text-gray-500">© 2026 Sambhaash AI. All rights reserved.</p>
+      <footer className="relative z-10 py-16 text-center border-t border-[#faedcd]">
+        <p className="text-[#3d2b1f]/60 font-semibold font-display">© 2026 Sambhaash AI. All rights reserved.</p>
       </footer>
     </div>
   );

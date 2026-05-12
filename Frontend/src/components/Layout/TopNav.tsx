@@ -60,10 +60,10 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick, hideMenuButton }) =
         <div className="relative">
           <button 
             aria-label="Show notifications"
-            className="p-2.5 hover:bg-white/80 rounded-xl transition-colors relative border border-transparent hover:border-gray-100 shadow-sm">
-            <Bell size={20} className="text-gray-600" />
+            className="p-2.5 bg-white/40 hover:bg-[#faedcd]/60 rounded-xl transition-colors relative border border-[#faedcd]/40 shadow-sm">
+            <Bell size={20} className="text-[#3d2b1f]" />
             {notifications > 0 && (
-              <span className="absolute top-2 right-2 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center border-2 border-white">
+              <span className="absolute top-2 right-2 bg-[#d4a373] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center border-2 border-[#fefae0]">
                 {notifications}
               </span>
             )}
@@ -76,16 +76,16 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick, hideMenuButton }) =
             onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
             aria-haspopup="menu"
             aria-expanded={isUserMenuOpen}
-            className="flex items-center gap-3 px-3 py-1.5 hover:bg-white/80 rounded-xl transition-colors border border-transparent hover:border-gray-100 shadow-sm"
+            className="flex items-center gap-3 px-3 py-1.5 bg-white/40 hover:bg-[#faedcd]/60 rounded-xl transition-colors border border-[#faedcd]/40 shadow-sm"
           >
-            <div className="w-9 h-9 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-bold shadow-md shadow-blue-500/20">
+            <div className="w-9 h-9 bg-gradient-to-br from-[#d4a373] to-[#b5835a] rounded-full flex items-center justify-center text-white font-bold shadow-md shadow-[#d4a373]/20">
               {currentUser.name.charAt(0)}
             </div>
             <div className="hidden sm:block text-left">
-              <p className="text-sm font-bold text-gray-900 leading-tight">
+              <p className="text-sm font-bold text-[#2d1e18] leading-tight">
                 {currentUser.name}
               </p>
-              <p className="text-[10px] text-gray-500 uppercase tracking-wider font-semibold">{currentUser.role}</p>
+              <p className="text-[10px] text-[#3d2b1f]/60 uppercase tracking-wider font-semibold">{currentUser.role}</p>
             </div>
           </button>
 
@@ -96,23 +96,23 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick, hideMenuButton }) =
                 className="fixed inset-0 z-30"
                 onClick={() => setIsUserMenuOpen(false)}
               />
-              <div className="absolute right-0 mt-2 w-56 bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-gray-100 z-40 overflow-hidden py-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                <div className="px-4 py-3 mb-2 border-b border-gray-50">
-                  <p className="text-sm font-bold text-gray-900">
+              <div className="absolute right-0 mt-2 w-56 bg-[#fefae0]/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-[#faedcd] z-40 overflow-hidden py-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="px-4 py-3 mb-2 border-b border-[#faedcd]">
+                  <p className="text-sm font-bold text-[#2d1e18]">
                     {currentUser.name}
                   </p>
-                  <p className="text-xs text-gray-500">{currentUser.email}</p>
+                  <p className="text-xs text-[#3d2b1f]/60">{currentUser.email}</p>
                 </div>
-                <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-colors">
+                <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#3d2b1f] hover:bg-[#faedcd]/50 hover:text-[#2d1e18] transition-colors">
                   <User size={16} />
                   Profile Details
                 </button>
-                <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-colors">
+                <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#3d2b1f] hover:bg-[#faedcd]/50 hover:text-[#2d1e18] transition-colors">
                   <Settings size={16} />
                   Account Settings
                 </button>
-                <div className="px-2 mt-2 pt-2 border-t border-gray-50">
-                  <button className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-500 hover:bg-red-50 rounded-xl transition-colors">
+                <div className="px-2 mt-2 pt-2 border-t border-[#faedcd]">
+                  <button className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50/50 rounded-xl transition-colors">
                     <LogOut size={16} />
                     Sign Out
                   </button>

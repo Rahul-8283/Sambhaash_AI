@@ -6,20 +6,20 @@ import type { LeadStatus, ScoreClassification, UserRole } from "../types/index";
 
 // Status colors - supports LeadStatus AND Call statuses
 export const STATUS_COLORS: Record<LeadStatus | "Connected" | "No Answer" | "Failed" | string, string> = {
-  "Not Called": "bg-gray-100 text-gray-800",
-  "Calling": "bg-blue-100 text-blue-800",
-  "Connected": "bg-green-100 text-green-800",
-  "No Answer": "bg-yellow-100 text-yellow-800",
-  "Failed": "bg-red-100 text-red-800",
-  "Completed": "bg-green-100 text-green-800",
+  "Not Called": "bg-[#faedcd]/40 text-[#3d2b1f]/70 border border-[#faedcd]",
+  "Calling": "bg-[#d4a373]/20 text-[#d4a373] border border-[#d4a373]/30",
+  "Connected": "bg-emerald-100/50 text-emerald-800 border border-emerald-200/50",
+  "No Answer": "bg-amber-100/50 text-amber-800 border border-amber-200/50",
+  "Failed": "bg-rose-100/50 text-rose-800 border border-rose-200/50",
+  "Completed": "bg-emerald-100/50 text-emerald-800 border border-emerald-200/50",
 };
 
 // Score colors
 export const SCORE_COLORS: Record<ScoreClassification, string> = {
-  "Hot": "bg-red-100 text-red-800",
-  "Warm": "bg-yellow-100 text-yellow-800",
-  "Cold": "bg-blue-100 text-blue-800",
-  "Unscored": "bg-gray-100 text-gray-800",
+  "Hot": "bg-rose-100/50 text-rose-800 border border-rose-200/50",
+  "Warm": "bg-amber-100/50 text-amber-800 border border-amber-200/50",
+  "Cold": "bg-blue-100/50 text-blue-800 border border-blue-200/50",
+  "Unscored": "bg-[#faedcd]/40 text-[#3d2b1f]/70 border border-[#faedcd]",
 };
 
 export const SCORE_ICONS: Record<ScoreClassification, string> = {
@@ -31,16 +31,16 @@ export const SCORE_ICONS: Record<ScoreClassification, string> = {
 
 // Priority colors
 export const PRIORITY_COLORS: Record<string, string> = {
-  "High": "bg-red-100 text-red-800",
-  "Medium": "bg-yellow-100 text-yellow-800",
-  "Low": "bg-green-100 text-green-800",
+  "High": "bg-rose-100/50 text-rose-800 border border-rose-200/50",
+  "Medium": "bg-amber-100/50 text-amber-800 border border-amber-200/50",
+  "Low": "bg-emerald-100/50 text-emerald-800 border border-emerald-200/50",
 };
 
 // Sentiment colors
 export const SENTIMENT_COLORS: Record<string, string> = {
-  "Positive": "bg-green-100 text-green-800",
-  "Neutral": "bg-gray-100 text-gray-800",
-  "Negative": "bg-red-100 text-red-800",
+  "Positive": "bg-emerald-100/50 text-emerald-800 border border-emerald-200/50",
+  "Neutral": "bg-amber-100/50 text-amber-800 border border-amber-200/50",
+  "Negative": "bg-rose-100/50 text-rose-800 border border-rose-200/50",
 };
 
 // Tone options for prompt settings
