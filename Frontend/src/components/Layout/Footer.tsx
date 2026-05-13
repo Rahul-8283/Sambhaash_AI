@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Zap, Github } from "lucide-react";
+import { Github } from "lucide-react";
 
 export const Footer: React.FC = () => {
   const navigate = useNavigate();
@@ -11,8 +11,8 @@ export const Footer: React.FC = () => {
         {/* Brand Column */}
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <span className="p-2 rounded-xl bg-[#d4a373]/10 text-[#d4a373] flex items-center justify-center">
-              <Zap size={20} fill="#d4a373" />
+            <span className="p-1 rounded-xl bg-[#d4a373]/10 flex items-center justify-center">
+              <img src="/logo.png" className="w-8 h-8 object-contain" alt="Sambhaash AI" />
             </span>
             <span className="text-xl font-black text-[#2d1e18] font-display">Sambhaash AI</span>
           </div>

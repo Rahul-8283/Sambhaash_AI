@@ -3,7 +3,6 @@ import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users,
-  Zap,
   Settings,
   FileText,
   Target,
@@ -50,9 +49,11 @@ const ModernSidebar: React.FC<ModernSidebarProps> = ({ isOpen, onToggle }) => {
         {/* Header */}
         <div className="p-6 flex items-center">
           <Link to="/" className="flex items-center gap-4 group">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-[#d4a373] to-[#b5835a] flex items-center justify-center text-white shrink-0 shadow-lg shadow-[#d4a373]/30 group-hover:scale-105 transition-transform duration-200">
-              <Zap size={22} fill="white" className="drop-shadow-sm" />
-            </div>
+            <img 
+              src="/logo.png" 
+              className="w-10 h-10 object-contain shrink-0 group-hover:scale-105 transition-transform duration-200" 
+              alt="Sambhaash logo" 
+            />
             <AnimatePresence mode="wait">
               {isOpen && (
                 <motion.span

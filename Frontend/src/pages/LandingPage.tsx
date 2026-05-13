@@ -7,7 +7,6 @@ import {
   Cpu,
   Globe,
   Database,
-  Zap,
   MessageSquare,
   ShieldCheck,
   UserCheck
@@ -101,7 +100,7 @@ export const LandingPage: React.FC = () => {
           transition={{ duration: 0.8 }}
           className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#faedcd] border border-[#d4a373]/30 text-[#a87440] mb-8 shadow-sm"
         >
-          <Zap size={16} fill="#d4a373" className="text-[#d4a373]" />
+          <img src="/logo.png" className="w-5 h-5 object-contain" alt="" />
           <span className="text-xs font-bold uppercase tracking-wider">Enterprise AI Telephony</span>
         </motion.div>
 
