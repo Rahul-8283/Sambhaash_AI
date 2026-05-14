@@ -81,7 +81,7 @@ export const LandingPage: React.FC = () => {
       {/* Dynamic Golden Snowfall Background */}
       <Snowfall
         color="#d4a373"
-        snowflakeCount={180}
+        snowflakeCount={190}
         style={{
           position: "fixed",
           width: "100vw",
