@@ -33,29 +33,27 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick, hideMenuButton }) =
       return "Administrator";
     };
 
-    // 1. Load active user session immediately on mount
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        const meta = session.user.user_metadata;
-        setCurrentUser({
-          name: meta?.full_name || session.user.email?.split("@")[0] || "User",
-          email: session.user.email || "",
-          role: getSavedRole(),
-          avatar: meta?.avatar_url || ""
-        });
-      }
-    });
+    const syncUserData = () => {
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.user) {
+          const meta = session.user.user_metadata;
+          setCurrentUser({
+            name: meta?.full_name || session.user.email?.split("@")[0] || "User",
+            email: session.user.email || "",
+            role: getSavedRole(), // 💾 Only role/designation is from local storage
+            avatar: meta?.avatar_url || ""
+          });
+        }
+      });
+    };
+
+    // 1. Initial Sync
+    syncUserData();
 
     // 2. Listen to real-time auth changes (Sign-in / Sign-out)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
-        const meta = session.user.user_metadata;
-        setCurrentUser({
-          name: meta?.full_name || session.user.email?.split("@")[0] || "User",
-          email: session.user.email || "",
-          role: getSavedRole(),
-          avatar: meta?.avatar_url || ""
-        });
+        syncUserData();
       } else {
         // Fallback default if not logged in
         setCurrentUser({
@@ -67,8 +65,14 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick, hideMenuButton }) =
       }
     });
 
+    // 3. Listen to local profile updates to synchronize the custom designation immediately
+    window.addEventListener("user-profile-updated", syncUserData);
+    window.addEventListener("storage", syncUserData);
+
     return () => {
       subscription.unsubscribe();
+      window.removeEventListener("user-profile-updated", syncUserData);
+      window.removeEventListener("storage", syncUserData);
     };
   }, []);
 
@@ -98,7 +102,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick, hideMenuButton }) =
       <div className="flex items-center gap-4">
         {/* Notifications */}
         <div className="relative">
-          <button 
+          <button
             aria-label="Show notifications"
             className="p-2.5 bg-white/40 hover:bg-[#faedcd]/60 rounded-xl transition-colors relative border border-[#faedcd]/40 shadow-sm">
             <Bell size={20} className="text-[#3d2b1f]" />
@@ -152,7 +156,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick, hideMenuButton }) =
                   </p>
                   <p className="text-xs text-[#3d2b1f]/60">{currentUser.email}</p>
                 </div>
-                <button 
+                <button
                   onClick={() => {
                     setIsUserMenuOpen(false);
                     navigate("/dashboard/settings/profile");
@@ -163,7 +167,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick, hideMenuButton }) =
                   Settings
                 </button>
                 <div className="px-2 mt-2 pt-2 border-t border-[#faedcd]">
-                  <button 
+                  <button
                     onClick={handleSignOut}
                     className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50/50 rounded-xl transition-colors cursor-pointer"
                   >

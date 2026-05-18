@@ -151,8 +151,8 @@ export const ProfileSettingsPage: React.FC = () => {
                 <input
                   type="email"
                   value={profile.email}
-                  onChange={(e) => setProfile({ ...profile, email: e.target.value })}
-                  className="w-full pl-11 pr-4 py-3 bg-white/70 border border-[#faedcd] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#d4a373]/30 focus:border-[#d4a373] transition-all font-semibold text-[#3d2b1f]"
+                  readOnly
+                  className="w-full pl-11 pr-4 py-3 bg-gray-100/50 border border-[#faedcd]/60 rounded-2xl cursor-not-allowed font-semibold text-[#3d2b1f]/60"
                   placeholder="Enter email address"
                 />
               </div>
@@ -161,7 +161,7 @@ export const ProfileSettingsPage: React.FC = () => {
             {/* Role/Designation Input */}
             <div className="space-y-2">
               <label className="block text-xs font-bold text-[#3d2b1f]/60 uppercase tracking-wide">
-                Role / Designation
+                Role
               </label>
               <div className="relative">
                 <span className="absolute inset-y-0 left-0 flex items-center pl-4 text-[#3d2b1f]/40">
