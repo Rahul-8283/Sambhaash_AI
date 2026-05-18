@@ -12,9 +12,24 @@ import {
   UserCheck
 } from "lucide-react";
 import Footer from "../components/Layout/Footer";
+import { supabase } from "../services/supabase";
 
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
+
+  const handleGoogleSignIn = async () => {
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: window.location.origin + "/dashboard/leads",
+        },
+      });
+      if (error) throw error;
+    } catch (err: any) {
+      console.error("Sign in failed:", err.message);
+    }
+  };
 
   const fadeIn = {
     initial: { opacity: 0, y: 20 },
@@ -131,7 +146,10 @@ export const LandingPage: React.FC = () => {
             Go to Admin Dashboard
             <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
           </button>
-          <button className="px-8 py-4 rounded-2xl bg-[#faedcd] border border-[#d4a373]/20 text-[#3d2b1f] font-bold hover:bg-[#f5e3b8] transition-all duration-300 shadow-sm active:scale-95 flex items-center gap-3 cursor-pointer">
+          <button 
+            onClick={handleGoogleSignIn}
+            className="px-8 py-4 rounded-2xl bg-[#faedcd] border border-[#d4a373]/20 text-[#3d2b1f] font-bold hover:bg-[#f5e3b8] transition-all duration-300 shadow-sm active:scale-95 flex items-center gap-3 cursor-pointer"
+          >
             <svg className="w-5 h-5 shrink-0" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
               <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
