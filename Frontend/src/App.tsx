@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "./components/Layout/MainLayout";
+import ProtectedRoute from "./components/Auth/ProtectedRoute";
 
 // Pages
 import LandingPage from "./pages/LandingPage";
@@ -16,16 +17,22 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<LandingPage />} />
-        <Route path="/dashboard/*" element={<MainLayout><Routes>
-          <Route path="leads" element={<LeadsPage />} />
-          <Route path="leads/:id" element={<LeadDetailPage />} />
-          <Route path="calls" element={<CallsPage />} />
-          <Route path="analytics" element={<AnalyticsPage />} />
-          <Route path="appendix" element={<AppendixPage />} />
-          <Route path="rm" element={<RMPage />} />
-          <Route path="settings/profile" element={<ProfileSettingsPage />} />
-          <Route path="*" element={<Navigate to="/dashboard/leads" replace />} />
-        </Routes></MainLayout>} />
+        <Route path="/dashboard/*" element={
+          <ProtectedRoute>
+            <MainLayout>
+              <Routes>
+                <Route path="leads" element={<LeadsPage />} />
+                <Route path="leads/:id" element={<LeadDetailPage />} />
+                <Route path="calls" element={<CallsPage />} />
+                <Route path="analytics" element={<AnalyticsPage />} />
+                <Route path="appendix" element={<AppendixPage />} />
+                <Route path="rm" element={<RMPage />} />
+                <Route path="settings/profile" element={<ProfileSettingsPage />} />
+                <Route path="*" element={<Navigate to="/dashboard/leads" replace />} />
+              </Routes>
+            </MainLayout>
+          </ProtectedRoute>
+        } />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

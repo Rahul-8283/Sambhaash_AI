@@ -16,6 +16,7 @@ import logging
 from services.database.supabase_client import get_db_client, SupabaseClient
 from services.database.repository import Repository
 from services.database.models import LeadStatus
+from api.auth import get_current_user
 
 logger = logging.getLogger(__name__)
 
@@ -128,7 +129,11 @@ async def get_repository() -> Repository:
 
 # ==================== ROUTER ====================
 
-router = APIRouter(prefix="/api/leads", tags=["leads"])
+router = APIRouter(
+    prefix="/api/leads",
+    tags=["leads"],
+    dependencies=[Depends(get_current_user)]
+)
 
 
 # ==================== ENDPOINTS ====================

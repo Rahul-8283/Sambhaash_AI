@@ -192,29 +192,31 @@ export const RMPage: React.FC = () => {
         </div>
 
         {/* RM Assignment Filter */}
-        <div className="flex flex-wrap items-center gap-3">
-          <span className="text-xs font-bold text-[#3d2b1f]/80 uppercase tracking-wider flex items-center gap-1.5">
+        <div className="flex flex-col lg:flex-row lg:items-center gap-3 w-full lg:w-auto">
+          <span className="text-xs font-bold text-[#3d2b1f]/80 uppercase tracking-wider flex items-center gap-1.5 shrink-0">
             <Filter size={16} /> Filter by Assignment:
           </span>
-          <div className="flex rounded-xl p-1 bg-[#faedcd]/30 border border-[#faedcd]/60">
-            {[
-              { id: "all", label: "All" },
-              { id: "unassigned", label: "Unassigned" },
-              { id: "assigned", label: "Assigned" },
-              ...AVAILABLE_RMS.map(name => ({ id: name, label: name.split(" ")[0] }))
-            ].map(tab => (
-              <button
-                key={tab.id}
-                onClick={() => setSelectedRmFilter(tab.id)}
-                className={`px-3.5 py-1.5 rounded-lg text-xs font-bold tracking-wide transition-all duration-200 cursor-pointer ${
-                  selectedRmFilter === tab.id 
-                    ? "bg-[#d4a373] text-white shadow-sm" 
-                    : "text-[#3d2b1f]/60 hover:text-[#3d2b1f]"
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
+          <div className="overflow-x-auto no-scrollbar scroll-smooth p-1 bg-[#faedcd]/30 border border-[#faedcd]/60 rounded-xl max-w-full">
+            <div className="flex flex-nowrap gap-1">
+              {[
+                { id: "all", label: "All" },
+                { id: "unassigned", label: "Unassigned" },
+                { id: "assigned", label: "Assigned" },
+                ...AVAILABLE_RMS.map(name => ({ id: name, label: name.split(" ")[0] }))
+              ].map(tab => (
+                <button
+                  key={tab.id}
+                  onClick={() => setSelectedRmFilter(tab.id)}
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold tracking-wide transition-all duration-200 cursor-pointer whitespace-nowrap ${
+                    selectedRmFilter === tab.id 
+                      ? "bg-[#d4a373] text-white shadow-sm" 
+                      : "text-[#3d2b1f]/60 hover:text-[#3d2b1f]"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
           </div>
         </div>
       </div>

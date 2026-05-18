@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -21,6 +21,15 @@ interface ModernSidebarProps {
 const ModernSidebar: React.FC<ModernSidebarProps> = ({ isOpen, onToggle }) => {
   const location = useLocation();
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(typeof window !== "undefined" ? window.innerWidth < 768 : false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const isActive = (path: string) => location.pathname.startsWith(path);
 
@@ -42,9 +51,16 @@ const ModernSidebar: React.FC<ModernSidebarProps> = ({ isOpen, onToggle }) => {
       {/* Sidebar Container */}
       <motion.aside
         initial={false}
-        animate={{ width: isOpen ? 260 : 80 }}
+        animate={{ 
+          width: isMobile ? (isOpen ? 260 : 0) : (isOpen ? 260 : 80),
+          x: isMobile ? (isOpen ? 0 : -320) : 0,
+          opacity: isMobile ? (isOpen ? 1 : 0) : 1
+        }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="fixed left-4 top-4 bottom-4 z-50 bg-[#faedcd]/90 backdrop-blur-2xl border border-[#d4a373]/30 rounded-[2rem] shadow-2xl flex flex-col overflow-hidden"
+        className={clsx(
+          "fixed left-4 top-4 bottom-4 z-50 bg-[#faedcd]/90 backdrop-blur-2xl border border-[#d4a373]/30 rounded-[2rem] shadow-2xl flex flex-col overflow-hidden",
+          isMobile && !isOpen && "pointer-events-none"
+        )}
       >
         {/* Header */}
         <div className="p-6 flex items-center">
@@ -147,9 +163,9 @@ const ModernSidebar: React.FC<ModernSidebarProps> = ({ isOpen, onToggle }) => {
       {/* Synchronized Spacer */}
       <motion.div 
         initial={false}
-        animate={{ width: isOpen ? 260 : 80 }}
+        animate={{ width: isMobile ? 0 : (isOpen ? 260 : 80) }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
-        className="shrink-0"
+        className="shrink-0 hidden md:block"
       />
     </>
   );
