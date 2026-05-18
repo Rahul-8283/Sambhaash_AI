@@ -141,26 +141,26 @@ export const LeadsPage: React.FC = () => {
   };
 
   return (
-    <div className="p-6 pt-2 space-y-6">
+    <div className="p-4 md:p-6 pt-2 space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-black text-[#2d1e18] font-display">Leads Queue</h1>
+          <h1 className="text-2xl md:text-3xl font-black text-[#2d1e18] font-display">Leads Queue</h1>
           <p className="text-sm font-semibold text-[#3d2b1f]/70">Track, manage, and engage {total} system leads</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <button
             onClick={() => setShowUploadModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-[#faedcd] border border-[#d4a373]/30 text-[#3d2b1f] font-bold rounded-2xl hover:bg-[#faedcd]/80 transition-all shadow-sm"
+            className="flex items-center gap-2 px-3 md:px-4 py-2 bg-[#faedcd] border border-[#d4a373]/30 text-[#3d2b1f] font-bold rounded-2xl hover:bg-[#faedcd]/80 transition-all shadow-sm text-sm cursor-pointer"
           >
-            <Upload size={20} className="text-[#3d2b1f]/80" />
+            <Upload size={18} className="text-[#3d2b1f]/80" />
             Upload CSV
           </button>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-[#d4a373] text-white font-bold rounded-2xl hover:bg-[#b5835a] transition-all shadow-lg shadow-[#d4a373]/20"
+            className="flex items-center gap-2 px-3 md:px-4 py-2 bg-[#d4a373] text-white font-bold rounded-2xl hover:bg-[#b5835a] transition-all shadow-lg shadow-[#d4a373]/20 text-sm cursor-pointer"
           >
-            <Plus size={20} />
+            <Plus size={18} />
             Add Lead
           </button>
         </div>
