@@ -92,6 +92,10 @@ The overall functional flow of Sambhaash AI covers the entire lifecycle—from t
 VITE_API_BASE_URL_DEV=http://127.0.0.1:8000
 VITE_API_BASE_URL_PRO=https://your-production-api-domain.com
 MODE=development
+
+# Supabase Client Configurations
+VITE_SUPABASE_URL=https://your-supabase-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your-supabase-anon-public-key
 ```
 
 3. Install dependencies and start the development server:
