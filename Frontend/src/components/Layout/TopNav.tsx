@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { Menu, Bell, LogOut, Settings, User } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { supabase } from "../../services/supabase";
 
 interface TopNavProps {
   onMenuClick: () => void;
@@ -7,39 +9,65 @@ interface TopNavProps {
 }
 
 export const TopNav: React.FC<TopNavProps> = ({ onMenuClick, hideMenuButton }) => {
+  const navigate = useNavigate();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [notifications] = useState(3);
 
-  const [currentUser, setCurrentUser] = React.useState(() => {
-    const saved = localStorage.getItem("user_profile");
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {}
-    }
-    return {
-      name: "ADMIN",
-      email: "admin@sambhaash.ai",
-      role: "sambhaash ai",
-    };
+  const [currentUser, setCurrentUser] = React.useState({
+    name: "ADMIN",
+    email: "admin@sambhaash.ai",
+    role: "sambhaash ai",
+    avatar: ""
   });
 
   React.useEffect(() => {
-    const handleProfileChange = () => {
-      const saved = localStorage.getItem("user_profile");
-      if (saved) {
-        try {
-          setCurrentUser(JSON.parse(saved));
-        } catch (e) {}
+    // 1. Load active user session immediately on mount
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        const meta = session.user.user_metadata;
+        setCurrentUser({
+          name: meta?.full_name || session.user.email?.split("@")[0] || "User",
+          email: session.user.email || "",
+          role: "Administrator",
+          avatar: meta?.avatar_url || ""
+        });
       }
-    };
-    window.addEventListener("user-profile-updated", handleProfileChange);
-    window.addEventListener("storage", handleProfileChange);
+    });
+
+    // 2. Listen to real-time auth changes (Sign-in / Sign-out)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        const meta = session.user.user_metadata;
+        setCurrentUser({
+          name: meta?.full_name || session.user.email?.split("@")[0] || "User",
+          email: session.user.email || "",
+          role: "Administrator",
+          avatar: meta?.avatar_url || ""
+        });
+      } else {
+        // Fallback default if not logged in
+        setCurrentUser({
+          name: "ADMIN",
+          email: "admin@sambhaash.ai",
+          role: "sambhaash ai",
+          avatar: ""
+        });
+      }
+    });
+
     return () => {
-      window.removeEventListener("user-profile-updated", handleProfileChange);
-      window.removeEventListener("storage", handleProfileChange);
+      subscription.unsubscribe();
     };
   }, []);
+
+  const handleSignOut = async () => {
+    try {
+      await supabase.auth.signOut();
+      navigate("/");
+    } catch (e) {
+      console.error("Sign out failed", e);
+    }
+  };
 
   return (
     <div className="flex items-center gap-4">
@@ -78,9 +106,18 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick, hideMenuButton }) =
             aria-expanded={isUserMenuOpen}
             className="flex items-center gap-3 px-3 py-1.5 bg-white/40 hover:bg-[#faedcd]/60 rounded-xl transition-colors border border-[#faedcd]/40 shadow-sm"
           >
-            <div className="w-9 h-9 bg-gradient-to-br from-[#d4a373] to-[#b5835a] rounded-full flex items-center justify-center text-white font-bold shadow-md shadow-[#d4a373]/20">
-              {currentUser.name.charAt(0)}
-            </div>
+            {currentUser.avatar ? (
+              <img
+                src={currentUser.avatar}
+                alt={currentUser.name}
+                referrerPolicy="no-referrer"
+                className="w-9 h-9 rounded-full object-cover border-2 border-[#d4a373]/30 shadow-md shadow-[#d4a373]/20"
+              />
+            ) : (
+              <div className="w-9 h-9 bg-gradient-to-br from-[#d4a373] to-[#b5835a] rounded-full flex items-center justify-center text-white font-bold shadow-md shadow-[#d4a373]/20">
+                {currentUser.name.charAt(0)}
+              </div>
+            )}
             <div className="hidden sm:block text-left">
               <p className="text-sm font-bold text-[#2d1e18] leading-tight">
                 {currentUser.name}
@@ -112,7 +149,10 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick, hideMenuButton }) =
                   Account Settings
                 </button>
                 <div className="px-2 mt-2 pt-2 border-t border-[#faedcd]">
-                  <button className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50/50 rounded-xl transition-colors">
+                  <button 
+                    onClick={handleSignOut}
+                    className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50/50 rounded-xl transition-colors cursor-pointer"
+                  >
                     <LogOut size={16} />
                     Sign Out
                   </button>
