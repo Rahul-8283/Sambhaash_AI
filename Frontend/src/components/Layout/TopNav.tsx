@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Menu, Bell, LogOut, Settings, User } from "lucide-react";
+import { Menu, Bell, LogOut, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../services/supabase";
 
@@ -140,13 +140,15 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick, hideMenuButton }) =
                   </p>
                   <p className="text-xs text-[#3d2b1f]/60">{currentUser.email}</p>
                 </div>
-                <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#3d2b1f] hover:bg-[#faedcd]/50 hover:text-[#2d1e18] transition-colors">
-                  <User size={16} />
-                  Profile Details
-                </button>
-                <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#3d2b1f] hover:bg-[#faedcd]/50 hover:text-[#2d1e18] transition-colors">
+                <button 
+                  onClick={() => {
+                    setIsUserMenuOpen(false);
+                    navigate("/dashboard/settings/profile");
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-[#3d2b1f] hover:bg-[#faedcd]/50 hover:text-[#2d1e18] transition-colors cursor-pointer"
+                >
                   <Settings size={16} />
-                  Account Settings
+                  Settings
                 </button>
                 <div className="px-2 mt-2 pt-2 border-t border-[#faedcd]">
                   <button 
