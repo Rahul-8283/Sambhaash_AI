@@ -13,9 +13,51 @@ import {
 } from "lucide-react";
 import Footer from "../components/Layout/Footer";
 import { supabase } from "../services/supabase";
+import toast from "react-hot-toast";
 
 export const LandingPage: React.FC = () => {
   const navigate = useNavigate();
+  const [hasSession, setHasSession] = React.useState(false);
+
+  React.useEffect(() => {
+    // 1. Initial session check
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setHasSession(!!session);
+    });
+
+    // 2. Real-time auth listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setHasSession(!!session);
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, []);
+
+  const handleDashboardClick = () => {
+    if (hasSession) {
+      navigate("/dashboard/leads");
+    } else {
+      toast.error("Please connect with Google first in order to access the admin dashboard!", {
+        duration: 5000,
+        style: {
+          background: "#fefae0",
+          color: "#3d2b1f",
+          border: "2px solid #faedcd",
+          fontWeight: "bold",
+          fontSize: "14px",
+          borderRadius: "20px",
+          boxShadow: "0 20px 25px -5px rgba(61, 43, 31, 0.1)",
+          padding: "16px 20px"
+        },
+        iconTheme: {
+          primary: "#d4a373",
+          secondary: "#fefae0"
+        }
+      });
+    }
+  };
 
   const handleGoogleSignIn = async () => {
     try {
@@ -140,8 +182,8 @@ export const LandingPage: React.FC = () => {
           transition={{ delay: 0.4 }}
         >
           <button
-            onClick={() => navigate('/dashboard')}
-            className="group relative px-8 py-4 rounded-2xl bg-[#d4a373] text-white hover:bg-[#c39162] transition-all duration-300 font-bold flex items-center gap-2 shadow-lg shadow-[#d4a373]/20 hover:shadow-[#d4a373]/30 active:scale-95"
+            onClick={handleDashboardClick}
+            className="group relative px-8 py-4 rounded-2xl bg-[#d4a373] text-white hover:bg-[#c39162] transition-all duration-300 font-bold flex items-center gap-2 shadow-lg shadow-[#d4a373]/20 hover:shadow-[#d4a373]/30 active:scale-95 cursor-pointer"
           >
             Go to Admin Dashboard
             <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
@@ -222,8 +264,8 @@ export const LandingPage: React.FC = () => {
           </div>
           <div className="h-4 w-px bg-[#d4a373]/30" />
           <button
-            onClick={() => navigate('/dashboard')}
-            className="text-sm font-black text-[#d4a373] hover:text-[#b5835a] transition-colors"
+            onClick={handleDashboardClick}
+            className="text-sm font-black text-[#d4a373] hover:text-[#b5835a] transition-colors cursor-pointer"
           >
             Launch Dashboard
           </button>

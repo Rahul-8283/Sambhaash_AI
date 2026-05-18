@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "./components/Layout/MainLayout";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
+import { Toaster } from "react-hot-toast";
 
 // Pages
 import LandingPage from "./pages/LandingPage";
@@ -15,6 +16,7 @@ import ProfileSettingsPage from "./pages/ProfileSettingsPage";
 function App() {
   return (
     <BrowserRouter>
+      <Toaster position="top-center" reverseOrder={false} />
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/dashboard/*" element={

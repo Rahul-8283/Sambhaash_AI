@@ -71,10 +71,10 @@ export const ProfileSettingsPage: React.FC = () => {
       window.dispatchEvent(new Event("user-profile-updated"));
       
       setSuccess(true);
-      toast.success("Profile updated in Supabase cloud!");
+      toast.success("Profile updated successfully!");
     } catch (e: any) {
       console.error("Failed to update profile in Supabase:", e);
-      toast.error(e.message || "Failed to update cloud profile.");
+      toast.error(e.message || "Failed to update profile.");
     } finally {
       setSaving(false);
       setTimeout(() => setSuccess(false), 3000);
