@@ -17,16 +17,25 @@ export const ProfileSettingsPage: React.FC = () => {
   // Load active session from Supabase on mount
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
+      // 💾 Check for customized designation in local storage first
+      const saved = localStorage.getItem("user_profile");
+      let savedRole = "Administrator";
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.role) savedRole = parsed.role;
+        } catch (e) {}
+      }
+
       if (session?.user) {
         const meta = session.user.user_metadata;
         setProfile({
           name: meta?.full_name || session.user.email?.split("@")[0] || "User",
           email: session.user.email || "",
-          role: "Administrator",
+          role: savedRole,
           avatar: meta?.avatar_url || ""
         });
       } else {
-        const saved = localStorage.getItem("user_profile");
         if (saved) {
           try {
             const parsed = JSON.parse(saved);
@@ -50,7 +59,7 @@ export const ProfileSettingsPage: React.FC = () => {
 
     try {
       // ☁️ Update the user metadata directly in Supabase database!
-      const { data, error } = await supabase.auth.updateUser({
+      const { error } = await supabase.auth.updateUser({
         data: { full_name: profile.name }
       });
 

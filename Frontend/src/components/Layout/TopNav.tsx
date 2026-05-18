@@ -21,6 +21,18 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick, hideMenuButton }) =
   });
 
   React.useEffect(() => {
+    // Helper function to read saved designation from localStorage
+    const getSavedRole = () => {
+      const saved = localStorage.getItem("user_profile");
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          if (parsed.role) return parsed.role;
+        } catch (e) {}
+      }
+      return "Administrator";
+    };
+
     // 1. Load active user session immediately on mount
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
@@ -28,7 +40,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick, hideMenuButton }) =
         setCurrentUser({
           name: meta?.full_name || session.user.email?.split("@")[0] || "User",
           email: session.user.email || "",
-          role: "Administrator",
+          role: getSavedRole(),
           avatar: meta?.avatar_url || ""
         });
       }
@@ -41,7 +53,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick, hideMenuButton }) =
         setCurrentUser({
           name: meta?.full_name || session.user.email?.split("@")[0] || "User",
           email: session.user.email || "",
-          role: "Administrator",
+          role: getSavedRole(),
           avatar: meta?.avatar_url || ""
         });
       } else {
