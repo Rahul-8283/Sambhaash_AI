@@ -11,7 +11,7 @@ export const Footer: React.FC = () => {
         {/* Brand Column */}
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <span className="p-1 rounded-xl bg-[#d4a373]/10 flex items-center justify-center">
+            <span className="p-1 rounded-2xl bg-[#d4a373]/10 flex items-center justify-center">
               <img src="/logo.png" className="w-8 h-8 object-contain" alt="Sambhaash AI" />
             </span>
             <span className="text-xl font-black text-[#2d1e18] font-display">Sambhaash AI</span>
@@ -82,7 +82,7 @@ export const Footer: React.FC = () => {
             href="https://github.com/Rahul-8283/Sambhaash_AI" 
             target="_blank" 
             rel="noopener noreferrer" 
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-[#3d2b1f]/15 bg-white/40 hover:bg-[#d4a373] hover:border-[#d4a373] text-[#3d2b1f]/80 hover:text-white transition-all duration-300 shadow-sm hover:shadow-md hover:scale-[1.03] active:scale-95 cursor-pointer font-bold"
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-2xl border border-[#3d2b1f]/15 bg-white/40 hover:bg-[#d4a373] hover:border-[#d4a373] text-[#3d2b1f]/80 hover:text-white transition-all duration-300 shadow-sm hover:shadow-md hover:scale-[1.03] active:scale-95 cursor-pointer font-bold"
           >
             <Github size={14} /> 
             <span>GitHub Repository</span>

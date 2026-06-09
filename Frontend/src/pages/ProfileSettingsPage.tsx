@@ -91,7 +91,7 @@ export const ProfileSettingsPage: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Side: Avatar Card */}
-        <div className="lg:col-span-1 bg-white/50 backdrop-blur-sm border border-[#faedcd]/60 rounded-3xl p-6 shadow-xl flex flex-col items-center justify-center text-center relative overflow-hidden group">
+        <div className="lg:col-span-1 bg-white/50 backdrop-blur-sm border border-[#faedcd]/60 rounded-2xl p-6 shadow-xl flex flex-col items-center justify-center text-center relative overflow-hidden group">
           <div className="absolute inset-0 bg-gradient-to-b from-[#faedcd]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
           
           {profile.avatar ? (
@@ -108,12 +108,12 @@ export const ProfileSettingsPage: React.FC = () => {
           )}
           
           <h2 className="text-xl font-black text-[#2d1e18] font-display">{profile.name || "ADMIN"}</h2>
-          <p className="text-[10px] text-[#3d2b1f] uppercase font-black tracking-widest mt-1 bg-[#faedcd] px-3 py-1 rounded-full border border-[#d4a373]/20">{profile.role || "Administrator"}</p>
+          <p className="text-[10px] text-[#3d2b1f] uppercase font-black tracking-widest mt-1 bg-[#faedcd] px-3 py-1 rounded-2xl border border-[#d4a373]/20">{profile.role || "Administrator"}</p>
           <p className="text-xs font-semibold text-[#3d2b1f]/50 mt-2 break-all">{profile.email || "admin@sambhaash.ai"}</p>
         </div>
 
         {/* Right Side: Edit Form */}
-        <div className="lg:col-span-2 glass rounded-3xl p-8 border border-[#faedcd]/60 shadow-xl bg-white/40 space-y-6">
+        <div className="lg:col-span-2 glass rounded-2xl p-8 border border-[#faedcd]/60 shadow-xl bg-white/40 space-y-6">
           <h3 className="text-lg font-black text-[#2d1e18] flex items-center gap-2 pb-4 border-b border-[#faedcd]/60 font-display">
             <User size={20} className="text-[#d4a373]" />
             Profile Details

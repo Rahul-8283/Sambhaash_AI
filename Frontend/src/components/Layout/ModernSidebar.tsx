@@ -120,7 +120,7 @@ const ModernSidebar: React.FC<ModernSidebarProps> = ({ isOpen, onToggle }) => {
               </AnimatePresence>
 
               {!isOpen && hoveredItem === item.id && (
-                <div className="fixed left-24 px-3 py-2 bg-[#2d1e18] text-[#fefae0] text-xs font-semibold rounded-lg shadow-xl pointer-events-none z-[60]">
+                <div className="fixed left-24 px-3 py-2 bg-[#2d1e18] text-[#fefae0] text-xs font-semibold rounded-2xl shadow-xl pointer-events-none z-[60]">
                   {item.label}
                 </div>
               )}

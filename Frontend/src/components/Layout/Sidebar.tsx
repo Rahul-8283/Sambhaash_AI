@@ -93,7 +93,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
               <Link
                 to={item.path}
                 className={clsx(
-                  "flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-colors",
+                  "flex items-center gap-3 px-4 py-2.5 rounded-2xl text-sm font-medium transition-colors",
                   isActive(item.path)
                     ? "bg-blue-50 text-blue-700"
                     : "text-gray-700 hover:bg-gray-100"

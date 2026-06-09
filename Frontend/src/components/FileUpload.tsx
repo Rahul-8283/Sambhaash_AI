@@ -49,7 +49,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         onClick={handleClick}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
-        className="border-2 border-dashed border-blue-300 rounded-lg p-8 text-center cursor-pointer hover:bg-blue-50 transition-colors"
+        className="border-2 border-dashed border-blue-300 rounded-2xl p-8 text-center cursor-pointer hover:bg-blue-50 transition-colors"
       >
         <input
           ref={fileInputRef}
@@ -68,7 +68,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         </p>
       </div>
       {error && (
-        <div className="flex items-center gap-2 mt-3 text-red-600 bg-red-50 p-3 rounded-lg">
+        <div className="flex items-center gap-2 mt-3 text-red-600 bg-red-50 p-3 rounded-2xl">
           <AlertCircle size={18} />
           <span className="text-sm">{error}</span>
         </div>

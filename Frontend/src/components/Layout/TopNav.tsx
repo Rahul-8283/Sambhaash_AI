@@ -92,7 +92,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick, hideMenuButton }) =
         <button
           onClick={onMenuClick}
           aria-label="Open menu"
-          className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          className="md:hidden p-2 hover:bg-gray-100 rounded-2xl transition-colors"
         >
           <Menu size={20} />
         </button>
@@ -104,7 +104,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick, hideMenuButton }) =
         <div className="relative">
           <button
             aria-label="Show notifications"
-            className="p-2.5 bg-white/40 hover:bg-[#faedcd]/60 rounded-xl transition-colors relative border border-[#faedcd]/40 shadow-sm">
+            className="p-2.5 bg-white/40 hover:bg-[#faedcd]/60 rounded-2xl transition-colors relative border border-[#faedcd]/40 shadow-sm">
             <Bell size={20} className="text-[#3d2b1f]" />
             {notifications > 0 && (
               <span className="absolute top-2 right-2 bg-[#d4a373] text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center border-2 border-[#fefae0]">
@@ -120,7 +120,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick, hideMenuButton }) =
             onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
             aria-haspopup="menu"
             aria-expanded={isUserMenuOpen}
-            className="flex items-center gap-3 px-3 py-1.5 bg-white/40 hover:bg-[#faedcd]/60 rounded-xl transition-colors border border-[#faedcd]/40 shadow-sm"
+            className="flex items-center gap-3 px-3 py-1.5 bg-white/40 hover:bg-[#faedcd]/60 rounded-2xl transition-colors border border-[#faedcd]/40 shadow-sm"
           >
             {currentUser.avatar ? (
               <img
@@ -169,7 +169,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick, hideMenuButton }) =
                 <div className="px-2 mt-2 pt-2 border-t border-[#faedcd]">
                   <button
                     onClick={handleSignOut}
-                    className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50/50 rounded-xl transition-colors cursor-pointer"
+                    className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-red-600 hover:bg-red-50/50 rounded-2xl transition-colors cursor-pointer"
                   >
                     <LogOut size={16} />
                     Sign Out

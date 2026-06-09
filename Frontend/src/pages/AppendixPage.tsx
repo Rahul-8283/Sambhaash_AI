@@ -125,13 +125,13 @@ const AppendixPage: React.FC = () => {
       )}
 
       {/* Upload Section */}
-      <div className="glass rounded-3xl p-6 border border-[#faedcd]/60 shadow-xl bg-white/40">
+      <div className="glass rounded-2xl p-6 border border-[#faedcd]/60 shadow-xl bg-white/40">
         <h2 className="text-xl font-black text-[#2d1e18] font-display mb-4">Upload New Resource</h2>
         <FileUpload onFileSelected={handleFileSelected} isLoading={isLoading} error={error} />
       </div>
 
       {/* Files List Section */}
-      <div className="glass rounded-3xl border border-[#faedcd]/60 shadow-xl bg-white/40 overflow-hidden">
+      <div className="glass rounded-2xl border border-[#faedcd]/60 shadow-xl bg-white/40 overflow-hidden">
         <div className="p-6 border-b border-[#faedcd]/60 flex justify-between items-center bg-[#faedcd]/10">
           <h2 className="text-xl font-black text-[#2d1e18] font-display">
             Active Assets ({files.length})
@@ -139,7 +139,7 @@ const AppendixPage: React.FC = () => {
           {files.length > 0 && (
             <button
               onClick={handleClearAll}
-              className="px-4 py-2 text-sm font-bold text-rose-700 bg-rose-100/40 hover:bg-rose-100/70 border border-rose-200/40 rounded-xl transition-all cursor-pointer shadow-sm"
+              className="px-4 py-2 text-sm font-bold text-rose-700 bg-rose-100/40 hover:bg-rose-100/70 border border-rose-200/40 rounded-2xl transition-all cursor-pointer shadow-sm"
             >
               Clear All
             </button>
@@ -187,14 +187,14 @@ const AppendixPage: React.FC = () => {
                       <div className="flex items-center justify-end gap-2">
                         <button
                           onClick={() => handleDownloadFile(file)}
-                          className="p-2 text-[#d4a373] hover:bg-[#faedcd]/50 rounded-xl border border-[#d4a373]/15 transition-all cursor-pointer shadow-sm"
+                          className="p-2 text-[#d4a373] hover:bg-[#faedcd]/50 rounded-2xl border border-[#d4a373]/15 transition-all cursor-pointer shadow-sm"
                           title="View"
                         >
                           <Download size={16} />
                         </button>
                         <button
                           onClick={() => handleDeleteFile(file.document_id)}
-                          className="p-2 text-rose-600 hover:bg-rose-100/50 rounded-xl border border-rose-200/20 transition-all cursor-pointer shadow-sm"
+                          className="p-2 text-rose-600 hover:bg-rose-100/50 rounded-2xl border border-rose-200/20 transition-all cursor-pointer shadow-sm"
                           title="Delete"
                         >
                           <Trash2 size={16} />
@@ -210,7 +210,7 @@ const AppendixPage: React.FC = () => {
       </div>
 
       {/* Info Box */}
-      <div className="mt-8 p-6 bg-[#faedcd]/20 border border-[#faedcd] rounded-3xl shadow-sm flex gap-3">
+      <div className="mt-8 p-6 bg-[#faedcd]/20 border border-[#faedcd] rounded-2xl shadow-sm flex gap-3">
         <Info size={24} className="text-[#d4a373] shrink-0 mt-0.5" />
         <div>
           <h3 className="font-black text-[#2d1e18] mb-1.5 font-display">How indexing works</h3>
