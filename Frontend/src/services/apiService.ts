@@ -39,29 +39,7 @@ export interface RMQueueLeadResponse {
   assigned_at: string;
 }
 
-export interface BatchUploadResponse {
-  created: number;
-  duplicates: number;
-  errors: number;
-  error_details: Array<{
-    row?: number;
-    index?: number;
-    phone: string;
-    error: string;
-  }>;
-}
 
-// --- RM Management ---
-export interface RMQueueLeadResponse {
-  id: string;
-  phone: string;
-  name: string | null;
-  email: string | null;
-  language: string;
-  status: string;
-  latest_score: number | null;
-  assigned_at: string;
-}
 
 export interface RMQueueResponse {
   rm_name: string;
@@ -100,16 +78,6 @@ export interface RMStatsResponse {
   conversion_rate: number;
 }
 
-export interface RMLeaderboardResponse {
-  period_days: number;
-  leaderboard: Array<{
-    rm_name: string;
-    total_leads: number;
-    converted: number;
-    conversion_rate: number;
-  }>;
-}
-
 // --- Queue & DLQ Management ---
 export interface QueueStatsResponse {
   total_pending: number;
@@ -141,6 +109,13 @@ export interface RMLeaderboardResponse {
   period: string;
   total_rms: number;
   entries: RMLeaderboardEntry[];
+  period_days?: number;
+  leaderboard?: Array<{
+    rm_name: string;
+    total_leads: number;
+    converted: number;
+    conversion_rate: number;
+  }>;
 }
 
 // --- General ---

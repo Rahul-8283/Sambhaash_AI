@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { apiService, QueueStatsResponse, DlqJob } from '../services/apiService';
+import { apiService } from '../services/apiService';
+import type { QueueStatsResponse, DlqJob } from '../services/apiService';
 import toast from 'react-hot-toast';
 import { AlertTriangle, RefreshCw, Server, Activity, ArrowRight, XCircle, CheckCircle2 } from 'lucide-react';
 
