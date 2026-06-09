@@ -91,7 +91,7 @@ export const ProfileSettingsPage: React.FC = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Side: Avatar Card */}
-        <div className="lg:col-span-1 bg-white/50 backdrop-blur-sm border border-[#faedcd]/60 rounded-2xl p-6 shadow-xl flex flex-col items-center justify-center text-center relative overflow-hidden group">
+        <div className="lg:col-span-1 bg-white/50 backdrop-blur-sm border border-[#faedcd]/60 rounded-lg p-6 shadow-xl flex flex-col items-center justify-center text-center relative overflow-hidden group">
           <div className="absolute inset-0 bg-gradient-to-b from-[#faedcd]/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" />
           
           {profile.avatar ? (
@@ -108,12 +108,12 @@ export const ProfileSettingsPage: React.FC = () => {
           )}
           
           <h2 className="text-xl font-black text-[#2d1e18] font-display">{profile.name || "ADMIN"}</h2>
-          <p className="text-[10px] text-[#3d2b1f] uppercase font-black tracking-widest mt-1 bg-[#faedcd] px-3 py-1 rounded-2xl border border-[#d4a373]/20">{profile.role || "Administrator"}</p>
+          <p className="text-[10px] text-[#3d2b1f] uppercase font-black tracking-widest mt-1 bg-[#faedcd] px-3 py-1 rounded-lg border border-[#d4a373]/20">{profile.role || "Administrator"}</p>
           <p className="text-xs font-semibold text-[#3d2b1f]/50 mt-2 break-all">{profile.email || "admin@sambhaash.ai"}</p>
         </div>
 
         {/* Right Side: Edit Form */}
-        <div className="lg:col-span-2 glass rounded-2xl p-8 border border-[#faedcd]/60 shadow-xl bg-white/40 space-y-6">
+        <div className="lg:col-span-2 glass rounded-lg p-8 border border-[#faedcd]/60 shadow-xl bg-white/40 space-y-6">
           <h3 className="text-lg font-black text-[#2d1e18] flex items-center gap-2 pb-4 border-b border-[#faedcd]/60 font-display">
             <User size={20} className="text-[#d4a373]" />
             Profile Details
@@ -133,7 +133,7 @@ export const ProfileSettingsPage: React.FC = () => {
                   type="text"
                   value={profile.name}
                   onChange={(e) => setProfile({ ...profile, name: e.target.value })}
-                  className="w-full pl-11 pr-4 py-3 bg-white/70 border border-[#faedcd] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#d4a373]/30 focus:border-[#d4a373] transition-all font-semibold text-[#3d2b1f]"
+                  className="w-full pl-11 pr-4 py-3 bg-white/70 border border-[#faedcd] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d4a373]/30 focus:border-[#d4a373] transition-all font-semibold text-[#3d2b1f]"
                   placeholder="Enter full name"
                 />
               </div>
@@ -152,7 +152,7 @@ export const ProfileSettingsPage: React.FC = () => {
                   type="email"
                   value={profile.email}
                   readOnly
-                  className="w-full pl-11 pr-4 py-3 bg-gray-100/50 border border-[#faedcd]/60 rounded-2xl cursor-not-allowed font-semibold text-[#3d2b1f]/60"
+                  className="w-full pl-11 pr-4 py-3 bg-gray-100/50 border border-[#faedcd]/60 rounded-lg cursor-not-allowed font-semibold text-[#3d2b1f]/60"
                   placeholder="Enter email address"
                 />
               </div>
@@ -171,7 +171,7 @@ export const ProfileSettingsPage: React.FC = () => {
                   type="text"
                   value={profile.role}
                   onChange={(e) => setProfile({ ...profile, role: e.target.value })}
-                  className="w-full pl-11 pr-4 py-3 bg-white/70 border border-[#faedcd] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#d4a373]/30 focus:border-[#d4a373] transition-all font-semibold text-[#3d2b1f]"
+                  className="w-full pl-11 pr-4 py-3 bg-white/70 border border-[#faedcd] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d4a373]/30 focus:border-[#d4a373] transition-all font-semibold text-[#3d2b1f]"
                   placeholder="Enter role designation"
                 />
               </div>
@@ -183,7 +183,7 @@ export const ProfileSettingsPage: React.FC = () => {
             <button
               onClick={handleSave}
               disabled={saving}
-              className="flex items-center gap-2 bg-[#d4a373] hover:bg-[#b5835a] text-white font-bold px-6 py-3 rounded-2xl shadow-lg shadow-[#d4a373]/20 hover:shadow-[#d4a373]/30 transition-all cursor-pointer disabled:opacity-50 active:scale-95 text-sm"
+              className="flex items-center gap-2 bg-[#d4a373] hover:bg-[#b5835a] text-white font-bold px-6 py-3 rounded-lg shadow-lg shadow-[#d4a373]/20 hover:shadow-[#d4a373]/30 transition-all cursor-pointer disabled:opacity-50 active:scale-95 text-sm"
             >
               {saving ? (
                 <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />

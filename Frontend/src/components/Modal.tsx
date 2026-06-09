@@ -61,7 +61,7 @@ export const Modal: React.FC<ModalProps> = ({
         {/* Modal */}
         <div
           className={clsx(
-            "bg-white rounded-2xl shadow-xl w-full",
+            "bg-white rounded-lg shadow-xl w-full",
             sizeClasses[size]
           )}
           onClick={(e) => e.stopPropagation()}
@@ -75,7 +75,7 @@ export const Modal: React.FC<ModalProps> = ({
             <button
               onClick={onClose}
               aria-label="Close dialog"
-              className="p-1 hover:bg-gray-100 rounded-2xl transition-colors"
+              className="p-1 hover:bg-gray-100 rounded-lg transition-colors"
             >
               <X size={20} />
             </button>

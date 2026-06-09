@@ -95,7 +95,7 @@ const ModernSidebar: React.FC<ModernSidebarProps> = ({ isOpen, onToggle }) => {
               onMouseEnter={() => setHoveredItem(item.id)}
               onMouseLeave={() => setHoveredItem(null)}
               className={clsx(
-                "relative flex items-center gap-4 px-3 py-3 rounded-2xl transition-all duration-200",
+                "relative flex items-center gap-4 px-3 py-3 rounded-lg transition-all duration-200",
                 isActive(item.path)
                   ? "bg-[#d4a373] text-white shadow-lg shadow-[#d4a373]/20"
                   : "text-[#3d2b1f]/70 hover:bg-[#fefae0] hover:text-[#3d2b1f]"
@@ -120,7 +120,7 @@ const ModernSidebar: React.FC<ModernSidebarProps> = ({ isOpen, onToggle }) => {
               </AnimatePresence>
 
               {!isOpen && hoveredItem === item.id && (
-                <div className="fixed left-24 px-3 py-2 bg-[#2d1e18] text-[#fefae0] text-xs font-semibold rounded-2xl shadow-xl pointer-events-none z-[60]">
+                <div className="fixed left-24 px-3 py-2 bg-[#2d1e18] text-[#fefae0] text-xs font-semibold rounded-lg shadow-xl pointer-events-none z-[60]">
                   {item.label}
                 </div>
               )}
@@ -141,7 +141,7 @@ const ModernSidebar: React.FC<ModernSidebarProps> = ({ isOpen, onToggle }) => {
         <div className="p-3 border-t border-[#d4a373]/20 space-y-1">
           <Link
             to="/"
-            className="flex items-center gap-4 px-3 py-3 rounded-2xl text-[#3d2b1f]/70 hover:bg-[#fefae0] hover:text-[#3d2b1f] transition-all duration-200"
+            className="flex items-center gap-4 px-3 py-3 rounded-lg text-[#3d2b1f]/70 hover:bg-[#fefae0] hover:text-[#3d2b1f] transition-all duration-200"
           >
             <div className="shrink-0 w-6 flex justify-center">
               <Home size={22} className="text-[#3d2b1f]/75" />
@@ -150,7 +150,7 @@ const ModernSidebar: React.FC<ModernSidebarProps> = ({ isOpen, onToggle }) => {
           </Link>
           <button
             onClick={onToggle}
-            className="w-full flex items-center gap-4 px-3 py-3 rounded-2xl text-[#3d2b1f]/70 hover:bg-[#fefae0] hover:text-[#3d2b1f] transition-all duration-200"
+            className="w-full flex items-center gap-4 px-3 py-3 rounded-lg text-[#3d2b1f]/70 hover:bg-[#fefae0] hover:text-[#3d2b1f] transition-all duration-200"
           >
             <div className={clsx("shrink-0 w-6 flex justify-center transition-transform duration-300", !isOpen && "rotate-180")}>
               <LogOut size={22} className="rotate-180 text-[#3d2b1f]/75" />

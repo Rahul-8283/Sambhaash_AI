@@ -52,7 +52,7 @@ export const MainLayout: FC<MainLayoutProps> = ({ children }) => {
             {isMobile && (
               <button
                 onClick={toggleSidebar}
-                className="p-2.5 bg-white/40 hover:bg-[#faedcd]/60 border border-[#faedcd]/40 shadow-sm rounded-2xl text-[#3d2b1f] mr-3 transition-colors cursor-pointer shrink-0"
+                className="p-2.5 bg-white/40 hover:bg-[#faedcd]/60 border border-[#faedcd]/40 shadow-sm rounded-lg text-[#3d2b1f] mr-3 transition-colors cursor-pointer shrink-0"
                 aria-label="Toggle Navigation Menu"
               >
                 <Menu size={22} className="text-[#3d2b1f]" />

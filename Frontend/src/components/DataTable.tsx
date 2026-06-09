@@ -83,7 +83,7 @@ export const DataTable = React.forwardRef<
   }
 
   return (
-    <div className="overflow-x-auto rounded-2xl border border-gray-200">
+    <div className="overflow-x-auto rounded-lg border border-gray-200">
       <table
         ref={ref}
         className="w-full text-sm text-gray-900 border-collapse"

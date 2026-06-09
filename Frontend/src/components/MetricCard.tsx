@@ -37,7 +37,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
   return (
     <div
       className={clsx(
-        "bg-[#faedcd]/20 border border-[#faedcd] shadow-premium rounded-2xl backdrop-blur-md",
+        "bg-[#faedcd]/20 border border-[#faedcd] shadow-premium rounded-lg backdrop-blur-md",
         sizeClasses[size]
       )}
     >

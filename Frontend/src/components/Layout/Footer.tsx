@@ -11,7 +11,7 @@ export const Footer: React.FC = () => {
         {/* Brand Column */}
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <span className="p-1 rounded-2xl bg-[#d4a373]/10 flex items-center justify-center">
+            <span className="p-1 rounded-lg bg-[#d4a373]/10 flex items-center justify-center">
               <img src="/logo.png" className="w-8 h-8 object-contain" alt="Sambhaash AI" />
             </span>
             <span className="text-xl font-black text-[#2d1e18] font-display">Sambhaash AI</span>
