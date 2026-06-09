@@ -58,7 +58,7 @@ const ModernSidebar: React.FC<ModernSidebarProps> = ({ isOpen, onToggle }) => {
         }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
         className={clsx(
-          "fixed left-4 top-4 bottom-4 z-50 bg-[#faedcd]/90 backdrop-blur-2xl border border-[#d4a373]/30 rounded-[2rem] shadow-2xl flex flex-col overflow-hidden",
+          "fixed left-4 top-4 bottom-4 z-50 bg-[#faedcd]/90 backdrop-blur-2xl border border-[#d4a373]/30 rounded-[1rem] shadow-2xl flex flex-col overflow-hidden",
           isMobile && !isOpen && "pointer-events-none"
         )}
       >
