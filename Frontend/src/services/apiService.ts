@@ -11,6 +11,7 @@ import type {
   LeadWithDetails,
   CreateLeadFormData
 } from '../types';
+import { supabase } from './supabase';
 
 // ==================== ADDITIONAL TYPES ====================
 
@@ -149,6 +150,15 @@ class ApiService {
       headers: {
         'Content-Type': 'application/json',
       },
+    });
+
+    // Request interceptor to attach Supabase auth token
+    this.api.interceptors.request.use(async (config) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        config.headers.Authorization = `Bearer ${session.access_token}`;
+      }
+      return config;
     });
 
     // Response interceptor for unified error handling
