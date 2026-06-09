@@ -338,7 +338,7 @@ async def recording_webhook(request: Request) -> Response:
 
                 # 2. LLM Orchestration
                 manager = CallManager()
-                reply_text, target_lang = await manager.process_turn(
+                reply_text, target_lang, is_ending = await manager.process_turn(
                     call_sid=call_sid,
                     user_text=transcript,
                     language=detected_lang,
@@ -364,10 +364,10 @@ async def recording_webhook(request: Request) -> Response:
                 # 5. Cache audio bytes for Twilio <Play> fetch
                 audio_cache[call_sid] = audio_bytes
 
-                # 6. Check if max turns reached (auto-end call)
+                # 6. Check if max turns reached or LLM decided to end call
                 max_turns = settings.max_turns_per_session
-                if turn_count >= max_turns:
-                        logger.info(f"Max turns ({max_turns}) reached for call {call_sid}")
+                if turn_count >= max_turns or is_ending:
+                        logger.info(f"Call ending. Max turns reached: {turn_count >= max_turns}, LLM ending: {is_ending} for call {call_sid}")
                         
                         # Score and assign lead
                         await _score_and_assign_lead(
@@ -393,16 +393,16 @@ async def recording_webhook(request: Request) -> Response:
                         except Exception as e:
                                 logger.error(f"[RECORDING] Failed to save recording: {e}")
                         
-                        # End call with summary
-                        summary_text = "Thanks for chatting with us! Our team will be in touch shortly. Goodbye!"
-                        audio_bytes = await manager.generate_tts(text=summary_text, language=target_lang)
+                        # End call with summary or LLM's final response
+                        final_reply = reply_text if is_ending else "Thanks for chatting with us! Our team will be in touch shortly. Goodbye!"
+                        audio_bytes = await manager.generate_tts(text=final_reply, language=target_lang)
                         audio_cache[call_sid] = audio_bytes
                         audio_url = client.build_base_url(f"/api/webhook/twilio/audio/{call_sid}")
                         
                         # Cleanup
                         del call_sessions[call_sid]
                         
-                        return _xml_response(f'<Response><Play>{audio_url}</Play></Response>')
+                        return _xml_response(f'<Response><Play>{audio_url}</Play><Hangup/></Response>')
                 
                 # 7. Build returning TwiML with next recording
                 audio_url = client.build_base_url(f"/api/webhook/twilio/audio/{call_sid}")
