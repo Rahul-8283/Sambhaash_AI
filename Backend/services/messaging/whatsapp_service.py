@@ -300,9 +300,12 @@ https://rupeezy.app/dashboard/{lead_id}
             if not phone.startswith("+"):
                 phone = "+91" + phone  # Assume India if no country code
             
+            # Clean from_ number to ensure we don't duplicate 'whatsapp:' prefix
+            from_number = self.whatsapp_from.replace('whatsapp:', '')
+            
             # Send via Twilio
             msg = self.twilio_client.messages.create(
-                from_=f"whatsapp:{self.whatsapp_from}",
+                from_=f"whatsapp:{from_number}",
                 to=f"whatsapp:{phone}",
                 body=message
             )
