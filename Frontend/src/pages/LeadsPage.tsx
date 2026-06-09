@@ -89,6 +89,17 @@ export const LeadsPage: React.FC = () => {
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLSelectElement>, nextFieldId?: string) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (nextFieldId) {
+        document.getElementById(nextFieldId)?.focus();
+      } else {
+        handleCreateLead();
+      }
+    }
+  };
+
   const handleCreateLead = async () => {
     if (!createForm.name || !createForm.phone) {
       alert("Name and phone are required");
@@ -494,9 +505,11 @@ export const LeadsPage: React.FC = () => {
               Name
             </label>
             <input
+              id="lead-name"
               type="text"
               value={createForm.name}
               onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+              onKeyDown={(e) => handleKeyDown(e, 'lead-phone')}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -505,9 +518,11 @@ export const LeadsPage: React.FC = () => {
               Phone
             </label>
             <input
+              id="lead-phone"
               type="tel"
               value={createForm.phone}
               onChange={(e) => setCreateForm({ ...createForm, phone: e.target.value })}
+              onKeyDown={(e) => handleKeyDown(e, 'lead-email')}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -516,9 +531,11 @@ export const LeadsPage: React.FC = () => {
               Email
             </label>
             <input
+              id="lead-email"
               type="email"
               value={createForm.email}
               onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+              onKeyDown={(e) => handleKeyDown(e, 'lead-language')}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -527,8 +544,10 @@ export const LeadsPage: React.FC = () => {
               Language
             </label>
             <select
+              id="lead-language"
               value={createForm.language}
               onChange={(e) => setCreateForm({ ...createForm, language: e.target.value })}
+              onKeyDown={(e) => handleKeyDown(e)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             >
               {Object.entries(LANGUAGE_MAP).map(([name, code]) => (
