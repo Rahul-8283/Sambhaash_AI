@@ -155,7 +155,7 @@ export const LandingPage: React.FC = () => {
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.8 }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-2xl bg-[#faedcd] border border-[#d4a373]/30 text-[#a87440] mb-8 shadow-sm"
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#faedcd] border border-[#d4a373]/30 text-[#a87440] mb-8 shadow-sm"
         >
           <img src="/logo.png" className="w-5 h-5 object-contain" alt="" />
           <span className="text-xs font-bold uppercase tracking-wider">Enterprise AI Telephony</span>

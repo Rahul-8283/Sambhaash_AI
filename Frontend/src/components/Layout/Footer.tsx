@@ -82,7 +82,7 @@ export const Footer: React.FC = () => {
             href="https://github.com/Rahul-8283/Sambhaash_AI" 
             target="_blank" 
             rel="noopener noreferrer" 
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-2xl border border-[#3d2b1f]/15 bg-white/40 hover:bg-[#d4a373] hover:border-[#d4a373] text-[#3d2b1f]/80 hover:text-white transition-all duration-300 shadow-sm hover:shadow-md hover:scale-[1.03] active:scale-95 cursor-pointer font-bold"
+            className="flex items-center gap-2 px-3.5 py-1.5 rounded-lg border border-[#3d2b1f]/15 bg-white/40 hover:bg-[#d4a373] hover:border-[#d4a373] text-[#3d2b1f]/80 hover:text-white transition-all duration-300 shadow-sm hover:shadow-md hover:scale-[1.03] active:scale-95 cursor-pointer font-bold"
           >
             <Github size={14} /> 
             <span>GitHub Repository</span>
