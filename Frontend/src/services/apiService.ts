@@ -100,6 +100,35 @@ export interface RMStatsResponse {
   conversion_rate: number;
 }
 
+export interface RMLeaderboardResponse {
+  period_days: number;
+  leaderboard: Array<{
+    rm_name: string;
+    total_leads: number;
+    converted: number;
+    conversion_rate: number;
+  }>;
+}
+
+// --- Queue & DLQ Management ---
+export interface QueueStatsResponse {
+  total_pending: number;
+  active_workers: number;
+  dlq_size: number;
+}
+
+export interface DlqJob {
+  id: string;
+  type: string;
+  lead_id: string;
+  payload: any;
+  retry_count: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  error?: string;
+}
+
 export interface RMLeaderboardEntry {
   rank: number;
   rm_name: string;
@@ -317,6 +346,24 @@ class ApiService {
     const response: AxiosResponse<any> = await this.api.get('/admin/kb/analytics/effectiveness', {
       params: { limit_days: days },
     });
+    return response.data;
+  }
+
+  // --- Queue & DLQ Endpoints ---
+  public async getQueueStats(): Promise<QueueStatsResponse> {
+    const response: AxiosResponse<QueueStatsResponse> = await this.api.get('/api/queue/stats');
+    return response.data;
+  }
+
+  public async getDlqJobs(limit: number = 50): Promise<DlqJob[]> {
+    const response: AxiosResponse<DlqJob[]> = await this.api.get('/api/queue/dlq', {
+      params: { limit },
+    });
+    return response.data;
+  }
+
+  public async retryDlqJob(jobId: string): Promise<{ success: boolean; message: string }> {
+    const response: AxiosResponse<{ success: boolean; message: string }> = await this.api.post(`/api/queue/dlq/${jobId}/retry`);
     return response.data;
   }
 }
