@@ -82,6 +82,10 @@ class SupabaseClient:
                 self.database_url,
                 min_size=self.min_size,
                 max_size=self.max_size,
+                # Essential for Production Supabase PgBouncer (Transaction Mode)
+                statement_cache_size=0,
+                max_inactive_connection_lifetime=300.0,
+                command_timeout=60.0
             )
             logger.info("✅ Supabase connection pool initialized")
         except Exception as e:
