@@ -117,6 +117,7 @@ export interface RecordingMetadata {
   sentiment: string;
   key_topics: string[];
   created_at: string;
+  lead_name?: string;
 }
 
 export interface RecordingsListResponse {

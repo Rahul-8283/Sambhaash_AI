@@ -32,6 +32,7 @@ class RecordingMetadata(BaseModel):
     sentiment: str
     key_topics: List[str]
     created_at: str
+    lead_name: Optional[str] = None
 
 
 class RecordingDetails(BaseModel):
@@ -128,7 +129,8 @@ async def list_call_recordings(
                 language=r.get("transcription_language", "en"),
                 sentiment=r.get("sentiment", "neutral"),
                 key_topics=topics,
-                created_at=str(r["created_at"])
+                created_at=str(r["created_at"]),
+                lead_name=r.get("lead_name")
             ))
         
         logger.info(f"[RECORDINGS] Listed {len(recordings)} recordings (page {page}, total {total})")

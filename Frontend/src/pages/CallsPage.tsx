@@ -63,11 +63,11 @@ const CallsPage: React.FC = () => {
               <thead>
                 <tr className="bg-[#fefae0]/50 text-[#3d2b1f]/70 text-sm border-b border-[#faedcd]/80">
                   <th className="p-4 font-semibold w-72">Play Audio</th>
+                  <th className="p-4 font-semibold">Lead</th>
                   <th className="p-4 font-semibold">Date</th>
                   <th className="p-4 font-semibold">Duration</th>
                   <th className="p-4 font-semibold">Sentiment</th>
                   <th className="p-4 font-semibold">Language</th>
-                  <th className="p-4 font-semibold">Topics</th>
                 </tr>
               </thead>
               <tbody>
@@ -79,6 +79,9 @@ const CallsPage: React.FC = () => {
                       ) : (
                         <span className="text-xs text-gray-400 font-medium">No Audio</span>
                       )}
+                    </td>
+                    <td className="p-4 text-sm font-semibold text-[#2d1e18]">
+                      {rec.lead_name || 'Unknown'}
                     </td>
                     <td className="p-4 text-sm text-[#3d2b1f]/70 whitespace-nowrap">
                       {new Date(rec.created_at).toLocaleString()}
@@ -102,19 +105,6 @@ const CallsPage: React.FC = () => {
                       <span className="px-2 py-1 bg-blue-50 text-blue-600 rounded text-xs font-semibold uppercase">
                         {rec.language || 'EN'}
                       </span>
-                    </td>
-                    <td className="p-4">
-                      <div className="flex flex-wrap gap-1">
-                        {rec.key_topics && rec.key_topics.length > 0 ? (
-                          rec.key_topics.slice(0, 3).map((topic, i) => (
-                            <span key={i} className="text-xs px-2 py-0.5 bg-[#fefae0] border border-[#d4a373]/30 text-[#d4a373] rounded-full">
-                              {topic}
-                            </span>
-                          ))
-                        ) : (
-                          <span className="text-xs text-gray-400">-</span>
-                        )}
-                      </div>
                     </td>
                   </tr>
                 ))}
