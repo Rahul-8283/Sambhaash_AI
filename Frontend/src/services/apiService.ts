@@ -105,6 +105,27 @@ export interface RMLeaderboardEntry {
   conversion_rate: number;
 }
 
+// --- Recordings Management ---
+export interface RecordingMetadata {
+  id: string;
+  call_session_id: string;
+  duration_seconds: number;
+  file_size_bytes: number;
+  storage_path: string;
+  storage_url: string;
+  language: string;
+  sentiment: string;
+  key_topics: string[];
+  created_at: string;
+}
+
+export interface RecordingsListResponse {
+  recordings: RecordingMetadata[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export interface RMLeaderboardResponse {
   period: string;
   total_rms: number;
@@ -339,6 +360,14 @@ class ApiService {
 
   public async retryDlqJob(jobId: string): Promise<{ success: boolean; message: string }> {
     const response: AxiosResponse<{ success: boolean; message: string }> = await this.api.post(`/api/queue/dlq/${jobId}/retry`);
+    return response.data;
+  }
+
+  // --- Recordings Endpoints ---
+  public async getRecordings(page: number = 1, limit: number = 20): Promise<RecordingsListResponse> {
+    const response: AxiosResponse<RecordingsListResponse> = await this.api.get('/admin/recordings', {
+      params: { page, limit }
+    });
     return response.data;
   }
 }
