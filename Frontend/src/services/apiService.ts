@@ -155,7 +155,7 @@ export interface ApiError {
 // ==================== API SERVICE CLASS ====================
 
 class ApiService {
-  private api: AxiosInstance;
+  public api: AxiosInstance;
   private static instance: ApiService;
 
   private constructor() {

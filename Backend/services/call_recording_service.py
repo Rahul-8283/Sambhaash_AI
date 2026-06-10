@@ -167,7 +167,11 @@ class CallRecordingService:
             settings = get_config()
             auth = (settings.twilio_account_sid, settings.twilio_auth_token)
             
-            async with httpx.AsyncClient() as client:
+            # Twilio requires .wav extension to return audio instead of JSON metadata
+            if not recording_url.endswith((".wav", ".mp3")):
+                recording_url = f"{recording_url}.wav"
+            
+            async with httpx.AsyncClient(follow_redirects=True) as client:
                 response = await client.get(recording_url, timeout=60.0, auth=auth)
                 if response.status_code == 200:
                     return response.content

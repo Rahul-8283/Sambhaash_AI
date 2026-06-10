@@ -103,6 +103,16 @@
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
   }
+
+  /* Custom Audio Player */
+  .custom-audio-player::-webkit-media-controls-enclosure {
+    border-radius: 8px !important;
+    background-color: rgba(254, 250, 224, 0.8) !important;
+    border: 1px solid rgba(250, 237, 205, 0.8) !important;
+  }
+  .custom-audio-player {
+    border-radius: 8px;
+  }
 }
 
 /* Custom Minimalist & Premium Scrollbar */

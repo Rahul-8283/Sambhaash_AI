@@ -917,7 +917,7 @@ class Repository:
             # Fetch with pagination
             query = f"""
             SELECT id, call_session_id, duration_seconds, transcription_language, 
-                   sentiment, key_topics, created_at
+                   sentiment, key_topics, storage_url, storage_path, created_at
             FROM call_recordings
             {where_clause}
             ORDER BY created_at DESC

@@ -62,7 +62,7 @@ const CallsPage: React.FC = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-[#fefae0]/50 text-[#3d2b1f]/70 text-sm border-b border-[#faedcd]/80">
-                  <th className="p-4 font-semibold w-16">Play Audio</th>
+                  <th className="p-4 font-semibold w-72">Play Audio</th>
                   <th className="p-4 font-semibold">Date</th>
                   <th className="p-4 font-semibold">Duration</th>
                   <th className="p-4 font-semibold">Sentiment</th>
@@ -75,7 +75,7 @@ const CallsPage: React.FC = () => {
                   <tr key={rec.id} className="border-b border-[#faedcd]/40 hover:bg-[#faedcd]/10 transition-colors group">
                     <td className="p-4">
                       {rec.storage_url ? (
-                        <audio controls src={rec.storage_url} className="w-48 h-8 rounded" preload="none" />
+                        <audio controls src={`${apiService.api.defaults.baseURL}/admin/recordings/audio/${rec.id}`} className="w-[300px] h-10 custom-audio-player outline-none shadow-sm" preload="none" />
                       ) : (
                         <span className="text-xs text-gray-400 font-medium">No Audio</span>
                       )}

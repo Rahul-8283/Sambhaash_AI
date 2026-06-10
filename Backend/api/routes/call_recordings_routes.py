@@ -79,7 +79,7 @@ class RecordingStatistics(BaseModel):
 
 
 @router.get(
-    "/",
+    "",
     response_model=RecordingsListResponse,
     summary="List all call recordings"
 )
@@ -142,6 +142,25 @@ async def list_call_recordings(
     except Exception as e:
         logger.error(f"[RECORDINGS] List error: {e}")
         raise HTTPException(status_code=500, detail="Failed to list recordings")
+
+from fastapi.responses import Response
+
+@router.get("/audio/{recording_id}")
+async def get_audio_stream(recording_id: str, db: SupabaseClient = Depends(get_db_client)):
+    try:
+        repo = Repository(db)
+        from uuid import UUID
+        recording = await repo.get_call_recording(UUID(recording_id))
+        if not recording or not recording.get("storage_path"):
+            raise HTTPException(status_code=404, detail="Audio not found")
+            
+        from services.storage_client import get_storage_client
+        client = await get_storage_client()
+        audio_bytes = await client.download_file(recording["storage_path"])
+        return Response(content=audio_bytes, media_type="audio/wav")
+    except Exception as e:
+        logger.error(f"[RECORDINGS] Audio stream error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to stream audio")
 
 
 @router.get(
