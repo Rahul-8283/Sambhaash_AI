@@ -57,7 +57,7 @@ export const Badge: React.FC<BadgeProps> = ({
   return (
     <span
       className={clsx(
-        "inline-flex items-center gap-1.5 rounded-full font-medium",
+        "inline-flex items-center gap-1.5 rounded-lg font-medium",
         sizeClasses[size],
         bgColor,
         textColor

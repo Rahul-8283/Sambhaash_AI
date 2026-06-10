@@ -914,13 +914,19 @@ class Repository:
             total_result = await self.db.execute_fetchval(count_query, tuple(params))
             total = total_result or 0
             
+            # Fix where_clause aliases
+            where_clause = where_clause.replace("transcription_language", "r.transcription_language").replace("sentiment", "r.sentiment")
+            
             # Fetch with pagination
             query = f"""
-            SELECT id, call_session_id, duration_seconds, transcription_language, 
-                   sentiment, key_topics, created_at
-            FROM call_recordings
+            SELECT r.id, r.call_session_id, r.duration_seconds, r.transcription_language, 
+                   r.sentiment, r.key_topics, r.storage_url, r.storage_path, r.created_at,
+                   l.name as lead_name
+            FROM call_recordings r
+            LEFT JOIN call_sessions s ON r.call_session_id = s.id
+            LEFT JOIN leads l ON s.lead_id = l.id
             {where_clause}
-            ORDER BY created_at DESC
+            ORDER BY r.created_at DESC
             LIMIT ${ len(params) + 1} OFFSET ${len(params) + 2}
             """
             

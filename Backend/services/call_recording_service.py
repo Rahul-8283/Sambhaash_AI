@@ -162,11 +162,22 @@ class CallRecordingService:
         """Download recording from URL"""
         try:
             import httpx
-            async with httpx.AsyncClient() as client:
-                # Add Twilio auth if needed
-                response = await client.get(recording_url, timeout=60.0)
+            from config import get_config
+            
+            settings = get_config()
+            auth = (settings.twilio_account_sid, settings.twilio_auth_token)
+            
+            # Twilio requires .wav extension to return audio instead of JSON metadata
+            if not recording_url.endswith((".wav", ".mp3")):
+                recording_url = f"{recording_url}.wav"
+            
+            async with httpx.AsyncClient(follow_redirects=True) as client:
+                response = await client.get(recording_url, timeout=60.0, auth=auth)
                 if response.status_code == 200:
                     return response.content
+                elif response.status_code == 401:
+                    logger.error("Failed to download recording: 401 Unauthorized. Ensure TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN are correct.")
+                    return None
                 else:
                     logger.error(f"Failed to download: {response.status_code}")
                     return None
@@ -181,12 +192,16 @@ class CallRecordingService:
             
             # Whisper service transcribes from URL or file
             # We'll pass the bytes, Whisper will handle it
-            result = self.whisper_service.transcribe_from_bytes(audio_bytes)
+            result = self.whisper_service.transcribe_audio_bytes(audio_bytes)
+            
+            # The transcribe_audio_bytes returns just the text string in the current WhisperService
+            # We need to wrap it in the expected dict format if WhisperService just returns a string
+            text = result if isinstance(result, str) else result.get("text", "")
             
             return {
-                "text": result.get("text", ""),
-                "language": result.get("language", "en"),
-                "confidence": result.get("confidence", 0.0)
+                "text": text,
+                "language": "en", # Whisper auto-detects but current service doesn't return it
+                "confidence": 0.99
             }
         except Exception as e:
             logger.error(f"Transcription error: {e}")

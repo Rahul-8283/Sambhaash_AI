@@ -58,7 +58,7 @@ export const LeadDetailPage: React.FC = () => {
       <div className="flex items-start justify-between">
         <button
           onClick={() => navigate("/dashboard/leads")}
-          className="flex items-center gap-2 text-[#d4a373] hover:text-[#b5835a] font-bold mb-4 bg-[#faedcd]/40 px-4 py-2 rounded-xl border border-[#faedcd] transition-all cursor-pointer shadow-sm"
+          className="flex items-center gap-2 text-[#d4a373] hover:text-[#b5835a] font-bold mb-4 bg-[#faedcd]/40 px-4 py-2 rounded-lg border border-[#faedcd] transition-all cursor-pointer shadow-sm"
         >
           <ArrowLeft size={20} />
           Back to Leads
@@ -66,7 +66,7 @@ export const LeadDetailPage: React.FC = () => {
       </div>
 
       {/* Lead Info Card */}
-      <div className="glass rounded-3xl p-8 border border-[#faedcd]/60 shadow-xl">
+      <div className="glass rounded-lg p-8 border border-[#faedcd]/60 shadow-xl">
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-3xl font-black text-[#2d1e18] font-display">{lead.name}</h1>
@@ -173,7 +173,7 @@ export const LeadDetailPage: React.FC = () => {
               }
             }}
             disabled={!lead.phone}
-            className="flex items-center gap-2 px-4 py-2 bg-[#d4a373] text-white font-bold rounded-2xl hover:bg-[#b5835a] disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-[#d4a373]/25 cursor-pointer transition-all active:scale-95 text-sm"
+            className="flex items-center gap-2 px-4 py-2 bg-[#d4a373] text-white font-bold rounded-lg hover:bg-[#b5835a] disabled:opacity-40 disabled:cursor-not-allowed shadow-lg shadow-[#d4a373]/25 cursor-pointer transition-all active:scale-95 text-sm"
           >
             <Phone size={18} />
             Call Now
@@ -181,7 +181,7 @@ export const LeadDetailPage: React.FC = () => {
         </div>
 
         {lead.callSessions.length === 0 ? (
-          <div className="bg-[#faedcd]/15 rounded-3xl border border-[#faedcd]/60 p-8 text-center text-[#3d2b1f]/60 font-semibold shadow-inner">
+          <div className="bg-[#faedcd]/15 rounded-lg border border-[#faedcd]/60 p-8 text-center text-[#3d2b1f]/60 font-semibold shadow-inner">
             No call records available
           </div>
         ) : (
@@ -189,7 +189,7 @@ export const LeadDetailPage: React.FC = () => {
             {lead.callSessions.map((session) => (
               <div
                 key={session.id}
-                className="bg-white/50 backdrop-blur-sm rounded-3xl border border-[#faedcd]/60 p-5 hover:shadow-premium-glow hover:border-[#d4a373]/40 transition-all cursor-pointer shadow-sm"
+                className="bg-white/50 backdrop-blur-sm rounded-lg border border-[#faedcd]/60 p-5 hover:shadow-premium-glow hover:border-[#d4a373]/40 transition-all cursor-pointer shadow-sm"
               >
                 <div className="flex items-start justify-between">
                   <div>
@@ -250,7 +250,7 @@ export const LeadDetailPage: React.FC = () => {
             {lead.objections.map((objection) => (
               <div
                 key={objection.id}
-                className="bg-white/50 backdrop-blur-sm rounded-3xl border border-[#faedcd]/60 p-5 shadow-sm"
+                className="bg-white/50 backdrop-blur-sm rounded-lg border border-[#faedcd]/60 p-5 shadow-sm"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -287,10 +287,10 @@ export const LeadDetailPage: React.FC = () => {
         <h2 className="text-xl font-black text-[#2d1e18] font-display">Internal Notes</h2>
         <textarea
           placeholder="Add internal notes about this lead..."
-          className="w-full px-4 py-3 bg-white/70 border border-[#faedcd] rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#d4a373]/30 focus:border-[#d4a373] text-[#3d2b1f] font-medium placeholder-[#3d2b1f]/30"
+          className="w-full px-4 py-3 bg-white/70 border border-[#faedcd] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d4a373]/30 focus:border-[#d4a373] text-[#3d2b1f] font-medium placeholder-[#3d2b1f]/30"
           rows={4}
         />
-        <button className="mt-2 px-6 py-2.5 bg-[#d4a373] text-white font-bold rounded-xl hover:bg-[#b5835a] transition-all cursor-pointer shadow-sm active:scale-95 text-sm">
+        <button className="mt-2 px-6 py-2.5 bg-[#d4a373] text-white font-bold rounded-lg hover:bg-[#b5835a] transition-all cursor-pointer shadow-sm active:scale-95 text-sm">
           Save Notes
         </button>
       </div>

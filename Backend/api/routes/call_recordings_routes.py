@@ -32,6 +32,7 @@ class RecordingMetadata(BaseModel):
     sentiment: str
     key_topics: List[str]
     created_at: str
+    lead_name: Optional[str] = None
 
 
 class RecordingDetails(BaseModel):
@@ -79,7 +80,7 @@ class RecordingStatistics(BaseModel):
 
 
 @router.get(
-    "/",
+    "",
     response_model=RecordingsListResponse,
     summary="List all call recordings"
 )
@@ -108,8 +109,17 @@ async def list_call_recordings(
             sentiment=sentiment
         )
         
-        formatted = [
-            RecordingMetadata(
+        formatted = []
+        import json
+        for r in recordings:
+            topics = r.get("key_topics", [])
+            if isinstance(topics, str):
+                try:
+                    topics = json.loads(topics)
+                except:
+                    topics = []
+            
+            formatted.append(RecordingMetadata(
                 id=str(r["id"]),
                 call_session_id=str(r["call_session_id"]),
                 duration_seconds=r["duration_seconds"],
@@ -118,11 +128,10 @@ async def list_call_recordings(
                 storage_url=r.get("storage_url", ""),
                 language=r.get("transcription_language", "en"),
                 sentiment=r.get("sentiment", "neutral"),
-                key_topics=r.get("key_topics", []),
-                created_at=str(r["created_at"])
-            )
-            for r in recordings
-        ]
+                key_topics=topics,
+                created_at=str(r["created_at"]),
+                lead_name=r.get("lead_name")
+            ))
         
         logger.info(f"[RECORDINGS] Listed {len(recordings)} recordings (page {page}, total {total})")
         
@@ -135,6 +144,25 @@ async def list_call_recordings(
     except Exception as e:
         logger.error(f"[RECORDINGS] List error: {e}")
         raise HTTPException(status_code=500, detail="Failed to list recordings")
+
+from fastapi.responses import Response
+
+@router.get("/audio/{recording_id}")
+async def get_audio_stream(recording_id: str, db: SupabaseClient = Depends(get_db_client)):
+    try:
+        repo = Repository(db)
+        from uuid import UUID
+        recording = await repo.get_call_recording(UUID(recording_id))
+        if not recording or not recording.get("storage_path"):
+            raise HTTPException(status_code=404, detail="Audio not found")
+            
+        from services.storage_client import get_storage_client
+        client = await get_storage_client()
+        audio_bytes = await client.download_file(recording["storage_path"])
+        return Response(content=audio_bytes, media_type="audio/wav")
+    except Exception as e:
+        logger.error(f"[RECORDINGS] Audio stream error: {e}")
+        raise HTTPException(status_code=500, detail="Failed to stream audio")
 
 
 @router.get(

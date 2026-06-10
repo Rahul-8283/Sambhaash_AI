@@ -89,6 +89,17 @@ export const LeadsPage: React.FC = () => {
     }
   };
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLSelectElement>, nextFieldId?: string) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      if (nextFieldId) {
+        document.getElementById(nextFieldId)?.focus();
+      } else {
+        handleCreateLead();
+      }
+    }
+  };
+
   const handleCreateLead = async () => {
     if (!createForm.name || !createForm.phone) {
       alert("Name and phone are required");
@@ -151,14 +162,14 @@ export const LeadsPage: React.FC = () => {
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <button
             onClick={() => setShowUploadModal(true)}
-            className="flex items-center gap-2 px-3 md:px-4 py-2 bg-[#faedcd] border border-[#d4a373]/30 text-[#3d2b1f] font-bold rounded-2xl hover:bg-[#faedcd]/80 transition-all shadow-sm text-sm cursor-pointer"
+            className="flex items-center gap-2 px-3 md:px-4 py-2 bg-[#faedcd] border border-[#d4a373]/30 text-[#3d2b1f] font-bold rounded-lg hover:bg-[#faedcd]/80 transition-all shadow-sm text-sm cursor-pointer"
           >
             <Upload size={18} className="text-[#3d2b1f]/80" />
             Upload CSV
           </button>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-3 md:px-4 py-2 bg-[#d4a373] text-white font-bold rounded-2xl hover:bg-[#b5835a] transition-all shadow-lg shadow-[#d4a373]/20 text-sm cursor-pointer"
+            className="flex items-center gap-2 px-3 md:px-4 py-2 bg-[#d4a373] text-white font-bold rounded-lg hover:bg-[#b5835a] transition-all shadow-lg shadow-[#d4a373]/20 text-sm cursor-pointer"
           >
             <Plus size={18} />
             Add Lead
@@ -167,18 +178,18 @@ export const LeadsPage: React.FC = () => {
       </div>
 
       {/* Search & Filters */}
-      <div className="glass rounded-3xl p-6 space-y-6 border border-[#faedcd]/60">
+      <div className="glass rounded-lg p-6 space-y-6 border border-[#faedcd]/60">
         <div className="flex items-center gap-3">
           <input
             type="text"
             placeholder="Search by name, phone, or email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 px-4 py-2.5 bg-white/70 border border-[#faedcd] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d4a373]/30 focus:border-[#d4a373] text-[#3d2b1f] placeholder-[#3d2b1f]/40 font-medium"
+            className="flex-1 px-4 py-2.5 bg-white/70 border border-[#faedcd] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d4a373]/30 focus:border-[#d4a373] text-[#3d2b1f] placeholder-[#3d2b1f]/40 font-medium"
           />
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-[#faedcd] text-[#3d2b1f] font-bold rounded-xl hover:bg-[#f5e3b8] transition-all shadow-sm"
+            className="flex items-center gap-2 px-4 py-2.5 bg-[#faedcd] text-[#3d2b1f] font-bold rounded-lg hover:bg-[#f5e3b8] transition-all shadow-sm"
           >
             <Filter size={20} className="text-[#3d2b1f]/80" />
             Filters
@@ -198,7 +209,7 @@ export const LeadsPage: React.FC = () => {
                 onChange={(e) =>
                   handleFilterChange("status", e.target.value ? [e.target.value] : undefined)
                 }
-                className="w-full px-3 py-2 bg-white/70 border border-[#faedcd] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d4a373]/30 focus:border-[#d4a373] text-[#3d2b1f] font-medium"
+                className="w-full px-3 py-2 bg-white/70 border border-[#faedcd] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d4a373]/30 focus:border-[#d4a373] text-[#3d2b1f] font-medium"
               >
                 <option value="">All Statuses</option>
                 <option value="Not Called">Not Called</option>
@@ -223,7 +234,7 @@ export const LeadsPage: React.FC = () => {
                     e.target.value ? [e.target.value] : undefined
                   )
                 }
-                className="w-full px-3 py-2 bg-white/70 border border-[#faedcd] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d4a373]/30 focus:border-[#d4a373] text-[#3d2b1f] font-medium"
+                className="w-full px-3 py-2 bg-white/70 border border-[#faedcd] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d4a373]/30 focus:border-[#d4a373] text-[#3d2b1f] font-medium"
               >
                 <option value="">All Scores</option>
                 <option value="Hot">Hot 🔥</option>
@@ -241,7 +252,7 @@ export const LeadsPage: React.FC = () => {
               <select
                 value={filters.language || ""}
                 onChange={(e) => handleFilterChange("language", e.target.value || undefined)}
-                className="w-full px-3 py-2 bg-white/70 border border-[#faedcd] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d4a373]/30 focus:border-[#d4a373] text-[#3d2b1f] font-medium"
+                className="w-full px-3 py-2 bg-white/70 border border-[#faedcd] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d4a373]/30 focus:border-[#d4a373] text-[#3d2b1f] font-medium"
               >
                 <option value="">All Languages</option>
                 {Object.entries(LANGUAGE_MAP).map(([name, code]) => (
@@ -262,7 +273,7 @@ export const LeadsPage: React.FC = () => {
                 onChange={(e) =>
                   handleFilterChange("rmAssignment", e.target.value || undefined)
                 }
-                className="w-full px-3 py-2 bg-white/70 border border-[#faedcd] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d4a373]/30 focus:border-[#d4a373] text-[#3d2b1f] font-medium"
+                className="w-full px-3 py-2 bg-white/70 border border-[#faedcd] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d4a373]/30 focus:border-[#d4a373] text-[#3d2b1f] font-medium"
               >
                 <option value="">All RMs</option>
                 <option value="Rajesh Kumar">Rajesh Kumar</option>
@@ -280,7 +291,7 @@ export const LeadsPage: React.FC = () => {
                   setSearchQuery("");
                   setPage(1);
                 }}
-                className="w-full px-3 py-2 bg-[#faedcd] text-[#3d2b1f] font-bold rounded-xl hover:bg-[#f5e3b8] transition-colors shadow-sm"
+                className="w-full px-3 py-2 bg-[#faedcd] text-[#3d2b1f] font-bold rounded-lg hover:bg-[#f5e3b8] transition-colors shadow-sm"
               >
                 Clear All
               </button>
@@ -290,14 +301,14 @@ export const LeadsPage: React.FC = () => {
 
         {/* Bulk Actions */}
         {selectedLeads.length > 0 && (
-          <div className="flex items-center justify-between pt-4 border-t border-[#faedcd] bg-[#faedcd]/30 p-4 rounded-2xl border border-[#faedcd]/40">
+          <div className="flex items-center justify-between pt-4 border-t border-[#faedcd] bg-[#faedcd]/30 p-4 rounded-lg border border-[#faedcd]/40">
             <p className="text-sm font-bold text-[#3d2b1f]">
               {selectedLeads.length} selected
             </p>
             <div className="flex items-center gap-2">
               <button
                 onClick={handleBulkDelete}
-                className="px-4 py-2 bg-rose-600 text-white font-bold rounded-xl hover:bg-rose-700 transition-colors text-sm shadow-sm"
+                className="px-4 py-2 bg-rose-600 text-white font-bold rounded-lg hover:bg-rose-700 transition-colors text-sm shadow-sm"
               >
                 Delete Selected
               </button>
@@ -307,7 +318,7 @@ export const LeadsPage: React.FC = () => {
       </div>
 
       {/* Table */}
-      <div className="glass rounded-3xl overflow-hidden border border-[#faedcd]/60 shadow-xl bg-white/40">
+      <div className="glass rounded-lg overflow-hidden border border-[#faedcd]/60 shadow-xl bg-white/40">
         {loading ? (
           <div className="p-8 text-center text-[#3d2b1f]/60 font-bold">Loading leads...</div>
         ) : leads.length === 0 ? (
@@ -409,7 +420,7 @@ export const LeadsPage: React.FC = () => {
                 <button
                   disabled={page === 1}
                   onClick={() => setPage(page - 1)}
-                  className="px-4 py-2 bg-[#faedcd] border border-[#d4a373]/20 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#faedcd]/70 text-[#3d2b1f] font-bold transition-all shadow-sm cursor-pointer"
+                  className="px-4 py-2 bg-[#faedcd] border border-[#d4a373]/20 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#faedcd]/70 text-[#3d2b1f] font-bold transition-all shadow-sm cursor-pointer"
                 >
                   Previous
                 </button>
@@ -417,7 +428,7 @@ export const LeadsPage: React.FC = () => {
                 <button
                   disabled={page * 20 >= total}
                   onClick={() => setPage(page + 1)}
-                  className="px-4 py-2 bg-[#faedcd] border border-[#d4a373]/20 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#faedcd]/70 text-[#3d2b1f] font-bold transition-all shadow-sm cursor-pointer"
+                  className="px-4 py-2 bg-[#faedcd] border border-[#d4a373]/20 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#faedcd]/70 text-[#3d2b1f] font-bold transition-all shadow-sm cursor-pointer"
                 >
                   Next
                 </button>
@@ -494,9 +505,11 @@ export const LeadsPage: React.FC = () => {
               Name
             </label>
             <input
+              id="lead-name"
               type="text"
               value={createForm.name}
               onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+              onKeyDown={(e) => handleKeyDown(e, 'lead-phone')}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -505,9 +518,11 @@ export const LeadsPage: React.FC = () => {
               Phone
             </label>
             <input
+              id="lead-phone"
               type="tel"
               value={createForm.phone}
               onChange={(e) => setCreateForm({ ...createForm, phone: e.target.value })}
+              onKeyDown={(e) => handleKeyDown(e, 'lead-email')}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -516,9 +531,11 @@ export const LeadsPage: React.FC = () => {
               Email
             </label>
             <input
+              id="lead-email"
               type="email"
               value={createForm.email}
               onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+              onKeyDown={(e) => handleKeyDown(e, 'lead-language')}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
@@ -527,8 +544,10 @@ export const LeadsPage: React.FC = () => {
               Language
             </label>
             <select
+              id="lead-language"
               value={createForm.language}
               onChange={(e) => setCreateForm({ ...createForm, language: e.target.value })}
+              onKeyDown={(e) => handleKeyDown(e)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
             >
               {Object.entries(LANGUAGE_MAP).map(([name, code]) => (

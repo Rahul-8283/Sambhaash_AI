@@ -11,6 +11,7 @@ import type {
   LeadWithDetails,
   CreateLeadFormData
 } from '../types';
+import { supabase } from './supabase';
 
 // ==================== ADDITIONAL TYPES ====================
 
@@ -38,29 +39,7 @@ export interface RMQueueLeadResponse {
   assigned_at: string;
 }
 
-export interface BatchUploadResponse {
-  created: number;
-  duplicates: number;
-  errors: number;
-  error_details: Array<{
-    row?: number;
-    index?: number;
-    phone: string;
-    error: string;
-  }>;
-}
 
-// --- RM Management ---
-export interface RMQueueLeadResponse {
-  id: string;
-  phone: string;
-  name: string | null;
-  email: string | null;
-  language: string;
-  status: string;
-  latest_score: number | null;
-  assigned_at: string;
-}
 
 export interface RMQueueResponse {
   rm_name: string;
@@ -99,6 +78,25 @@ export interface RMStatsResponse {
   conversion_rate: number;
 }
 
+// --- Queue & DLQ Management ---
+export interface QueueStatsResponse {
+  total_pending: number;
+  active_workers: number;
+  dlq_size: number;
+}
+
+export interface DlqJob {
+  id: string;
+  type: string;
+  lead_id: string;
+  payload: any;
+  retry_count: number;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  error?: string;
+}
+
 export interface RMLeaderboardEntry {
   rank: number;
   rm_name: string;
@@ -107,10 +105,39 @@ export interface RMLeaderboardEntry {
   conversion_rate: number;
 }
 
+// --- Recordings Management ---
+export interface RecordingMetadata {
+  id: string;
+  call_session_id: string;
+  duration_seconds: number;
+  file_size_bytes: number;
+  storage_path: string;
+  storage_url: string;
+  language: string;
+  sentiment: string;
+  key_topics: string[];
+  created_at: string;
+  lead_name?: string;
+}
+
+export interface RecordingsListResponse {
+  recordings: RecordingMetadata[];
+  total: number;
+  page: number;
+  limit: number;
+}
+
 export interface RMLeaderboardResponse {
   period: string;
   total_rms: number;
   entries: RMLeaderboardEntry[];
+  period_days?: number;
+  leaderboard?: Array<{
+    rm_name: string;
+    total_leads: number;
+    converted: number;
+    conversion_rate: number;
+  }>;
 }
 
 // --- General ---
@@ -129,7 +156,7 @@ export interface ApiError {
 // ==================== API SERVICE CLASS ====================
 
 class ApiService {
-  private api: AxiosInstance;
+  public api: AxiosInstance;
   private static instance: ApiService;
 
   private constructor() {
@@ -149,6 +176,15 @@ class ApiService {
       headers: {
         'Content-Type': 'application/json',
       },
+    });
+
+    // Request interceptor to attach Supabase auth token
+    this.api.interceptors.request.use(async (config) => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.access_token) {
+        config.headers.Authorization = `Bearer ${session.access_token}`;
+      }
+      return config;
     });
 
     // Response interceptor for unified error handling
@@ -306,6 +342,32 @@ class ApiService {
   public async getKBEffectiveness(days: number = 7): Promise<any> {
     const response: AxiosResponse<any> = await this.api.get('/admin/kb/analytics/effectiveness', {
       params: { limit_days: days },
+    });
+    return response.data;
+  }
+
+  // --- Queue & DLQ Endpoints ---
+  public async getQueueStats(): Promise<QueueStatsResponse> {
+    const response: AxiosResponse<QueueStatsResponse> = await this.api.get('/api/queue/stats');
+    return response.data;
+  }
+
+  public async getDlqJobs(limit: number = 50): Promise<DlqJob[]> {
+    const response: AxiosResponse<DlqJob[]> = await this.api.get('/api/queue/dlq', {
+      params: { limit },
+    });
+    return response.data;
+  }
+
+  public async retryDlqJob(jobId: string): Promise<{ success: boolean; message: string }> {
+    const response: AxiosResponse<{ success: boolean; message: string }> = await this.api.post(`/api/queue/dlq/${jobId}/retry`);
+    return response.data;
+  }
+
+  // --- Recordings Endpoints ---
+  public async getRecordings(page: number = 1, limit: number = 20): Promise<RecordingsListResponse> {
+    const response: AxiosResponse<RecordingsListResponse> = await this.api.get('/admin/recordings', {
+      params: { page, limit }
     });
     return response.data;
   }

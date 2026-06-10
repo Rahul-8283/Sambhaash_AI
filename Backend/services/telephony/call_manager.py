@@ -37,7 +37,7 @@ class CallManager:
         user_text: str,
         language: str,
         kb_context: Optional[Dict[str, Any]] = None
-    ) -> Tuple[str, str]:
+    ) -> Tuple[str, str, bool]:
         '''
         Takes transcribed text, processes with LLM (with optional KB context), 
         and returns the response text and suggested playback language.
@@ -49,7 +49,7 @@ class CallManager:
             kb_context: Optional KB context from retrieve_context_for_call()
         
         Returns:
-            (reply_text, language) tuple
+            (reply_text, language, is_ending) tuple
         '''
         request_obj = OrchestrationRequest(
             lead_id=call_sid,
@@ -69,11 +69,12 @@ class CallManager:
         # Run blocking orchestrator in a thread so FastAPI stays async/non-blocking
         try:
             result = await asyncio.to_thread(self.orchestrator.process_turn, request_obj)
-            return result.reply_text, result.language
+            is_ending = result.stage in ["handoff", "closing", "follow_up"] or getattr(result, "handoff_required", False)
+            return result.reply_text, result.language, is_ending
         except Exception as e:
             logger.exception("LLM Orchestration failed")
             # Provide an automatic fallback response so the call doesn't drop
-            return "I'm sorry, I'm having a little trouble connecting right now. Can you repeat that?", language
+            return "I'm sorry, I'm having a little trouble connecting right now. Can you repeat that?", language, False
 
     async def generate_tts(self, text: str, language: str) -> bytes:
         '''

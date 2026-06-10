@@ -428,6 +428,7 @@ Follow these rules:
 8. Use only approved facts from memory and retrieved context.
 9. Do not repeat points already resolved in memory.
 10. Return strict JSON only in the specified schema.
+11. CRITICAL: If the user explicitly says goodbye, thanks you to end the call, or asks to end the call, you MUST set "stage" to "closing" or "handoff" so the call gracefully hangs up.
 """.strip()
 
         return prompt
@@ -647,6 +648,7 @@ Follow these rules:
 - If the lead is hot, prepare for human RM handoff.
 - If the lead is warm, encourage WhatsApp follow-up gently.
 - If the lead is cold, remain polite and low-pressure.
+- If the user explicitly says goodbye or asks to end the call, you MUST set "stage" to "closing" to force a hang up.
 """.strip()
 
     # ------------------------------------------------------------------

@@ -9,7 +9,9 @@ import {
   Home,
   ChevronRight,
   LogOut,
-  BarChart3
+  BarChart3,
+  Server,
+  PhoneCall
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -35,7 +37,9 @@ const ModernSidebar: React.FC<ModernSidebarProps> = ({ isOpen, onToggle }) => {
 
   const menuItems = [
     { id: "leads", label: "Leads", path: "/dashboard/leads", icon: Users },
+    { id: "calls", label: "Call Logs", path: "/dashboard/calls", icon: PhoneCall },
     { id: "analytics", label: "Analytics", path: "/dashboard/analytics", icon: BarChart3 },
+    { id: "queue", label: "Queue (DLQ)", path: "/dashboard/queue", icon: Server },
     { id: "rm", label: "RM Desk", path: "/dashboard/rm", icon: Target },
     { id: "appendix", label: "Appendix", path: "/dashboard/appendix", icon: FileText },
     { 
@@ -58,7 +62,7 @@ const ModernSidebar: React.FC<ModernSidebarProps> = ({ isOpen, onToggle }) => {
         }}
         transition={{ type: "spring", stiffness: 300, damping: 30 }}
         className={clsx(
-          "fixed left-4 top-4 bottom-4 z-50 bg-[#faedcd]/90 backdrop-blur-2xl border border-[#d4a373]/30 rounded-[2rem] shadow-2xl flex flex-col overflow-hidden",
+          "fixed left-4 top-4 bottom-4 z-50 bg-[#faedcd]/90 backdrop-blur-2xl border border-[#d4a373]/30 rounded-[1rem] shadow-2xl flex flex-col overflow-hidden",
           isMobile && !isOpen && "pointer-events-none"
         )}
       >
@@ -95,7 +99,7 @@ const ModernSidebar: React.FC<ModernSidebarProps> = ({ isOpen, onToggle }) => {
               onMouseEnter={() => setHoveredItem(item.id)}
               onMouseLeave={() => setHoveredItem(null)}
               className={clsx(
-                "relative flex items-center gap-4 px-3 py-3 rounded-2xl transition-all duration-200",
+                "relative flex items-center gap-4 px-3 py-3 rounded-lg transition-all duration-200",
                 isActive(item.path)
                   ? "bg-[#d4a373] text-white shadow-lg shadow-[#d4a373]/20"
                   : "text-[#3d2b1f]/70 hover:bg-[#fefae0] hover:text-[#3d2b1f]"
@@ -141,7 +145,7 @@ const ModernSidebar: React.FC<ModernSidebarProps> = ({ isOpen, onToggle }) => {
         <div className="p-3 border-t border-[#d4a373]/20 space-y-1">
           <Link
             to="/"
-            className="flex items-center gap-4 px-3 py-3 rounded-2xl text-[#3d2b1f]/70 hover:bg-[#fefae0] hover:text-[#3d2b1f] transition-all duration-200"
+            className="flex items-center gap-4 px-3 py-3 rounded-lg text-[#3d2b1f]/70 hover:bg-[#fefae0] hover:text-[#3d2b1f] transition-all duration-200"
           >
             <div className="shrink-0 w-6 flex justify-center">
               <Home size={22} className="text-[#3d2b1f]/75" />
@@ -150,7 +154,7 @@ const ModernSidebar: React.FC<ModernSidebarProps> = ({ isOpen, onToggle }) => {
           </Link>
           <button
             onClick={onToggle}
-            className="w-full flex items-center gap-4 px-3 py-3 rounded-2xl text-[#3d2b1f]/70 hover:bg-[#fefae0] hover:text-[#3d2b1f] transition-all duration-200"
+            className="w-full flex items-center gap-4 px-3 py-3 rounded-lg text-[#3d2b1f]/70 hover:bg-[#fefae0] hover:text-[#3d2b1f] transition-all duration-200"
           >
             <div className={clsx("shrink-0 w-6 flex justify-center transition-transform duration-300", !isOpen && "rotate-180")}>
               <LogOut size={22} className="rotate-180 text-[#3d2b1f]/75" />

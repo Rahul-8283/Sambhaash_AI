@@ -81,6 +81,7 @@ class Settings(BaseSettings):
     # ==================== WHATSAPP ====================
     whatsapp_template_language: str = Field(default="hi", env="WHATSAPP_TEMPLATE_LANGUAGE")
     whatsapp_send_on_warm: bool = Field(default=True, env="WHATSAPP_SEND_ON_WARM")
+    support_phone_number: str = Field(default="+919999999999", env="SUPPORT_PHONE_NUMBER")
     
     # ==================== SESSION ====================
     session_timeout_minutes: int = Field(default=30, env="SESSION_TIMEOUT_MINUTES")

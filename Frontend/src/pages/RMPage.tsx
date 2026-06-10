@@ -135,7 +135,7 @@ export const RMPage: React.FC = () => {
         <div>
           <h1 className="text-3xl font-black text-[#2d1e18] font-display flex items-center gap-3">
             RM Control Desk 
-            <span className="text-[10px] font-black bg-rose-100 text-rose-700 px-3 py-1 rounded-full border border-rose-200 uppercase tracking-widest">
+            <span className="text-[10px] font-black bg-rose-100 text-rose-700 px-3 py-1 rounded-lg border border-rose-200 uppercase tracking-widest">
               Live Allocation
             </span>
           </h1>
@@ -144,7 +144,7 @@ export const RMPage: React.FC = () => {
         <button
           onClick={fetchHotLeads}
           disabled={loading}
-          className="flex items-center gap-2 px-4 py-2.5 bg-[#d4a373] text-white font-bold rounded-2xl hover:bg-[#b5835a] transition-all shadow-lg shadow-[#d4a373]/25 cursor-pointer disabled:opacity-50 text-sm active:scale-95"
+          className="flex items-center gap-2 px-4 py-2.5 bg-[#d4a373] text-white font-bold rounded-lg hover:bg-[#b5835a] transition-all shadow-lg shadow-[#d4a373]/25 cursor-pointer disabled:opacity-50 text-sm active:scale-95"
         >
           <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
           Refresh Desk
@@ -164,13 +164,13 @@ export const RMPage: React.FC = () => {
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.05 }}
-            className="bg-white/50 backdrop-blur-sm p-5 rounded-3xl border border-[#faedcd]/60 shadow-sm flex items-center justify-between hover:shadow-premium transition-all duration-200"
+            className="bg-white/50 backdrop-blur-sm p-5 rounded-lg border border-[#faedcd]/60 shadow-sm flex items-center justify-between hover:shadow-premium transition-all duration-200"
           >
             <div>
               <p className="text-xs font-bold text-[#3d2b1f]/70 uppercase tracking-wider">{stat.label}</p>
               <h3 className="text-3xl font-black text-[#2d1e18] mt-1 font-display">{stat.value}</h3>
             </div>
-            <div className={`p-3.5 rounded-2xl bg-[#faedcd] text-[#3d2b1f] border border-[#d4a373]/20`}>
+            <div className={`p-3.5 rounded-lg bg-[#faedcd] text-[#3d2b1f] border border-[#d4a373]/20`}>
               <stat.icon size={22} />
             </div>
           </motion.div>
@@ -178,7 +178,7 @@ export const RMPage: React.FC = () => {
       </div>
 
       {/* Controls */}
-      <div className="glass rounded-3xl border border-[#faedcd]/60 shadow-xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="glass rounded-lg border border-[#faedcd]/60 shadow-xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
         {/* Search */}
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#3d2b1f]/40" size={18} />
@@ -187,7 +187,7 @@ export const RMPage: React.FC = () => {
             placeholder="Search leads by name, phone..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2.5 bg-white/70 border border-[#faedcd] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d4a373]/30 focus:border-[#d4a373] text-sm text-[#3d2b1f] font-medium placeholder-[#3d2b1f]/30"
+            className="w-full pl-10 pr-4 py-2.5 bg-white/70 border border-[#faedcd] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d4a373]/30 focus:border-[#d4a373] text-sm text-[#3d2b1f] font-medium placeholder-[#3d2b1f]/30"
           />
         </div>
 
@@ -196,7 +196,7 @@ export const RMPage: React.FC = () => {
           <span className="text-xs font-bold text-[#3d2b1f]/80 uppercase tracking-wider flex items-center gap-1.5 shrink-0">
             <Filter size={16} /> Filter by Assignment:
           </span>
-          <div className="overflow-x-auto no-scrollbar scroll-smooth p-1 bg-[#faedcd]/30 border border-[#faedcd]/60 rounded-xl max-w-full">
+          <div className="overflow-x-auto no-scrollbar scroll-smooth p-1 bg-[#faedcd]/30 border border-[#faedcd]/60 rounded-lg max-w-full">
             <div className="flex flex-nowrap gap-1">
               {[
                 { id: "all", label: "All" },
@@ -222,7 +222,7 @@ export const RMPage: React.FC = () => {
       </div>
 
       {/* Leads Table */}
-      <div className="glass rounded-3xl border border-[#faedcd]/60 shadow-xl overflow-hidden bg-white/40">
+      <div className="glass rounded-lg border border-[#faedcd]/60 shadow-xl overflow-hidden bg-white/40">
         {loading ? (
           <div className="py-20 text-center flex flex-col items-center justify-center space-y-3">
             <RefreshCw size={36} className="animate-spin text-[#d4a373]" />
@@ -270,7 +270,7 @@ export const RMPage: React.FC = () => {
 
                       {/* Language */}
                       <td className="px-6 py-4">
-                        <span className="text-xs font-bold bg-[#faedcd] text-[#3d2b1f] px-3 py-1 rounded-full border border-[#d4a373]/20">
+                        <span className="text-xs font-bold bg-[#faedcd] text-[#3d2b1f] px-3 py-1 rounded-lg border border-[#d4a373]/20">
                           {LANGUAGE_MAP[lead.language as keyof typeof LANGUAGE_MAP] || lead.language}
                         </span>
                       </td>
@@ -278,9 +278,9 @@ export const RMPage: React.FC = () => {
                       {/* Score */}
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-24 bg-[#faedcd] h-2 rounded-full overflow-hidden border border-[#faedcd]/85">
+                          <div className="w-24 bg-[#faedcd] h-2 rounded-lg overflow-hidden border border-[#faedcd]/85">
                             <div 
-                              className="bg-[#d4a373] h-full rounded-full" 
+                              className="bg-[#d4a373] h-full rounded-lg" 
                               style={{ width: `${(score?.compositeScore || 0) * 100}%` }}
                             />
                           </div>
@@ -328,7 +328,7 @@ export const RMPage: React.FC = () => {
                           <button
                             onClick={() => handleAssignClick(lead)}
                             disabled={isConverted}
-                            className="flex items-center gap-1 px-3 py-1.5 bg-[#faedcd] hover:bg-[#f5e3b8] text-[#3d2b1f] text-xs font-bold rounded-xl border border-[#d4a373]/20 transition-all shadow-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="flex items-center gap-1 px-3 py-1.5 bg-[#faedcd] hover:bg-[#f5e3b8] text-[#3d2b1f] text-xs font-bold rounded-lg border border-[#d4a373]/20 transition-all shadow-sm cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                           >
                             <UserPlus size={14} />
                             {isAssigned ? "Re-assign" : "Allocate RM"}
@@ -337,7 +337,7 @@ export const RMPage: React.FC = () => {
                           <button
                             onClick={() => handleConvertClick(lead)}
                             disabled={isConverted}
-                            className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-md shadow-emerald-600/10 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                            className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-md shadow-emerald-600/10 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
                           >
                             <CheckCircle size={14} />
                             Mark Converted
@@ -361,7 +361,7 @@ export const RMPage: React.FC = () => {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white/95 backdrop-blur-md rounded-3xl p-6 shadow-2xl max-w-md w-full border border-[#faedcd] space-y-5"
+              className="bg-white/95 backdrop-blur-md rounded-lg p-6 shadow-2xl max-w-md w-full border border-[#faedcd] space-y-5"
             >
               <div>
                 <h3 className="text-xl font-black text-[#2d1e18] font-display">Allocate Relationship Manager</h3>
@@ -373,7 +373,7 @@ export const RMPage: React.FC = () => {
                 <select
                   value={assigningRm}
                   onChange={(e) => setAssigningRm(e.target.value)}
-                  className="w-full px-4 py-3 bg-white/70 border border-[#faedcd] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d4a373]/30 focus:border-[#d4a373] text-[#3d2b1f] font-bold"
+                  className="w-full px-4 py-3 bg-white/70 border border-[#faedcd] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d4a373]/30 focus:border-[#d4a373] text-[#3d2b1f] font-bold"
                 >
                   {AVAILABLE_RMS.map(name => (
                     <option key={name} value={name}>{name}</option>
@@ -385,14 +385,14 @@ export const RMPage: React.FC = () => {
                 <button
                   onClick={() => setShowAssignModal(false)}
                   disabled={submitting}
-                  className="px-4 py-2 bg-[#faedcd] hover:bg-[#f5e3b8] text-[#3d2b1f] font-bold rounded-xl text-sm transition-all cursor-pointer"
+                  className="px-4 py-2 bg-[#faedcd] hover:bg-[#f5e3b8] text-[#3d2b1f] font-bold rounded-lg text-sm transition-all cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleAssignSubmit}
                   disabled={submitting}
-                  className="px-5 py-2 bg-[#d4a373] hover:bg-[#b5835a] text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-[#d4a373]/20 cursor-pointer disabled:opacity-50"
+                  className="px-5 py-2 bg-[#d4a373] hover:bg-[#b5835a] text-white font-bold rounded-lg text-sm transition-all shadow-lg shadow-[#d4a373]/20 cursor-pointer disabled:opacity-50"
                 >
                   {submitting ? "Allocating..." : "Confirm Assignment"}
                 </button>
@@ -410,7 +410,7 @@ export const RMPage: React.FC = () => {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-white/95 backdrop-blur-md rounded-3xl p-6 shadow-2xl max-w-md w-full border border-[#faedcd] space-y-5"
+              className="bg-white/95 backdrop-blur-md rounded-lg p-6 shadow-2xl max-w-md w-full border border-[#faedcd] space-y-5"
             >
               <div>
                 <h3 className="text-xl font-black text-[#2d1e18] font-display flex items-center gap-2">
@@ -426,7 +426,7 @@ export const RMPage: React.FC = () => {
                   onChange={(e) => setConversionNotes(e.target.value)}
                   placeholder="E.g. Customer agreed to ₹50k loan with 8% interest rate. App installed."
                   rows={4}
-                  className="w-full px-4 py-3 bg-white/70 border border-[#faedcd] rounded-xl focus:outline-none focus:ring-2 focus:ring-[#d4a373]/30 focus:border-[#d4a373] text-sm text-[#3d2b1f] font-semibold"
+                  className="w-full px-4 py-3 bg-white/70 border border-[#faedcd] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d4a373]/30 focus:border-[#d4a373] text-sm text-[#3d2b1f] font-semibold"
                 />
               </div>
 
@@ -434,14 +434,14 @@ export const RMPage: React.FC = () => {
                 <button
                   onClick={() => setShowConvertModal(false)}
                   disabled={submitting}
-                  className="px-4 py-2 bg-[#faedcd] hover:bg-[#f5e3b8] text-[#3d2b1f] font-bold rounded-xl text-sm transition-all cursor-pointer"
+                  className="px-4 py-2 bg-[#faedcd] hover:bg-[#f5e3b8] text-[#3d2b1f] font-bold rounded-lg text-sm transition-all cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleConvertSubmit}
                   disabled={submitting}
-                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-sm transition-all shadow-lg shadow-emerald-600/20 cursor-pointer disabled:opacity-50"
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-lg text-sm transition-all shadow-lg shadow-emerald-600/20 cursor-pointer disabled:opacity-50"
                 >
                   {submitting ? "Saving..." : "Confirm Conversion"}
                 </button>
