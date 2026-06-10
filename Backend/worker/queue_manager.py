@@ -38,6 +38,7 @@ class JobType(Enum):
     SEND_SUMMARY = "send_summary"
     ASSIGN_RM = "assign_rm"
     UPDATE_SCORE = "update_score"
+    PROCESS_RECORDING = "process_recording"
 
 
 class QueueManager:

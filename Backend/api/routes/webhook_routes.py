@@ -378,20 +378,22 @@ async def recording_webhook(request: Request) -> Response:
                                 queue_manager=queue_manager
                         )
                         
-                        # 6.1 Save call recording (Phase 2B)
+                        # 6.1 Save call recording (Phase 2B) - Background Queue
                         try:
-                                recording_service = CallRecordingService(db_client=db_client)
-                                recording_result = await recording_service.save_call_recording(
-                                        call_session_id=UUID(session_id),
-                                        recording_url=recording_url,
-                                        twilio_recording_sid=call_sid,
-                                        twilio_call_sid=call_sid,
-                                        duration_seconds=int(duration) if duration else 0,
-                                        recorded_at=datetime.utcnow()
+                                await queue_manager.enqueue_job(
+                                        "process_recording",
+                                        payload={
+                                                "call_session_id": session_id,
+                                                "recording_url": recording_url,
+                                                "twilio_recording_sid": call_sid,
+                                                "twilio_call_sid": call_sid,
+                                                "duration_seconds": int(duration) if duration else 0
+                                        },
+                                        priority=1
                                 )
-                                logger.info(f"[RECORDING] Call recording saved: {recording_result.get('status')}")
+                                logger.info(f"[RECORDING] Enqueued recording job for session {session_id}")
                         except Exception as e:
-                                logger.error(f"[RECORDING] Failed to save recording: {e}")
+                                logger.error(f"[RECORDING] Failed to enqueue recording job: {e}")
                         
                         # End call with summary or LLM's final response
                         final_reply = reply_text if is_ending else "Thanks for chatting with us! Our team will be in touch shortly. Goodbye!"

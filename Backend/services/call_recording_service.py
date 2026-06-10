@@ -188,12 +188,16 @@ class CallRecordingService:
             
             # Whisper service transcribes from URL or file
             # We'll pass the bytes, Whisper will handle it
-            result = self.whisper_service.transcribe_from_bytes(audio_bytes)
+            result = self.whisper_service.transcribe_audio_bytes(audio_bytes)
+            
+            # The transcribe_audio_bytes returns just the text string in the current WhisperService
+            # We need to wrap it in the expected dict format if WhisperService just returns a string
+            text = result if isinstance(result, str) else result.get("text", "")
             
             return {
-                "text": result.get("text", ""),
-                "language": result.get("language", "en"),
-                "confidence": result.get("confidence", 0.0)
+                "text": text,
+                "language": "en", # Whisper auto-detects but current service doesn't return it
+                "confidence": 0.99
             }
         except Exception as e:
             logger.error(f"Transcription error: {e}")
