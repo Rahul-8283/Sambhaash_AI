@@ -108,8 +108,17 @@ async def list_call_recordings(
             sentiment=sentiment
         )
         
-        formatted = [
-            RecordingMetadata(
+        formatted = []
+        import json
+        for r in recordings:
+            topics = r.get("key_topics", [])
+            if isinstance(topics, str):
+                try:
+                    topics = json.loads(topics)
+                except:
+                    topics = []
+            
+            formatted.append(RecordingMetadata(
                 id=str(r["id"]),
                 call_session_id=str(r["call_session_id"]),
                 duration_seconds=r["duration_seconds"],
@@ -118,11 +127,9 @@ async def list_call_recordings(
                 storage_url=r.get("storage_url", ""),
                 language=r.get("transcription_language", "en"),
                 sentiment=r.get("sentiment", "neutral"),
-                key_topics=r.get("key_topics", []),
+                key_topics=topics,
                 created_at=str(r["created_at"])
-            )
-            for r in recordings
-        ]
+            ))
         
         logger.info(f"[RECORDINGS] Listed {len(recordings)} recordings (page {page}, total {total})")
         
