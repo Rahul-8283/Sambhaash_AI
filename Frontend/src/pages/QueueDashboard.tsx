@@ -71,24 +71,18 @@ const QueueDashboard: React.FC = () => {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="p-4 md:p-6 pt-2 space-y-6">
       
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-[#2d1e18] to-[#3d2b1f] p-8 rounded-[2rem] shadow-2xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-8 opacity-10">
-          <Server size={120} />
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-black text-[#2d1e18] font-display">Queue & Background Workers</h1>
+          <p className="text-sm font-semibold text-[#3d2b1f]/70">Manage background tasks and retry failed jobs.</p>
         </div>
-        <div className="relative z-10 space-y-2">
-          <h1 className="text-3xl font-bold text-[#faedcd] flex items-center gap-3">
-            <Activity className="text-[#d4a373]" />
-            Queue & Background Workers
-          </h1>
-          <p className="text-[#fefae0]/80">Manage background tasks and retry failed jobs.</p>
-        </div>
-        <div className="relative z-10 flex gap-4">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <button
             onClick={fetchData}
-            className="flex items-center gap-2 px-6 py-3 bg-[#faedcd]/10 hover:bg-[#faedcd]/20 text-[#faedcd] rounded-xl transition-all duration-300 font-medium border border-[#faedcd]/20"
+            className="flex items-center gap-2 px-3 md:px-4 py-2 bg-[#faedcd] border border-[#d4a373]/30 text-[#3d2b1f] font-bold rounded-lg hover:bg-[#faedcd]/80 transition-all shadow-sm text-sm cursor-pointer"
           >
             <RefreshCw size={18} className={isLoading ? "animate-spin" : ""} />
             Refresh
@@ -98,49 +92,40 @@ const QueueDashboard: React.FC = () => {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <motion.div
-          whileHover={{ y: -5 }}
-          className="bg-white/80 backdrop-blur-xl p-6 rounded-3xl border border-[#d4a373]/30 shadow-xl flex items-center gap-6"
-        >
-          <div className="p-4 bg-[#fefae0] text-[#d4a373] rounded-2xl">
-            <Server size={32} />
+        <div className="glass rounded-lg p-6 border border-[#faedcd]/60 flex items-center gap-6 shadow-sm">
+          <div className="p-4 bg-[#fefae0] text-[#d4a373] rounded-lg">
+            <Server size={28} />
           </div>
           <div>
-            <p className="text-[#3d2b1f]/60 font-semibold mb-1">Active Workers</p>
-            <h3 className="text-3xl font-bold text-[#2d1e18]">{stats?.active_workers || 0}</h3>
+            <p className="text-[#3d2b1f]/60 font-bold text-sm uppercase tracking-wider mb-1">Active Workers</p>
+            <h3 className="text-2xl font-black text-[#2d1e18]">{stats?.active_workers || 0}</h3>
           </div>
-        </motion.div>
+        </div>
 
-        <motion.div
-          whileHover={{ y: -5 }}
-          className="bg-white/80 backdrop-blur-xl p-6 rounded-3xl border border-[#d4a373]/30 shadow-xl flex items-center gap-6"
-        >
-          <div className="p-4 bg-blue-50 text-blue-500 rounded-2xl">
-            <Activity size={32} />
+        <div className="glass rounded-lg p-6 border border-[#faedcd]/60 flex items-center gap-6 shadow-sm">
+          <div className="p-4 bg-blue-50 text-blue-500 rounded-lg">
+            <Activity size={28} />
           </div>
           <div>
-            <p className="text-[#3d2b1f]/60 font-semibold mb-1">Pending Jobs</p>
-            <h3 className="text-3xl font-bold text-[#2d1e18]">{stats?.total_pending || 0}</h3>
+            <p className="text-[#3d2b1f]/60 font-bold text-sm uppercase tracking-wider mb-1">Pending Jobs</p>
+            <h3 className="text-2xl font-black text-[#2d1e18]">{stats?.total_pending || 0}</h3>
           </div>
-        </motion.div>
+        </div>
 
-        <motion.div
-          whileHover={{ y: -5 }}
-          className="bg-white/80 backdrop-blur-xl p-6 rounded-3xl border border-red-200 shadow-xl flex items-center gap-6"
-        >
-          <div className="p-4 bg-red-50 text-red-500 rounded-2xl">
-            <AlertTriangle size={32} />
+        <div className="glass rounded-lg p-6 border border-red-100 flex items-center gap-6 shadow-sm">
+          <div className="p-4 bg-red-50 text-red-500 rounded-lg">
+            <AlertTriangle size={28} />
           </div>
           <div>
-            <p className="text-[#3d2b1f]/60 font-semibold mb-1">Failed Jobs (DLQ)</p>
-            <h3 className="text-3xl font-bold text-red-600">{stats?.dlq_size || 0}</h3>
+            <p className="text-[#3d2b1f]/60 font-bold text-sm uppercase tracking-wider mb-1">Failed Jobs (DLQ)</p>
+            <h3 className="text-2xl font-black text-red-600">{stats?.dlq_size || 0}</h3>
           </div>
-        </motion.div>
+        </div>
       </div>
 
       {/* DLQ Table */}
-      <div className="bg-white/80 backdrop-blur-xl border border-[#d4a373]/30 rounded-3xl shadow-xl overflow-hidden flex flex-col">
-        <div className="p-6 border-b border-[#d4a373]/20 flex justify-between items-center bg-[#faedcd]/30">
+      <div className="glass rounded-lg border border-[#faedcd]/60 overflow-hidden flex flex-col shadow-sm">
+        <div className="p-6 border-b border-[#faedcd]/80 flex justify-between items-center">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-red-100 text-red-500 rounded-lg">
               <AlertTriangle size={20} />
@@ -153,7 +138,7 @@ const QueueDashboard: React.FC = () => {
           {dlqJobs.length > 0 && (
             <button
               onClick={handleRetryAll}
-              className="flex items-center gap-2 px-5 py-2.5 bg-[#d4a373] hover:bg-[#bc8a5f] text-white rounded-xl transition-all duration-300 font-medium shadow-lg shadow-[#d4a373]/30"
+              className="flex items-center gap-2 px-3 md:px-4 py-2 bg-[#d4a373] text-white font-bold rounded-lg hover:bg-[#b5835a] transition-all shadow-sm text-sm cursor-pointer"
             >
               <RefreshCw size={16} />
               Retry All Failed
@@ -188,18 +173,16 @@ const QueueDashboard: React.FC = () => {
                   {dlqJobs.map((job) => (
                     <motion.tr
                       key={job.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.95 }}
-                      className="border-b border-[#d4a373]/10 hover:bg-[#faedcd]/20 transition-colors group"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="border-b border-[#faedcd]/40 hover:bg-[#faedcd]/10 transition-colors group"
                     >
-                      <td className="p-4">
-                        <span className="font-mono text-xs px-2 py-1 bg-[#2d1e18]/5 text-[#2d1e18]/70 rounded-md border border-[#2d1e18]/10">
-                          {job.id ? job.id.substring(0, 8) + '...' : 'Unknown'}
-                        </span>
+                      <td className="p-4 font-mono text-slate-500">
+                        {job.id ? job.id.substring(0, 8) + '...' : 'Unknown'}
                       </td>
                       <td className="p-4">
-                        <span className="px-3 py-1 bg-blue-50 text-blue-600 text-xs font-semibold rounded-full border border-blue-100 uppercase tracking-wide">
+                        <span className="text-blue-600 font-medium bg-blue-50 px-2 py-0.5 rounded text-xs">
                           {job.type}
                         </span>
                       </td>
