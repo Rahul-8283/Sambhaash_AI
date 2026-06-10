@@ -162,11 +162,18 @@ class CallRecordingService:
         """Download recording from URL"""
         try:
             import httpx
+            from config import get_config
+            
+            settings = get_config()
+            auth = (settings.twilio_account_sid, settings.twilio_auth_token)
+            
             async with httpx.AsyncClient() as client:
-                # Add Twilio auth if needed
-                response = await client.get(recording_url, timeout=60.0)
+                response = await client.get(recording_url, timeout=60.0, auth=auth)
                 if response.status_code == 200:
                     return response.content
+                elif response.status_code == 401:
+                    logger.error("Failed to download recording: 401 Unauthorized. Ensure TWILIO_ACCOUNT_SID and TWILIO_AUTH_TOKEN are correct.")
+                    return None
                 else:
                     logger.error(f"Failed to download: {response.status_code}")
                     return None
