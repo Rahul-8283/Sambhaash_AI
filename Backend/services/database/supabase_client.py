@@ -51,8 +51,8 @@ class SupabaseClient:
     def __init__(
         self,
         database_url: str,
-        min_size: int = 5,
-        max_size: int = 20,
+        min_size: int = 1,
+        max_size: int = 5,
     ):
         """
         Initialize Supabase client.
