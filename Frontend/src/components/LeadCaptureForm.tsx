@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Send, Phone, User, Mail, Globe2 } from "lucide-react";
+import { Send, Phone, User, Mail, Globe2, ChevronDown } from "lucide-react";
 import toast from "react-hot-toast";
 import { apiService } from "../services/apiService";
 
@@ -9,7 +9,7 @@ export const LeadCaptureForm: React.FC = () => {
     name: "",
     email: "",
     phone: "",
-    language: "hi"
+    language: "en"
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -44,7 +44,7 @@ export const LeadCaptureForm: React.FC = () => {
         }
       });
 
-      setFormData({ name: "", email: "", phone: "", language: "hi" });
+      setFormData({ name: "", email: "", phone: "", language: "en" });
     } catch (error: any) {
       toast.error(error.response?.data?.detail || error.message || "Failed to submit form");
     } finally {
@@ -78,7 +78,7 @@ export const LeadCaptureForm: React.FC = () => {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Rahul Sharma"
+                  placeholder="Your Name"
                   className="w-full bg-[#fefae0] border border-[#d4a373]/30 rounded-xl py-3 pl-12 pr-4 text-[#3d2b1f] placeholder:text-[#3d2b1f]/40 focus:outline-none focus:border-[#d4a373] focus:ring-2 focus:ring-[#d4a373]/20 transition-all font-medium"
                 />
               </div>
@@ -93,7 +93,7 @@ export const LeadCaptureForm: React.FC = () => {
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="rahul@example.com"
+                  placeholder="user@example.com"
                   className="w-full bg-[#fefae0] border border-[#d4a373]/30 rounded-xl py-3 pl-12 pr-4 text-[#3d2b1f] placeholder:text-[#3d2b1f]/40 focus:outline-none focus:border-[#d4a373] focus:ring-2 focus:ring-[#d4a373]/20 transition-all font-medium"
                 />
               </div>
@@ -122,19 +122,26 @@ export const LeadCaptureForm: React.FC = () => {
 
             <div className="space-y-2">
               <label className="text-sm font-bold text-[#3d2b1f]/80 ml-1">Preferred Language</label>
-              <div className="relative">
-                <Globe2 size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#d4a373]" />
+              <div className="relative bg-[#fefae0] rounded-xl border border-[#d4a373]/30 focus-within:border-[#d4a373] focus-within:ring-2 focus-within:ring-[#d4a373]/20 transition-all">
+                <Globe2 size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#d4a373] pointer-events-none" />
                 <select
                   value={formData.language}
                   onChange={(e) => setFormData({ ...formData, language: e.target.value })}
-                  className="w-full bg-[#fefae0] border border-[#d4a373]/30 rounded-xl py-3 pl-12 pr-4 text-[#3d2b1f] focus:outline-none focus:border-[#d4a373] focus:ring-2 focus:ring-[#d4a373]/20 transition-all font-medium appearance-none cursor-pointer"
+                  className="w-full bg-transparent py-3 pl-12 pr-10 text-[#3d2b1f] focus:outline-none font-medium appearance-none cursor-pointer"
                 >
                   <option value="en">English</option>
                   <option value="hi">Hindi (हिंदी)</option>
                   <option value="bn">Bengali (বাংলা)</option>
-                  <option value="ta">Tamil (தமிழ்)</option>
                   <option value="te">Telugu (తెలుగు)</option>
+                  <option value="mr">Marathi (मराठी)</option>
+                  <option value="ta">Tamil (தமிழ்)</option>
+                  <option value="ur">Urdu (اردو)</option>
+                  <option value="gu">Gujarati (ગુજરાતી)</option>
+                  <option value="kn">Kannada (ಕನ್ನಡ)</option>
+                  <option value="ml">Malayalam (മലയാളം)</option>
+                  <option value="pa">Punjabi (ਪੰਜਾਬੀ)</option>
                 </select>
+                <ChevronDown size={18} className="absolute right-4 top-1/2 -translate-y-1/2 text-[#d4a373] pointer-events-none" />
               </div>
             </div>
           </div>
