@@ -254,6 +254,15 @@ class ApiService {
     return response.data;
   }
 
+  public async submitPublicLead(lead: CreateLeadFormData): Promise<Lead> {
+    // Uses the public endpoint, which bypasses the global auth interceptor
+    // but the interceptor is harmless since there might be no session anyway.
+    // However, if the user happens to have an expired token, we don't want it to fail.
+    // So we just rely on the backend not validating it for /api/public/leads
+    const response: AxiosResponse<Lead> = await this.api.post('/api/public/leads', lead);
+    return response.data;
+  }
+
   public async updateLead(id: string, lead: Partial<CreateLeadFormData> & { status?: string }): Promise<Lead> {
     const response: AxiosResponse<Lead> = await this.api.put(`/api/leads/${id}`, lead);
     return response.data;
