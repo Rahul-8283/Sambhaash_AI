@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { Send, Phone, User, Mail, Globe2 } from "lucide-react";
 import toast from "react-hot-toast";
-import { ApiService } from "../services/apiService";
+import { apiService } from "../services/apiService";
 
 export const LeadCaptureForm: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -18,8 +18,6 @@ export const LeadCaptureForm: React.FC = () => {
     setIsSubmitting(true);
 
     try {
-      const apiService = ApiService.getInstance();
-      
       // Auto-prepend +91
       const formattedPhone = `+91${formData.phone.replace(/\D/g, '')}`;
       
