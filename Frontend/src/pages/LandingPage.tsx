@@ -12,6 +12,7 @@ import {
   UserCheck
 } from "lucide-react";
 import Footer from "../components/Layout/Footer";
+import LeadCaptureForm from "../components/LeadCaptureForm";
 import { supabase } from "../services/supabase";
 import toast from "react-hot-toast";
 
@@ -250,6 +251,9 @@ export const LandingPage: React.FC = () => {
           ))}
         </div>
       </section>
+
+      {/* Public Lead Capture Form */}
+      <LeadCaptureForm />
 
       {/* Floating CTA */}
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
