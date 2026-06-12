@@ -6,7 +6,8 @@ Entry point for the backend server
 import os
 import logging
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 import uvicorn
@@ -142,10 +143,13 @@ def create_app() -> FastAPI:
     async def general_exception_handler(request, exc):
         """Handle general exceptions"""
         logger.error(f"Unhandled exception: {str(exc)}")
-        return {
-            "error": "Internal server error",
-            "message": str(exc)
-        }
+        return JSONResponse(
+            status_code=500,
+            content={
+                "error": "Internal server error",
+                "message": str(exc)
+            }
+        )
     
     logger.info("[APP] FastAPI application created successfully")
     return app
