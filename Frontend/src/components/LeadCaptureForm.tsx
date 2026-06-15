@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Send, Phone, User, Mail, Globe2, ChevronDown } from "lucide-react";
+import { Send, Phone, User, Mail, Globe2, ChevronDown, X, MessageSquare, PhoneCall } from "lucide-react";
 import toast from "react-hot-toast";
 import { apiService } from "../services/apiService";
 
@@ -12,18 +12,23 @@ export const LeadCaptureForm: React.FC = () => {
     language: "en"
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showVerificationModal, setShowVerificationModal] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const formattedPhone = `+91${formData.phone.replace(/\D/g, '')}`;
+    if (formattedPhone.length < 13) {
+      toast.error("Please enter a valid 10-digit mobile number");
+      return;
+    }
+    setShowVerificationModal(true);
+  };
+
+  const handleProceed = async () => {
     setIsSubmitting(true);
 
     try {
-      // Auto-prepend +91
       const formattedPhone = `+91${formData.phone.replace(/\D/g, '')}`;
-      
-      if (formattedPhone.length < 13) {
-        throw new Error("Please enter a valid 10-digit mobile number");
-      }
 
       await apiService.submitPublicLead({
         name: formData.name,
@@ -49,11 +54,13 @@ export const LeadCaptureForm: React.FC = () => {
       toast.error(error.response?.data?.detail || error.message || "Failed to submit form");
     } finally {
       setIsSubmitting(false);
+      setShowVerificationModal(false);
     }
   };
 
   return (
-    <section className="relative z-10 py-24 px-6 max-w-4xl mx-auto border-t border-[#d4a373]/20">
+    <>
+      <section className="relative z-10 py-24 px-6 max-w-4xl mx-auto border-t border-[#d4a373]/20">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
@@ -156,7 +163,83 @@ export const LeadCaptureForm: React.FC = () => {
           </button>
         </form>
       </motion.div>
-    </section>
+
+      </section>
+
+      {/* Verification Splash Modal */}
+      {showVerificationModal && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowVerificationModal(false);
+          }}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-[#fefae0] rounded-3xl max-w-lg w-full p-8 shadow-2xl relative border border-[#d4a373]/30"
+          >
+            <button 
+              onClick={() => setShowVerificationModal(false)}
+              className="absolute top-5 right-5 text-[#3d2b1f]/60 hover:text-[#d4a373] transition-colors"
+            >
+              <X size={24} strokeWidth={3} />
+            </button>
+            
+            <div className="text-center mb-6">
+              <h3 className="text-2xl font-black text-[#2d1e18] font-display mb-2">Sandbox Verification</h3>
+              <p className="text-[#3d2b1f]/70 font-medium text-sm">
+                Before proceeding, please ensure you've completed the Twilio test environment setup for this phone number.
+              </p>
+            </div>
+
+            <div className="space-y-4 mb-8">
+              <div className="bg-[#faedcd]/40 p-4 rounded-2xl border border-[#d4a373]/20 flex gap-4 items-start">
+                <div className="p-2 bg-[#d4a373]/10 text-[#d4a373] rounded-xl shrink-0">
+                  <PhoneCall size={20} />
+                </div>
+                <div>
+                  <h4 className="font-bold text-[#3d2b1f] text-sm mb-1">1. Voice Call Verification</h4>
+                  <p className="text-xs text-[#3d2b1f]/70 leading-relaxed">
+                    Make sure this number is added and verified in the Twilio Caller IDs list, as we are using a trial account.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="bg-[#faedcd]/40 p-4 rounded-2xl border border-[#d4a373]/20 flex gap-4 items-start">
+                <div className="p-2 bg-[#d4a373]/10 text-[#d4a373] rounded-xl shrink-0">
+                  <MessageSquare size={20} />
+                </div>
+                <div>
+                  <h4 className="font-bold text-[#3d2b1f] text-sm mb-1">2. WhatsApp Sandbox</h4>
+                  <p className="text-xs text-[#3d2b1f]/70 leading-relaxed">
+                    To receive AI follow-up texts, you must join the Twilio WhatsApp Sandbox by sending the join code to our sandbox number first.
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={() => setShowVerificationModal(false)}
+                className="flex-1 px-4 py-3 rounded-xl border-2 border-[#d4a373]/20 text-[#3d2b1f]/70 font-bold hover:bg-[#faedcd]/50 hover:text-[#3d2b1f] transition-all"
+              >
+                Deny
+              </button>
+              <button
+                type="button"
+                onClick={handleProceed}
+                disabled={isSubmitting}
+                className="flex-1 px-4 py-3 rounded-xl bg-[#d4a373] text-white font-bold hover:bg-[#c39162] transition-all shadow-lg flex justify-center items-center gap-2"
+              >
+                {isSubmitting ? "Submitting..." : "Completed"}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+    </>
   );
 };
 
