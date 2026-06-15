@@ -50,7 +50,7 @@ export const LeadDetailPage: React.FC = () => {
     );
   }
 
-  const latestScore = lead.scoreHistory[0] || lead.currentScore;
+  const latestScore = lead.scoreHistory?.[0] || lead.currentScore;
 
   return (
     <div className="p-6 space-y-6">
@@ -180,13 +180,13 @@ export const LeadDetailPage: React.FC = () => {
           </button>
         </div>
 
-        {lead.callSessions.length === 0 ? (
+        {(!lead.callSessions || lead.callSessions.length === 0) ? (
           <div className="bg-[#faedcd]/15 rounded-lg border border-[#faedcd]/60 p-8 text-center text-[#3d2b1f]/60 font-semibold shadow-inner">
             No call records available
           </div>
         ) : (
           <div className="space-y-3">
-            {lead.callSessions.map((session) => (
+            {lead.callSessions?.map((session) => (
               <div
                 key={session.id}
                 className="bg-white/50 backdrop-blur-sm rounded-lg border border-[#faedcd]/60 p-5 hover:shadow-premium-glow hover:border-[#d4a373]/40 transition-all cursor-pointer shadow-sm"
@@ -243,11 +243,11 @@ export const LeadDetailPage: React.FC = () => {
       </div>
 
       {/* Objections */}
-      {lead.objections.length > 0 && (
+      {lead.objections && lead.objections.length > 0 && (
         <div className="space-y-4">
           <h2 className="text-xl font-black text-[#2d1e18] font-display">Objections Logged</h2>
           <div className="space-y-3">
-            {lead.objections.map((objection) => (
+            {lead.objections?.map((objection) => (
               <div
                 key={objection.id}
                 className="bg-white/50 backdrop-blur-sm rounded-lg border border-[#faedcd]/60 p-5 shadow-sm"

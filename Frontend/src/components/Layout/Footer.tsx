@@ -22,7 +22,7 @@ export const Footer: React.FC = () => {
         </div>
 
         {/* Quick Links Column */}
-        <div className="space-y-3">
+        <div className="space-y-3 hidden md:block">
           <h4 className="text-xs font-black text-[#2d1e18] uppercase tracking-wider">Platform Desk</h4>
           <ul className="space-y-2 text-xs font-bold text-[#3d2b1f]/70">
             <li>
@@ -41,7 +41,7 @@ export const Footer: React.FC = () => {
         </div>
 
         {/* Settings Column */}
-        <div className="space-y-3">
+        <div className="space-y-3 hidden md:block">
           <h4 className="text-xs font-black text-[#2d1e18] uppercase tracking-wider">AI Config Workspace</h4>
           <ul className="space-y-2 text-xs font-bold text-[#3d2b1f]/70">
             <li>
@@ -60,7 +60,7 @@ export const Footer: React.FC = () => {
         </div>
 
         {/* Core Tech Column */}
-        <div className="space-y-3">
+        <div className="space-y-3 hidden md:block">
           <h4 className="text-xs font-black text-[#2d1e18] uppercase tracking-wider">Our AI Stack</h4>
           <ul className="space-y-2 text-xs font-bold text-[#3d2b1f]/70">
             <li className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#d4a373]" /> Groq LLaMA 3.3</li>

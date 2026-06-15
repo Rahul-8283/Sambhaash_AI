@@ -12,6 +12,7 @@ import {
   UserCheck
 } from "lucide-react";
 import Footer from "../components/Layout/Footer";
+import LeadCaptureForm from "../components/LeadCaptureForm";
 import { supabase } from "../services/supabase";
 import toast from "react-hot-toast";
 
@@ -224,7 +225,7 @@ export const LandingPage: React.FC = () => {
       {/* The Flow Section */}
       <section className="relative z-10 py-24 px-6 max-w-7xl mx-auto">
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-black mb-6 text-[#2d1e18] font-display leading-tight">Built for Rupazeey-Grade Performance</h2>
+          <h2 className="text-4xl md:text-5xl font-black mb-6 text-[#2d1e18] font-display leading-tight">Built for Enterprise Grade Performance</h2>
           <p className="text-[#3d2b1f]/80 max-w-2xl mx-auto text-lg font-medium">
             A complete, end-to-end pipeline designed to handle every stage of the lead lifecycle automatically.
           </p>
@@ -250,6 +251,9 @@ export const LandingPage: React.FC = () => {
           ))}
         </div>
       </section>
+
+      {/* Public Lead Capture Form */}
+      <LeadCaptureForm />
 
       {/* Floating CTA */}
       <div className="fixed bottom-8 left-1/2 -translate-x-1/2 z-50">
