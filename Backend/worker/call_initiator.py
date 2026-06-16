@@ -209,6 +209,11 @@ class CallInitiator:
                 # Cleanup pending session
                 if pending_session_key in call_sessions:
                     del call_sessions[pending_session_key]
+                # Mark as REJECTED so it doesn't infinitely loop
+                await self.repository.update_lead(
+                    lead_id=lead_id,
+                    status=LeadStatus.REJECTED.value
+                )
                 return False
         
         except Exception as e:
@@ -225,4 +230,14 @@ class CallInitiator:
                     del call_sessions[pending_session_key]
             except:
                 pass
+            
+            # Mark lead as REJECTED so we don't infinitely retry the crash
+            try:
+                await self.repository.update_lead(
+                    lead_id=lead_id,
+                    status=LeadStatus.REJECTED.value
+                )
+            except Exception as update_err:
+                logger.error(f"[CALL_INIT] Failed to mark lead as REJECTED: {update_err}")
+                
             return False
