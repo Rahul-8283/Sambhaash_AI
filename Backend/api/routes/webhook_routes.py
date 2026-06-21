@@ -336,16 +336,34 @@ async def recording_webhook(request: Request) -> Response:
                         logger.error(f"[KB] Failed to retrieve context: {e}")
                         kb_context = None
 
-                # 2. LLM Orchestration
-                manager = CallManager()
-                reply_text, target_lang, is_ending = await manager.process_turn(
-                    call_sid=call_sid,
-                    user_text=transcript,
-                    language=detected_lang,
-                    kb_context=kb_context
-                )
-
-                logger.info(f"AI response: {reply_text} (Target Lang: {target_lang})")
+                # 2. LangGraph Orchestration
+                from orchestration.graph import app
+                from langchain_core.messages import HumanMessage
+                
+                logger.info(f"Invoking LangGraph for session {session_id}")
+                
+                input_state = {
+                    "messages": [HumanMessage(content=transcript)],
+                    "session_id": session_id,
+                    "lead_id": lead_id,
+                    "lead_language": detected_lang
+                }
+                
+                # The thread_id tells the Supabase checkpointer which row to update
+                config = {"configurable": {"thread_id": session_id}}
+                
+                # Run the state machine
+                final_state = await app.ainvoke(input_state, config=config)
+                
+                # Extract the AI's final response and outcome
+                ai_message = final_state["messages"][-1].content if final_state.get("messages") else "I'm sorry, I encountered an error."
+                outcome = final_state.get("outcome", "UNKNOWN")
+                
+                reply_text = ai_message
+                target_lang = detected_lang
+                is_ending = outcome in ["HOT", "COLD"]
+                
+                logger.info(f"LangGraph response: {reply_text} (Target Lang: {target_lang}, Outcome: {outcome})")
 
                 # 3. Save conversation turn to database (in background so we don't delay TTS)
                 import asyncio
