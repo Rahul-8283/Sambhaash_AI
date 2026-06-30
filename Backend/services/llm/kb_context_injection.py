@@ -12,6 +12,7 @@ import json
 from config import settings
 from services.database.supabase_client import get_db_client
 from services.database.repository import Repository
+from services.llm.embedder import EmbedderService
 from services.llm.rag_engine import RAGEngine
 
 logger = logging.getLogger(__name__)
@@ -90,11 +91,17 @@ class KBContextInjectionService:
         try:
             logger.info(f"[KB_CTX] Retrieving context for call {call_session_id}, lead {lead_id}")
             
-            # 1. Query knowledge base for relevant chunks
-            # We currently don't have an embedder configured for Groq to natively do vector search.
-            # Bypassing the pgvector query to prevent TypeError and returning empty gracefully.
-            logger.debug(f"[KB_CTX] Bypassing vector search since no embedder is wired for {user_text[:20]}")
-            search_results = []
+            # 1. Generate Embedding for User Query
+            embedder = EmbedderService()
+            query_embedding = embedder.embed_text(user_text)
+            
+            # 2. Query knowledge base for relevant chunks using pgvector
+            logger.debug(f"[KB_CTX] Running vector search for: {user_text[:30]}")
+            search_results = await self.repository.vector_search_knowledge_base(
+                query_embedding=query_embedding,
+                top_k=top_k,
+                min_similarity=min_score
+            )
             
             if not search_results:
                 logger.info(f"[KB_CTX] No KB results for query: {user_text[:50]}")
