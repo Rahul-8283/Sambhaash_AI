@@ -342,11 +342,15 @@ async def recording_webhook(request: Request) -> Response:
                 
                 logger.info(f"Invoking LangGraph for session {session_id}")
                 
+                # Extract the pre-formatted string from the KB retrieval dict
+                kb_text = kb_context.get("formatted_context", "") if kb_context else ""
+                
                 input_state = {
                     "messages": [HumanMessage(content=transcript)],
                     "session_id": session_id,
                     "lead_id": lead_id,
-                    "lead_language": detected_lang
+                    "lead_language": detected_lang,
+                    "kb_context": kb_text
                 }
                 
                 # The thread_id tells the Supabase checkpointer which row to update

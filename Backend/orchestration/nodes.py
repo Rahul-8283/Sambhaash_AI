@@ -35,10 +35,15 @@ def rag_node(state: AgentState) -> Dict[str, Any]:
     """
     Retrieval-Augmented Generation node to answer specific questions.
     """
-    system_prompt = SystemMessage(content="You are Sambhaash AI. The user asked a specific question. Answer it concisely based on your knowledge.")
+    kb_content = state.get("kb_context", "")
     
-    # Placeholder for actual Supabase Vector query
-    # context = query_supabase_vector_store(state["messages"][-1].content)
+    prompt_text = (
+        "You are Sambhaash AI. The user asked a specific question. "
+        "Answer it concisely based ONLY on the following knowledge base context:\n\n"
+        f"{kb_content}"
+    )
+    
+    system_prompt = SystemMessage(content=prompt_text)
     
     response = llm.invoke([system_prompt] + state["messages"])
     

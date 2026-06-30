@@ -28,6 +28,7 @@ class AgentState(TypedDict):
     lead_id: str
     lead_name: str
     lead_language: str
+    kb_context: str
     
     # Conversation intelligence
     detected_objections: List[str]
