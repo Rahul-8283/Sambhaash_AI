@@ -111,7 +111,8 @@ async def _score_and_assign_lead(
         queue_manager: QueueManager,
         user_engagement: int = 70,
         user_interest: int = 70,
-        user_sentiment: int = 70
+        user_sentiment: int = 70,
+        classification_override: Optional[str] = None
 ):
         """
         Score lead based on conversation and auto-assign/follow-up.
@@ -133,12 +134,15 @@ async def _score_and_assign_lead(
                 composite = (interest + engagement + sentiment) / 3.0
                 
                 # Classify
-                if composite >= 0.75:
-                        classification = "HOT"
-                elif composite >= 0.50:
-                        classification = "WARM"
+                if classification_override and classification_override in ["HOT", "WARM", "COLD"]:
+                        classification = classification_override
                 else:
-                        classification = "COLD"
+                        if composite >= 0.75:
+                                classification = "HOT"
+                        elif composite >= 0.50:
+                                classification = "WARM"
+                        else:
+                                classification = "COLD"
                 
                 logger.info(f"Lead scoring: composite={composite:.2f} ({classification})")
                 
@@ -397,7 +401,8 @@ async def recording_webhook(request: Request) -> Response:
                                 session_id=UUID(session_id),
                                 repository=repository,
                                 scoring_engine=scoring_engine,
-                                queue_manager=queue_manager
+                                queue_manager=queue_manager,
+                                classification_override=outcome
                         )
                         
                         # 6.1 Save call recording (Phase 2B) - Background Queue
@@ -516,6 +521,37 @@ async def status_webhook(
                                 logger.info(f"[TWILIO STATUS] Successfully marked lead {lead_id} as FAILED")
                         except Exception as e:
                                 logger.error(f"[TWILIO STATUS] Error updating lead {lead_id} status: {e}")
+                        finally:
+                                if db_client:
+                                        try:
+                                                await db_client.disconnect()
+                                        except:
+                                                pass
+                                                
+        elif call_status == "completed":
+                # Handle abrupt hangups! If the call completed but wasn't scored, score it as WARM.
+                if lead_id and session_id:
+                        db_client = None
+                        try:
+                                db_client = await get_db_client()
+                                repository = Repository(db_client)
+                                lead = await repository.get_lead(UUID(lead_id))
+                                
+                                # If it's still 'CONTACTED', it means the user hung up before max_turns or the LLM formally ended it!
+                                if lead and lead.get("status") == LeadStatus.CONTACTED.value:
+                                        logger.info(f"[TWILIO STATUS] Lead {lead_id} hung up abruptly. Auto-scoring as WARM...")
+                                        queue_manager = QueueManager()
+                                        scoring_engine = ScoringEngine(repository)
+                                        await _score_and_assign_lead(
+                                                lead_id=UUID(lead_id),
+                                                session_id=UUID(session_id),
+                                                repository=repository,
+                                                scoring_engine=scoring_engine,
+                                                queue_manager=queue_manager,
+                                                classification_override="WARM"
+                                        )
+                        except Exception as e:
+                                logger.error(f"[TWILIO STATUS] Error auto-scoring on hangup: {e}")
                         finally:
                                 if db_client:
                                         try:
