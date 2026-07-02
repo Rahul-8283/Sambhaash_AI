@@ -478,6 +478,50 @@ async def whatsapp_webhook(request: Request) -> Response:
 
         client = TwilioClient()
         reply = client.build_whatsapp_reply_twiml(
-                "Thanks for messaging Sambhaash AI. Your request is received and will be processed by the team."
+                "Thanks for reaching out! A Relationship Manager will be in touch shortly."
         )
         return Response(content=reply, media_type="application/xml")
+
+@router.post("/status")
+async def status_webhook(
+        request: Request,
+        session_id: Optional[str] = None,
+        lead_id: Optional[str] = None
+) -> Response:
+        """Status callback from Twilio to handle failed/no-answer calls."""
+        form = await request.form()
+        form_data = dict(form)
+        
+        call_sid = _form_value(form_data, "CallSid", "")
+        call_status = _form_value(form_data, "CallStatus", "").lower()
+        answered_by = _form_value(form_data, "AnsweredBy", "").lower()
+        
+        logger.info(f"[TWILIO STATUS] CallSid: {call_sid}, Status: {call_status}, AnsweredBy: {answered_by}, Lead: {lead_id}")
+        
+        # We only care about terminal failure states or voicemail
+        is_voicemail = answered_by.startswith("machine")
+        is_failed = call_status in ["failed", "busy", "no-answer", "canceled"]
+        
+        if is_voicemail or is_failed:
+                logger.warning(f"[TWILIO STATUS] Call {call_sid} failed or hit voicemail. Updating lead to FAILED...")
+                if lead_id:
+                        db_client = None
+                        try:
+                                db_client = await get_db_client()
+                                repository = Repository(db_client)
+                                await repository.update_lead(
+                                        lead_id=UUID(lead_id),
+                                        status=LeadStatus.FAILED.value
+                                )
+                                logger.info(f"[TWILIO STATUS] Successfully marked lead {lead_id} as FAILED")
+                        except Exception as e:
+                                logger.error(f"[TWILIO STATUS] Error updating lead {lead_id} status: {e}")
+                        finally:
+                                if db_client:
+                                        try:
+                                                await db_client.disconnect()
+                                        except:
+                                                pass
+        
+        # Always return HTTP 200 to Twilio
+        return Response(content="<Response></Response>", media_type="application/xml")

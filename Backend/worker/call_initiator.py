@@ -182,7 +182,8 @@ class CallInitiator:
             # Initiate Twilio call
             result = self.twilio_client.create_outbound_call(
                 to_number=phone,
-                webhook_path=f"/api/webhook/twilio/voice?session_id={call_session['id']}&lead_id={lead_id}"
+                webhook_path=f"/api/webhook/twilio/voice?session_id={call_session['id']}&lead_id={lead_id}",
+                status_callback_path=f"/api/webhook/twilio/status?session_id={call_session['id']}&lead_id={lead_id}"
             )
             
             if result.sid:
