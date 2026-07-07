@@ -60,6 +60,28 @@ class Repository:
             logger.warning(f"Could not update summary for session {session_id}")
             return False
 
+    async def get_all_summaries(self) -> List[Dict[str, Any]]:
+        """
+        Fetch all call sessions that have a generated summary, along with lead info.
+        """
+        query = """
+        SELECT 
+            c.id as session_id,
+            c.duration_seconds,
+            c.created_at,
+            c.summary,
+            c.classification,
+            l.id as lead_id,
+            l.name as lead_name,
+            l.phone as lead_phone
+        FROM call_sessions c
+        JOIN leads l ON c.lead_id = l.id
+        WHERE c.summary IS NOT NULL
+        ORDER BY c.created_at DESC
+        """
+        records = await self.db.execute_query(query)
+        return records
+
     # ==================== LEAD OPERATIONS ====================
     
     async def create_lead(
