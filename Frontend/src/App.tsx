@@ -13,6 +13,7 @@ import AppendixPage from "./pages/AppendixPage";
 import RMPage from "./pages/RMPage";
 import ProfileSettingsPage from "./pages/ProfileSettingsPage";
 import QueueDashboard from "./pages/QueueDashboard";
+import CallSummaries from "./pages/CallSummaries";
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
                 <Route path="appendix" element={<AppendixPage />} />
                 <Route path="rm" element={<RMPage />} />
                 <Route path="queue" element={<QueueDashboard />} />
+                <Route path="summaries" element={<CallSummaries />} />
                 <Route path="settings/profile" element={<ProfileSettingsPage />} />
                 <Route path="*" element={<Navigate to="/dashboard/leads" replace />} />
               </Routes>
