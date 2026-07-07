@@ -34,13 +34,14 @@ export const CallSummaries: React.FC = () => {
       {/* Main Content */}
       <div className="bg-white/80 backdrop-blur-xl border border-white/20 shadow-[0_8px_30px_rgb(0,0,0,0.04)] rounded-2xl p-4 md:p-6">
         {loading ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500"></div>
-          </div>
+          <div className="p-12 flex justify-center text-[#d4a373] animate-pulse font-medium">Loading Summaries...</div>
         ) : summaries.length === 0 ? (
-          <div className="text-center py-20 flex flex-col items-center">
-            <PhoneCall className="w-16 h-16 text-gray-300 mb-4" />
-            <p className="text-gray-500 font-medium">No call summaries available yet.</p>
+          <div className="p-12 flex flex-col items-center justify-center text-center">
+            <PhoneCall size={40} className="text-[#d4a373] mb-4 opacity-50" />
+            <h3 className="text-xl font-bold text-[#2d1e18] mb-2">No Call Summaries Yet</h3>
+            <p className="text-[#3d2b1f]/60 max-w-sm">
+              Your call summaries will appear here once AI generates them from your calls.
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
