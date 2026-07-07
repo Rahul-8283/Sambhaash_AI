@@ -35,6 +35,31 @@ class Repository:
         """
         self.db = db
     
+    async def update_call_session_summary(self, session_id: UUID, summary: dict) -> bool:
+        """
+        Update the summary of a call session.
+        
+        Args:
+            session_id: The UUID of the call session
+            summary: Dictionary containing the AI generated summary
+            
+        Returns:
+            bool: True if updated, False otherwise
+        """
+        query = """
+        UPDATE call_sessions 
+        SET summary = $1
+        WHERE id = $2
+        """
+        result = await self.db.execute_update(query, (json.dumps(summary), str(session_id)))
+        
+        if result > 0:
+            logger.info(f"Updated summary for call session {session_id}")
+            return True
+        else:
+            logger.warning(f"Could not update summary for session {session_id}")
+            return False
+
     # ==================== LEAD OPERATIONS ====================
     
     async def create_lead(
