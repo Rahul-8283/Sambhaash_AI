@@ -20,6 +20,8 @@ from services.messaging.whatsapp_service import WhatsAppService
 from services.scoring.scoring_engine import ScoringEngine
 from services.database.supabase_client import get_db_client, close_db_client
 from services.database.repository import Repository
+from services.llm.llm_client import LLMClient
+from services.llm.summary_generator import SummaryGenerator
 from config import get_config
 
 logger = logging.getLogger(__name__)
@@ -214,15 +216,44 @@ class BackgroundWorker:
         if not session:
             raise ValueError(f"Session not found: {session_id}")
         
-        # Generate summary (placeholder - integrate with LLM service)
-        summary = f"""Call Summary for {lead_id}
-Duration: {session.get('duration_seconds')}s
-Language: {session.get('language_detected')}
-Turns: {len(session.get('conversation_history', []))}
-Created: {session.get('created_at')}"""
+        # Set up LLM Client (using groq mixtral model as default)
+        config = get_config()
+        llm_client = LLMClient(
+            model_name=config.llm_model_name,
+            api_key=config.groq_api_key,
+            base_url="https://api.groq.com/openai/v1"
+        )
+        
+        # Initialize SummaryGenerator
+        summary_generator = SummaryGenerator(llm_client=llm_client)
+        
+        # Extract required data
+        history = session.get("conversation_history", [])
+        
+        # Generate structured summary
+        generated_summary = summary_generator.generate(
+            memory_snapshot={"current_classification": session.get("classification")},
+            transcript=history
+        )
+        
+        # Save to database
+        await self.repository.update_call_session_summary(session_id, generated_summary)
+        
+        # Format the message for WhatsApp
+        objections_text = ", ".join(generated_summary.get("objections_raised", [])) or "None"
+        topics_text = ", ".join(generated_summary.get("topics_covered", [])) or "None"
+        
+        summary_message = f"""*Call Summary*
+*Lead ID:* {lead_id}
+*Duration:* {session.get('duration_seconds')}s
+*Topics Covered:* {topics_text}
+*Objections:* {objections_text}
+*Action:* {generated_summary.get('recommended_next_action', 'None')}
+
+_{generated_summary.get('one_line_summary', '')}_"""
         
         # Send to lead via WhatsApp
-        result = await self.whatsapp_service.send_custom_message(lead_id, summary)
+        result = await self.whatsapp_service.send_custom_message(lead_id, summary_message)
         
         if not result.get("success"):
             raise Exception(f"Summary send failed: {result.get('error')}")
