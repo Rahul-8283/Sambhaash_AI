@@ -1,6 +1,24 @@
-# 🎙️ Sambhaash AI
+<div align="center">
+  <img src="Frontend/public/logo.png" alt="Sambhaash AI Logo" width="200" />
+  <h1>Sambhaash AI</h1>
+  <p><strong>A Premium Multilingual Voice AI Platform built for the Namespace Hackathon</strong></p>
+  
+  <p>
+    <em>Built for the <strong>Sarvam AI Track</strong> (Build AI Applications with Sarvam AI)</em>
+  </p>
+</div>
 
-Sambhaash AI is a premium, state-of-the-art multilingual voice and text conversational AI platform designed to automate lead generation, objection handling, and conversions. Powered by an intelligent, multilingual LLM brain, Sambhaash AI interacts with leads via phone calls and WhatsApp, answers context-specific questions from an indexed Knowledge Base (RAG pipeline), scores leads dynamically, and assigns high-intent clients directly to Relationship Managers.
+---
+
+## 🏆 Built for the Sarvam AI Track (Namespace Hackathon)
+Sambhaash AI was explicitly designed to leverage cutting-edge **Sarvam AI APIs** for hyper-realistic, localized Indian language interactions.
+* **Sarvam Text-to-Speech (BulBul V3):** The entire core of Sambhaash's voice orchestration runs on Sarvam's BulBul V3 API, allowing the AI to synthesize highly accurate, natural-sounding audio in **10 regional Indian languages** with sub-second latency. This bridges the language barrier for high-fidelity lead engagement across India.
+
+## 💡 The Problem
+Traditional telecalling and lead qualification processes in India face severe bottlenecks: immense manual overhead, high drop-off rates due to language barriers, and a lack of scalable, intelligent 24/7 engagement.
+
+## 🚀 Our Solution
+Sambhaash AI is a premium, state-of-the-art multilingual voice and text conversational AI platform designed to automate lead generation, objection handling, and conversions. Powered by an intelligent, multilingual LLM brain, Sambhaash AI interacts with leads via phone calls and WhatsApp, answers context-specific questions from an indexed Knowledge Base (RAG pipeline), scores leads dynamically based on the conversation, and assigns high-intent clients directly to dedicated Relationship Managers.
 
 ---
 
