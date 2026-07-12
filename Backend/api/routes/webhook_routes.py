@@ -111,7 +111,8 @@ async def _score_and_assign_lead(
         queue_manager: QueueManager,
         user_engagement: int = 70,
         user_interest: int = 70,
-        user_sentiment: int = 70
+        user_sentiment: int = 70,
+        classification_override: Optional[str] = None
 ):
         """
         Score lead based on conversation and auto-assign/follow-up.
@@ -133,12 +134,15 @@ async def _score_and_assign_lead(
                 composite = (interest + engagement + sentiment) / 3.0
                 
                 # Classify
-                if composite >= 0.75:
-                        classification = "HOT"
-                elif composite >= 0.50:
-                        classification = "WARM"
+                if classification_override and classification_override in ["HOT", "WARM", "COLD"]:
+                        classification = classification_override
                 else:
-                        classification = "COLD"
+                        if composite >= 0.75:
+                                classification = "HOT"
+                        elif composite >= 0.50:
+                                classification = "WARM"
+                        else:
+                                classification = "COLD"
                 
                 logger.info(f"Lead scoring: composite={composite:.2f} ({classification})")
                 
@@ -180,6 +184,17 @@ async def _score_and_assign_lead(
                         }
                         await queue_manager.enqueue_job(JobType.SEND_WHATSAPP.value, job)
                         logger.info(f"[SCORE] Scheduled WhatsApp follow-up for WARM lead in language '{lead_lang}'")
+                        
+                # Always enqueue the summary generation job after scoring
+                try:
+                        summary_job = {
+                                "session_id": str(session_id),
+                                "lead_id": str(lead_id)
+                        }
+                        await queue_manager.enqueue_job(JobType.SEND_SUMMARY.value, summary_job)
+                        logger.info(f"[SCORE] Enqueued SEND_SUMMARY for session {session_id}")
+                except Exception as e:
+                        logger.error(f"[SCORE] Failed to enqueue SEND_SUMMARY: {e}")
         
         except Exception as e:
                 logger.error(f"Error scoring lead: {e}")
@@ -237,6 +252,7 @@ async def recording_webhook(request: Request) -> Response:
         duration = _form_value(form_data, "RecordingDuration", "0")
 
         client = TwilioClient()
+        manager = CallManager()
 
         if not recording_url:
                 logger.warning("Recording webhook called without RecordingUrl (CallSid=%s)", call_sid)
@@ -317,6 +333,10 @@ async def recording_webhook(request: Request) -> Response:
                 detected_lang = language_detector.detect_language(transcript)
                 
                 logger.info(f"User said: {transcript} (Lang: {detected_lang})")
+                
+                print(f"\n{'='*60}")
+                print(f"🗣️  USER SAID: {transcript}")
+                print(f"{'='*60}\n")
 
                 # 1.5 Retrieve KB Context
                 kb_context = None
@@ -336,16 +356,43 @@ async def recording_webhook(request: Request) -> Response:
                         logger.error(f"[KB] Failed to retrieve context: {e}")
                         kb_context = None
 
-                # 2. LLM Orchestration
-                manager = CallManager()
-                reply_text, target_lang, is_ending = await manager.process_turn(
-                    call_sid=call_sid,
-                    user_text=transcript,
-                    language=detected_lang,
-                    kb_context=kb_context
-                )
-
-                logger.info(f"AI response: {reply_text} (Target Lang: {target_lang})")
+                # 2. LangGraph Orchestration
+                from orchestration.graph import app
+                from langchain_core.messages import HumanMessage
+                
+                logger.info(f"Invoking LangGraph for session {session_id}")
+                
+                # Extract the pre-formatted string from the KB retrieval dict
+                kb_text = kb_context.get("formatted_context", "") if kb_context else ""
+                
+                input_state = {
+                    "messages": [HumanMessage(content=transcript)],
+                    "session_id": session_id,
+                    "lead_id": lead_id,
+                    "lead_language": detected_lang,
+                    "kb_context": kb_text
+                }
+                
+                # The thread_id tells the Supabase checkpointer which row to update
+                config = {"configurable": {"thread_id": session_id}}
+                
+                # Run the state machine
+                final_state = await app.ainvoke(input_state, config=config)
+                
+                # Extract the AI's final response and outcome
+                ai_message = final_state["messages"][-1].content if final_state.get("messages") else "I'm sorry, I encountered an error."
+                outcome = final_state.get("outcome", "UNKNOWN")
+                
+                reply_text = ai_message
+                target_lang = detected_lang
+                is_ending = outcome in ["HOT", "COLD"]
+                
+                logger.info(f"LangGraph response: {reply_text} (Target Lang: {target_lang}, Outcome: {outcome})")
+                
+                print(f"\n{'='*60}")
+                print(f"🤖  AI REPLIED: {reply_text}")
+                print(f"   (Outcome: {outcome})")
+                print(f"{'='*60}\n")
 
                 # 3. Save conversation turn to database (in background so we don't delay TTS)
                 import asyncio
@@ -375,25 +422,9 @@ async def recording_webhook(request: Request) -> Response:
                                 session_id=UUID(session_id),
                                 repository=repository,
                                 scoring_engine=scoring_engine,
-                                queue_manager=queue_manager
+                                queue_manager=queue_manager,
+                                classification_override=outcome
                         )
-                        
-                        # 6.1 Save call recording (Phase 2B) - Background Queue
-                        try:
-                                await queue_manager.enqueue_job(
-                                        "process_recording",
-                                        payload={
-                                                "call_session_id": session_id,
-                                                "recording_url": recording_url,
-                                                "twilio_recording_sid": call_sid,
-                                                "twilio_call_sid": call_sid,
-                                                "duration_seconds": int(duration) if duration else 0
-                                        },
-                                        priority=1
-                                )
-                                logger.info(f"[RECORDING] Enqueued recording job for session {session_id}")
-                        except Exception as e:
-                                logger.error(f"[RECORDING] Failed to enqueue recording job: {e}")
                         
                         # End call with summary or LLM's final response
                         final_reply = reply_text if is_ending else "Thanks for chatting with us! Our team will be in touch shortly. Goodbye!"
@@ -426,13 +457,6 @@ async def recording_webhook(request: Request) -> Response:
                         content=client.build_say_twiml("Sorry, I could not process your input just now. Please speak again."),
                         media_type="application/xml",
                 )
-        finally:
-                # Cleanup
-                if db_client:
-                        try:
-                                await db_client.disconnect()
-                        except:
-                                pass
 
 @router.get("/audio/{call_sid}")
 async def fetch_audio(call_sid: str) -> Response:
@@ -456,6 +480,68 @@ async def whatsapp_webhook(request: Request) -> Response:
 
         client = TwilioClient()
         reply = client.build_whatsapp_reply_twiml(
-                "Thanks for messaging Sambhaash AI. Your request is received and will be processed by the team."
+                "Thanks for reaching out! A Relationship Manager will be in touch shortly."
         )
         return Response(content=reply, media_type="application/xml")
+
+@router.post("/status")
+async def status_webhook(
+        request: Request,
+        session_id: Optional[str] = None,
+        lead_id: Optional[str] = None
+) -> Response:
+        """Status callback from Twilio to handle failed/no-answer calls."""
+        form = await request.form()
+        form_data = dict(form)
+        
+        call_sid = _form_value(form_data, "CallSid", "")
+        call_status = _form_value(form_data, "CallStatus", "").lower()
+        answered_by = _form_value(form_data, "AnsweredBy", "").lower()
+        
+        logger.info(f"[TWILIO STATUS] CallSid: {call_sid}, Status: {call_status}, AnsweredBy: {answered_by}, Lead: {lead_id}")
+        
+        # We only care about terminal failure states or voicemail
+        is_voicemail = answered_by.startswith("machine")
+        is_failed = call_status in ["failed", "busy", "no-answer", "canceled"]
+        
+        if is_voicemail or is_failed:
+                logger.warning(f"[TWILIO STATUS] Call {call_sid} failed or hit voicemail. Updating lead to FAILED...")
+                if lead_id:
+                        db_client = None
+                        try:
+                                db_client = await get_db_client()
+                                repository = Repository(db_client)
+                                await repository.update_lead(
+                                        lead_id=UUID(lead_id),
+                                        status=LeadStatus.FAILED.value
+                                )
+                                logger.info(f"[TWILIO STATUS] Successfully marked lead {lead_id} as FAILED")
+                        except Exception as e:
+                                logger.error(f"[TWILIO STATUS] Error updating lead {lead_id} status: {e}")
+        elif call_status == "completed":
+                # Handle abrupt hangups! If the call completed but wasn't scored, score it as WARM.
+                if lead_id and session_id:
+                        db_client = None
+                        try:
+                                db_client = await get_db_client()
+                                repository = Repository(db_client)
+                                lead = await repository.get_lead(UUID(lead_id))
+                                
+                                # If it's still 'CONTACTED', it means the user hung up before max_turns or the LLM formally ended it!
+                                if lead and lead.get("status") == LeadStatus.CONTACTED.value:
+                                        logger.info(f"[TWILIO STATUS] Lead {lead_id} hung up abruptly. Auto-scoring as WARM...")
+                                        queue_manager = QueueManager()
+                                        scoring_engine = ScoringEngine(repository)
+                                        await _score_and_assign_lead(
+                                                lead_id=UUID(lead_id),
+                                                session_id=UUID(session_id),
+                                                repository=repository,
+                                                scoring_engine=scoring_engine,
+                                                queue_manager=queue_manager,
+                                                classification_override="WARM"
+                                        )
+                        except Exception as e:
+                                logger.error(f"[TWILIO STATUS] Error auto-scoring on hangup: {e}")
+        
+        # Always return HTTP 200 to Twilio
+        return Response(content="<Response></Response>", media_type="application/xml")

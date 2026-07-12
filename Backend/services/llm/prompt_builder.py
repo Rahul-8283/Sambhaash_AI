@@ -437,6 +437,29 @@ Follow these rules:
     # Helpers: memory / context formatting
     # ------------------------------------------------------------------
 
+    def _format_transcript(self, transcript: Sequence[Dict[str, Any] | str]) -> str:
+        if not transcript:
+            return "No transcript available."
+            
+        lines = []
+        for turn in transcript:
+            if isinstance(turn, str):
+                lines.append(turn)
+            elif isinstance(turn, dict):
+                # Handle custom Sambhaash format (user/ai keys)
+                if "user" in turn:
+                    lines.append(f"USER: {turn['user']}")
+                if "ai" in turn:
+                    lines.append(f"AI: {turn['ai']}")
+                
+                # Handle standard OpenAI/Langchain style dicts if present
+                if "role" in turn:
+                    text = turn.get("text") or turn.get("content") or ""
+                    if text:
+                        lines.append(f"{str(turn['role']).upper()}: {text}")
+        
+        return "\n".join(lines)
+
     def _format_memory_section(self, memory_snapshot: Dict[str, Any]) -> str:
         if not memory_snapshot:
             return "No memory available."

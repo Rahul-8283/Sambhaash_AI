@@ -12,6 +12,7 @@ import json
 from config import settings
 from services.database.supabase_client import get_db_client
 from services.database.repository import Repository
+from services.llm.embedder import EmbedderService
 from services.llm.rag_engine import RAGEngine
 
 logger = logging.getLogger(__name__)
@@ -90,11 +91,16 @@ class KBContextInjectionService:
         try:
             logger.info(f"[KB_CTX] Retrieving context for call {call_session_id}, lead {lead_id}")
             
-            # 1. Query knowledge base for relevant chunks
-            # We currently don't have an embedder configured for Groq to natively do vector search.
-            # Bypassing the pgvector query to prevent TypeError and returning empty gracefully.
-            logger.debug(f"[KB_CTX] Bypassing vector search since no embedder is wired for {user_text[:20]}")
-            search_results = []
+            # 1. Generate Embedding for User Query
+            embedder = EmbedderService()
+            query_embedding = embedder.embed_text(user_text)
+            
+            # 2. Query knowledge base for relevant chunks using pgvector
+            logger.debug(f"[KB_CTX] Running vector search for: {user_text[:30]}")
+            search_results = await self.repository.vector_search_knowledge_base(
+                query_embedding=query_embedding,
+                top_k=top_k
+            )
             
             if not search_results:
                 logger.info(f"[KB_CTX] No KB results for query: {user_text[:50]}")
@@ -116,12 +122,12 @@ class KBContextInjectionService:
             total_tokens = 0
             
             for i, result in enumerate(search_results, 1):
-                chunk_id = result.get("chunk_id")
+                chunk_id = result.get("id")
                 doc_id = result.get("document_id")
-                chunk_text = result.get("chunk_text")
-                score = result.get("similarity_score", 0.0)
+                chunk_text = result.get("text")
+                score = result.get("score", 0.0)
                 doc_title = result.get("file_name", "Unknown Document")
-                chunk_number = result.get("chunk_number", 0)
+                chunk_number = result.get("source_section") or 0
                 
                 # Format chunk
                 context_block = {

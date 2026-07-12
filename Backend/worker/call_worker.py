@@ -20,6 +20,8 @@ from services.messaging.whatsapp_service import WhatsAppService
 from services.scoring.scoring_engine import ScoringEngine
 from services.database.supabase_client import get_db_client, close_db_client
 from services.database.repository import Repository
+from services.llm.llm_client import LLMClient
+from services.llm.summary_generator import SummaryGenerator
 from config import get_config
 
 logger = logging.getLogger(__name__)
@@ -141,8 +143,6 @@ class BackgroundWorker:
                             await self._process_assign_rm(job)
                         elif job_type == JobType.UPDATE_SCORE:
                             await self._process_update_score(job)
-                        elif job_type == JobType.PROCESS_RECORDING:
-                            await self._process_recording(job)
                         
                         # Mark as complete
                         await self.queue_manager.mark_job_complete(job["id"])
@@ -214,15 +214,44 @@ class BackgroundWorker:
         if not session:
             raise ValueError(f"Session not found: {session_id}")
         
-        # Generate summary (placeholder - integrate with LLM service)
-        summary = f"""Call Summary for {lead_id}
-Duration: {session.get('duration_seconds')}s
-Language: {session.get('language_detected')}
-Turns: {len(session.get('conversation_history', []))}
-Created: {session.get('created_at')}"""
+        # Set up LLM Client (using groq mixtral model as default)
+        config = get_config()
+        llm_client = LLMClient(
+            model_name=config.llm_model_name,
+            api_key=config.groq_api_key,
+            base_url="https://api.groq.com/openai/v1"
+        )
+        
+        # Initialize SummaryGenerator
+        summary_generator = SummaryGenerator(llm_client=llm_client)
+        
+        # Extract required data
+        history = session.get("conversation_history", [])
+        
+        # Generate structured summary
+        generated_summary = summary_generator.generate(
+            memory_snapshot={"current_classification": session.get("classification")},
+            transcript=history
+        )
+        
+        # Save to database
+        await self.repository.update_call_session_summary(session_id, generated_summary)
+        
+        # Format the message for WhatsApp
+        objections_text = ", ".join(generated_summary.get("objections_raised", [])) or "None"
+        topics_text = ", ".join(generated_summary.get("topics_covered", [])) or "None"
+        
+        summary_message = f"""*Call Summary*
+*Lead ID:* {lead_id}
+*Duration:* {session.get('duration_seconds')}s
+*Topics Covered:* {topics_text}
+*Objections:* {objections_text}
+*Action:* {generated_summary.get('recommended_next_action', 'None')}
+
+_{generated_summary.get('one_line_summary', '')}_"""
         
         # Send to lead via WhatsApp
-        result = await self.whatsapp_service.send_custom_message(lead_id, summary)
+        result = await self.whatsapp_service.send_custom_message(lead_id, summary_message)
         
         if not result.get("success"):
             raise Exception(f"Summary send failed: {result.get('error')}")
@@ -267,40 +296,6 @@ Created: {session.get('created_at')}"""
             raise ValueError(f"Scoring failed for lead {lead_id}")
         
         logger.info(f"[WORKER] Score updated: {result['classification']}")
-
-    async def _process_recording(self, job: Dict[str, Any]):
-        """
-        Process call recording job.
-        
-        Args:
-            job: Job dict with payload
-        """
-        payload = job["payload"]
-        call_session_id = payload.get("call_session_id")
-        recording_url = payload.get("recording_url")
-        twilio_recording_sid = payload.get("twilio_recording_sid")
-        twilio_call_sid = payload.get("twilio_call_sid")
-        duration_seconds = payload.get("duration_seconds", 0)
-        
-        logger.info(f"Processing recording for session {call_session_id}")
-        
-        from services.call_recording_service import CallRecordingService
-        from uuid import UUID
-        
-        recording_service = CallRecordingService(db_client=self.db_client)
-        result = await recording_service.save_call_recording(
-            call_session_id=UUID(call_session_id),
-            recording_url=recording_url,
-            twilio_recording_sid=twilio_recording_sid,
-            twilio_call_sid=twilio_call_sid,
-            duration_seconds=duration_seconds,
-            recorded_at=datetime.utcnow()
-        )
-        
-        if result.get("error"):
-            raise Exception(f"Recording processing failed: {result.get('error')}")
-            
-        logger.info(f"[WORKER] Recording processed successfully for {call_session_id}")
 
 
 async def main():

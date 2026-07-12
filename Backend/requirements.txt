@@ -1,74 +1,70 @@
 # Web Framework & Server
-fastapi==0.109.0
-uvicorn[standard]==0.27.0
-python-multipart==0.0.6
-websockets==12.0
-pyngrok==7.2.0
+fastapi>=0.109.0
+uvicorn[standard]>=0.27.0
+python-multipart>=0.0.6
+websockets>=12.0
+pyngrok>=7.2.0
 
-# LLM & AI Framework
-langchain==0.1.13
-langchain-community==0.0.35
-langchain-openai==0.1.1
-langgraph==0.0.41
+# LLM & AI Framework (Orchestration)
+langchain>=0.2.0
+langchain-core>=0.2.0
+langchain-community>=0.2.0
+langchain-groq>=0.1.0
+langgraph>=0.1.0
 
 # LLM Providers
-openai==1.14.0
-google-generativeai==0.4.1
-groq==0.4.2
+openai>=1.14.0
+google-generativeai>=0.4.1
+groq>=0.4.2
 
 # Database & ORM
-supabase==2.4.1
-sqlalchemy==2.0.25
-psycopg2-binary==2.9.9
-asyncpg==0.29.0
+supabase>=2.4.1
+sqlalchemy>=2.0.25
+psycopg2-binary>=2.9.9
+asyncpg>=0.29.0
 
 # Vector Operations & Embeddings
-numpy==1.26.4
+numpy>=1.26.4
 huggingface-hub>=0.25.0
 
 # Language Detection
-langdetect==1.0.9
+langdetect>=1.0.9
 
 # Document Processing
-PyPDF2==3.0.1
-python-docx==1.1.0
-pydantic==2.6.1
-pydantic-settings==2.2.1
-email-validator==2.2.0
+PyPDF2>=3.0.1
+python-docx>=1.1.0
+pydantic>=2.6.1
+pydantic-settings>=2.2.1
+email-validator>=2.2.0
 
 # Utilities
-python-dotenv==1.0.1
-requests==2.31.0
-aiofiles==23.2.1
+python-dotenv>=1.0.1
+requests>=2.31.0
+aiofiles>=23.2.1
 
 # Caching & Performance
-redis==5.0.1
+redis>=5.0.1
 
 # Type Hints
-typing-extensions==4.10.0
+typing-extensions>=4.10.0
 
 # Testing
-pytest==7.4.4
-pytest-asyncio==0.23.2
+pytest>=7.4.4
+pytest-asyncio>=0.23.2
 
 # Logging & Monitoring
-python-json-logger==2.0.7
+python-json-logger>=2.0.7
 
 # Telephony (YOU NEED THIS)
-twilio==8.10.0
+twilio>=8.10.0
 
 # Speech-to-Text (YOU NEED THIS)
-openai==1.14.0  # Already in file, for Whisper API
 # OR use Groq's Whisper (faster, cheaper)
 
-# Language Detection (Already present)
-langdetect==1.0.9
-
 # Audio Processing
-pydub==0.25.1
-librosa==0.10.0
+pydub>=0.25.1
+librosa>=0.10.0
 
 # Async HTTP
-httpx==0.27.2
-aiohttp==3.9.1
-requests==2.31.0
+httpx>=0.27.2
+aiohttp>=3.9.1

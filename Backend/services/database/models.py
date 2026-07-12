@@ -101,6 +101,7 @@ class CallSession(Base):
     )
     language_detected = Column(String(50), nullable=True)
     duration_seconds = Column(Integer, nullable=False, default=0)
+    summary = Column(JSON, nullable=True)
     created_at = Column(DateTime(timezone=True), nullable=False, default=datetime.utcnow, index=True)
     
     # Relationships

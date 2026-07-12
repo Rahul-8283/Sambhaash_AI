@@ -35,6 +35,53 @@ class Repository:
         """
         self.db = db
     
+    async def update_call_session_summary(self, session_id: UUID, summary: dict) -> bool:
+        """
+        Update the summary of a call session.
+        
+        Args:
+            session_id: The UUID of the call session
+            summary: Dictionary containing the AI generated summary
+            
+        Returns:
+            bool: True if updated, False otherwise
+        """
+        query = """
+        UPDATE call_sessions 
+        SET summary = $1
+        WHERE id = $2
+        """
+        result = await self.db.execute_update(query, (json.dumps(summary), str(session_id)))
+        
+        if result > 0:
+            logger.info(f"Updated summary for call session {session_id}")
+            return True
+        else:
+            logger.warning(f"Could not update summary for session {session_id}")
+            return False
+
+    async def get_all_summaries(self) -> List[Dict[str, Any]]:
+        """
+        Fetch all call sessions that have a generated summary, along with lead info.
+        """
+        query = """
+        SELECT 
+            c.id as session_id,
+            c.duration_seconds,
+            c.created_at,
+            c.summary,
+            c.classification,
+            l.id as lead_id,
+            l.name as lead_name,
+            l.phone as lead_phone
+        FROM call_sessions c
+        JOIN leads l ON c.lead_id = l.id
+        WHERE c.summary IS NOT NULL
+        ORDER BY c.created_at DESC
+        """
+        records = await self.db.execute_query(query)
+        return records
+
     # ==================== LEAD OPERATIONS ====================
     
     async def create_lead(
@@ -739,8 +786,8 @@ class Repository:
                 kb.created_at,
                 doc.file_name,
                 doc.document_type,
-                -- Placeholder similarity (use pgvector <-> operator if available)
-                0.8 as score
+                -- Placeholder similarity (uses $1 so asyncpg doesn't crash on unused param)
+                0.8 + (0 * length($1::text)) as score
             FROM knowledge_base kb
             JOIN documents doc ON kb.document_id = doc.id
             WHERE {where_clause}

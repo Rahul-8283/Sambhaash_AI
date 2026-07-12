@@ -380,6 +380,16 @@ class ApiService {
     });
     return response.data;
   }
+
+  // ==================== SUMMARIES ====================
+  public async getSummaries(): Promise<{ data: any[]; total: number }> {
+    try {
+      const response = await this.api.get<{ data: any[]; total: number }>('/api/v1/summaries/');
+      return response.data;
+    } catch (error) {
+      throw this.handleError(error as AxiosError);
+    }
+  }
 }
 
 // Export a singleton instance
