@@ -11,7 +11,8 @@ import {
   LogOut,
   BarChart3,
   Server,
-  PhoneCall
+  PhoneCall,
+  ClipboardList
 } from "lucide-react";
 import clsx from "clsx";
 
@@ -38,7 +39,7 @@ const ModernSidebar: React.FC<ModernSidebarProps> = ({ isOpen, onToggle }) => {
   const menuItems = [
     { id: "leads", label: "Leads", path: "/dashboard/leads", icon: Users },
     { id: "calls", label: "Call Logs", path: "/dashboard/calls", icon: PhoneCall },
-    { id: "summaries", label: "Call Summaries", path: "/dashboard/summaries", icon: PhoneCall },
+    { id: "summaries", label: "Call Summaries", path: "/dashboard/summaries", icon: ClipboardList },
     { id: "analytics", label: "Analytics", path: "/dashboard/analytics", icon: BarChart3 },
     { id: "queue", label: "Queue (DLQ)", path: "/dashboard/queue", icon: Server },
     { id: "rm", label: "RM Desk", path: "/dashboard/rm", icon: Target },
