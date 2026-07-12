@@ -48,9 +48,3 @@ async def get_all_summaries() -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Error fetching summaries: {e}")
         raise HTTPException(status_code=500, detail=str(e))
-    finally:
-        if db_client:
-            try:
-                await db_client.disconnect()
-            except:
-                pass

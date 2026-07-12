@@ -99,8 +99,7 @@ class KBContextInjectionService:
             logger.debug(f"[KB_CTX] Running vector search for: {user_text[:30]}")
             search_results = await self.repository.vector_search_knowledge_base(
                 query_embedding=query_embedding,
-                top_k=top_k,
-                min_similarity=min_score
+                top_k=top_k
             )
             
             if not search_results:
@@ -123,12 +122,12 @@ class KBContextInjectionService:
             total_tokens = 0
             
             for i, result in enumerate(search_results, 1):
-                chunk_id = result.get("chunk_id")
+                chunk_id = result.get("id")
                 doc_id = result.get("document_id")
-                chunk_text = result.get("chunk_text")
-                score = result.get("similarity_score", 0.0)
+                chunk_text = result.get("text")
+                score = result.get("score", 0.0)
                 doc_title = result.get("file_name", "Unknown Document")
-                chunk_number = result.get("chunk_number", 0)
+                chunk_number = result.get("source_section") or 0
                 
                 # Format chunk
                 context_block = {

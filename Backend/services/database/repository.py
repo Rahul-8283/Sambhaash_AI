@@ -786,8 +786,8 @@ class Repository:
                 kb.created_at,
                 doc.file_name,
                 doc.document_type,
-                -- Placeholder similarity (use pgvector <-> operator if available)
-                0.8 as score
+                -- Placeholder similarity (uses $1 so asyncpg doesn't crash on unused param)
+                0.8 + (0 * length($1::text)) as score
             FROM knowledge_base kb
             JOIN documents doc ON kb.document_id = doc.id
             WHERE {where_clause}

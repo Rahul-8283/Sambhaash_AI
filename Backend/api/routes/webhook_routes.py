@@ -241,6 +241,7 @@ async def recording_webhook(request: Request) -> Response:
         duration = _form_value(form_data, "RecordingDuration", "0")
 
         client = TwilioClient()
+        manager = CallManager()
 
         if not recording_url:
                 logger.warning("Recording webhook called without RecordingUrl (CallSid=%s)", call_sid)
@@ -453,13 +454,6 @@ async def recording_webhook(request: Request) -> Response:
                         content=client.build_say_twiml("Sorry, I could not process your input just now. Please speak again."),
                         media_type="application/xml",
                 )
-        finally:
-                # Cleanup
-                if db_client:
-                        try:
-                                await db_client.disconnect()
-                        except:
-                                pass
 
 @router.get("/audio/{call_sid}")
 async def fetch_audio(call_sid: str) -> Response:
@@ -521,13 +515,6 @@ async def status_webhook(
                                 logger.info(f"[TWILIO STATUS] Successfully marked lead {lead_id} as FAILED")
                         except Exception as e:
                                 logger.error(f"[TWILIO STATUS] Error updating lead {lead_id} status: {e}")
-                        finally:
-                                if db_client:
-                                        try:
-                                                await db_client.disconnect()
-                                        except:
-                                                pass
-                                                
         elif call_status == "completed":
                 # Handle abrupt hangups! If the call completed but wasn't scored, score it as WARM.
                 if lead_id and session_id:
@@ -552,12 +539,6 @@ async def status_webhook(
                                         )
                         except Exception as e:
                                 logger.error(f"[TWILIO STATUS] Error auto-scoring on hangup: {e}")
-                        finally:
-                                if db_client:
-                                        try:
-                                                await db_client.disconnect()
-                                        except:
-                                                pass
         
         # Always return HTTP 200 to Twilio
         return Response(content="<Response></Response>", media_type="application/xml")

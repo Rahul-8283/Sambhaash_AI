@@ -61,8 +61,21 @@ class TwilioClient:
 	def build_base_url(self, path: str) -> str:
 		if path.startswith("http://") or path.startswith("https://"):
 			return path
-		if self.webhook_base_url:
-			return urljoin(self.webhook_base_url.rstrip("/") + "/", path.lstrip("/"))
+			
+		base = self.webhook_base_url
+		if base and "localhost" in base:
+			try:
+				import json, os
+				ngrok_file = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), "ngrok_url.json")
+				if os.path.exists(ngrok_file):
+					with open(ngrok_file, "r") as f:
+						data = json.load(f)
+						base = data.get("url", base)
+			except Exception:
+				pass
+				
+		if base:
+			return urljoin(base.rstrip("/") + "/", path.lstrip("/"))
 		return path
 
 	def build_voice_entry_twiml(
