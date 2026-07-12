@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="Frontend/public/logo.png" alt="Sambhaash AI Logo" width="200" />
+  <img src="Frontend/public/logo.png" alt="Sambhaash AI Logo" width="100" />
   <h1>Sambhaash AI</h1>
   <p><strong>A Premium Multilingual Voice AI Platform built for the Namespace Hackathon</strong></p>
   
