@@ -72,8 +72,8 @@ class LeadResponse(BaseModel):
     email: Optional[str]
     language: str
     status: str
-    created_at: datetime
-    updated_at: datetime
+    createdAt: datetime
+    updatedAt: datetime
     currentScore: Optional[Dict[str, Any]] = None
     rmAssignment: Optional[Dict[str, Any]] = None
     
@@ -85,8 +85,8 @@ class LeadResponse(BaseModel):
             "email": "rajesh@example.com",
             "language": "hi",
             "status": "NEW",
-            "created_at": "2026-05-03T10:00:00",
-            "updated_at": "2026-05-03T10:00:00"
+            "createdAt": "2026-05-03T10:00:00",
+            "updatedAt": "2026-05-03T10:00:00"
         }
 
 
@@ -645,6 +645,10 @@ def _format_lead_response(lead: Dict[str, Any]) -> Dict[str, Any]:
     
     current_score = None
     if lead.get("score_classification"):
+        # Capitalize the classification (e.g., "WARM" -> "Warm") for the frontend
+        raw_class = lead.get("score_classification", "")
+        formatted_class = raw_class.capitalize() if isinstance(raw_class, str) else raw_class
+        
         current_score = {
             "id": "",
             "leadId": str(lead.get("id", "")),
@@ -652,7 +656,7 @@ def _format_lead_response(lead: Dict[str, Any]) -> Dict[str, Any]:
             "engagementScore": lead.get("engagement_score", 0.0),
             "sentimentScore": lead.get("sentiment_score", 0.0),
             "compositeScore": lead.get("composite_score", 0.0),
-            "classification": lead.get("score_classification"),
+            "classification": formatted_class,
             "timestamp": _format_datetime(lead.get("score_timestamp"))
         }
 
@@ -673,8 +677,8 @@ def _format_lead_response(lead: Dict[str, Any]) -> Dict[str, Any]:
         "email": lead.get("email"),
         "language": lead.get("language", "hi"),
         "status": lead.get("status", "NEW"),
-        "created_at": _format_datetime(lead.get("created_at")),
-        "updated_at": _format_datetime(lead.get("updated_at")),
+        "createdAt": _format_datetime(lead.get("created_at")),
+        "updatedAt": _format_datetime(lead.get("updated_at")),
         "currentScore": current_score,
         "rmAssignment": rm_assignment
     }

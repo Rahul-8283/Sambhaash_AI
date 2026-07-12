@@ -7,9 +7,10 @@ import { Link, useLocation } from "react-router-dom";
 import {
   Users,
   Settings,
-  X,
-  FileText,
   Target,
+  FileText,
+  PhoneCall,
+  X,
   BarChart3,
 } from "lucide-react";
 import clsx from "clsx";
@@ -48,6 +49,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ isOpen, onToggle }) => {
       label: "Appendix",
       path: "/dashboard/appendix",
       icon: FileText,
+    },
+    {
+      id: "summaries",
+      label: "Call Summaries",
+      path: "/dashboard/summaries",
+      icon: PhoneCall,
     },
     {
       id: "settings",
