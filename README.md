@@ -8,33 +8,28 @@ Sambhaash AI is a premium, state-of-the-art multilingual voice and text conversa
 
 Sambhaash AI leverages a modern, cutting-edge full-stack architecture to ensure low-latency, scalable, and high-fidelity multilingual interactions.
 
-### Frontend
-![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
-![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white)
-
-### Backend
-![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi&logoColor=white)
-![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
-
-### Database & Auth
-![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
-![pgvector](https://img.shields.io/badge/pgvector-316192?style=for-the-badge&logo=postgresql&logoColor=white)
-
-### LLM Brain & Conversational AI
-![Meta Llama 3.3](https://img.shields.io/badge/Meta_Llama_3.3-040D21?style=for-the-badge&logo=meta&logoColor=white)
-![Hugging Face](https://img.shields.io/badge/Hugging_Face-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black)
-![OpenAI Whisper](https://img.shields.io/badge/OpenAI_Whisper-412991?style=for-the-badge&logo=openai&logoColor=white)
-![Groq](https://img.shields.io/badge/Groq-F55036?style=for-the-badge&logo=groq&logoColor=white)
-![Sarvam AI](https://img.shields.io/badge/Sarvam.ai--BulBul_V3-FF5A5F?style=for-the-badge)
-
-### Devops & Productivity Tools
-![Twilio](https://img.shields.io/badge/Twilio-F22F46?style=for-the-badge&logo=twilio&logoColor=white)
-![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)
-![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
-![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-D71F1F?style=for-the-badge&logo=sqlalchemy&logoColor=white)
-![Ngrok](https://img.shields.io/badge/Ngrok-1F1F1F?style=for-the-badge&logo=ngrok&logoColor=white)
+<div align="center">
+  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" />
+  <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" />
+  <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" />
+  <img src="https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi&logoColor=white" />
+  <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" />
+  <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" />
+  <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" />
+  <img src="https://img.shields.io/badge/pgvector-316192?style=for-the-badge&logo=postgresql&logoColor=white" />
+  <img src="https://img.shields.io/badge/Meta_Llama_3-040D21?style=for-the-badge&logo=meta&logoColor=white" />
+  <img src="https://img.shields.io/badge/LangChain-1C3C3C?style=for-the-badge&logo=langchain&logoColor=white" />
+  <img src="https://img.shields.io/badge/LangGraph-232F3E?style=for-the-badge&logo=langchain&logoColor=white" />
+  <img src="https://img.shields.io/badge/Hugging_Face-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black" />
+  <img src="https://img.shields.io/badge/OpenAI_Whisper-412991?style=for-the-badge&logo=openai&logoColor=white" />
+  <img src="https://img.shields.io/badge/Groq-F55036?style=for-the-badge&logo=groq&logoColor=white" />
+  <img src="https://img.shields.io/badge/Sarvam.ai--BulBul_V3-FF5A5F?style=for-the-badge" />
+  <img src="https://img.shields.io/badge/Twilio-F22F46?style=for-the-badge&logo=twilio&logoColor=white" />
+  <img src="https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white" />
+  <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" />
+  <img src="https://img.shields.io/badge/SQLAlchemy-D71F1F?style=for-the-badge&logo=sqlalchemy&logoColor=white" />
+  <img src="https://img.shields.io/badge/Ngrok-1F1F1F?style=for-the-badge&logo=ngrok&logoColor=white" />
+</div>
 
 
 ## 📐 Architecture & Flowchart
@@ -42,6 +37,69 @@ Sambhaash AI leverages a modern, cutting-edge full-stack architecture to ensure 
 The overall functional flow of Sambhaash AI covers the entire lifecycle—from the administrator uploading lead contacts to telephony engagement, RAG vector lookup, lead scoring, automated WhatsApp conversational follow-ups, and Relationship Manager allocation.
 
 ![Sambhaash AI Project Flowchart](Images/flowchart.png)
+
+### System Architecture Workflow
+
+```mermaid
+flowchart TD
+    %% Define Styles
+    classDef frontend fill:#20232a,stroke:#61dafb,stroke-width:2px,color:#fff
+    classDef backend fill:#005571,stroke:#00a3cc,stroke-width:2px,color:#fff
+    classDef database fill:#3ecf8e,stroke:#2496ed,stroke-width:2px,color:#fff
+    classDef ai fill:#f55036,stroke:#ff5a5f,stroke-width:2px,color:#fff
+    classDef external fill:#f22f46,stroke:#dc382d,stroke-width:2px,color:#fff
+
+    %% Nodes
+    subgraph Client ["Client Interface"]
+        UI["React Dashboard\n(Lead & RM Management)"]:::frontend
+    end
+
+    subgraph API_Layer ["API Layer (FastAPI)"]
+        API["REST API Routes\n(Leads, RM, Admin)"]:::backend
+        WH["Webhook Routes\n(Twilio Voice & WhatsApp)"]:::backend
+    end
+
+    subgraph Core_Services ["Background Orchestration"]
+        Worker["Async Celery/Redis Worker\n(Job Processing)"]:::backend
+        Graph["LangGraph Orchestrator\n(State & LLM Routing)"]:::ai
+    end
+
+    subgraph AI_Engine ["AI Models & Generation"]
+        Groq["Groq API\n(Llama 3 8B)"]:::ai
+        Whisper["Groq Whisper\n(Speech-to-Text)"]:::ai
+        Sarvam["Sarvam AI\n(Text-to-Speech)"]:::ai
+    end
+
+    subgraph Persistence ["Data Storage"]
+        Supabase["Supabase\n(PostgreSQL)"]:::database
+        PgVector["pgvector\n(RAG Knowledge Base)"]:::database
+    end
+
+    subgraph External_Comm ["Telephony & Messaging"]
+        TwilioVoice["Twilio Voice\n(SIP / Phone Calls)"]:::external
+        TwilioWA["Twilio WhatsApp API\n(Automated Messages)"]:::external
+    end
+
+    %% Connections
+    UI <-->|HTTP Requests| API
+    API <--> Supabase
+    API -->|Dispatch Jobs| Worker
+
+    TwilioVoice <-->|Voice Stream / TwiML| WH
+    TwilioWA <-->|Message Payloads| WH
+    
+    WH -->|Audio Transcription| Whisper
+    WH -->|Process State| Graph
+    
+    Graph -->|Query Documents| PgVector
+    Graph -->|Generate Responses| Groq
+    
+    Graph -->|TTS Synthesis| Sarvam
+    Sarvam -->|Audio Bytes| WH
+
+    Worker -->|Send WhatsApp follow-ups| TwilioWA
+    Worker -->|Post-Call Summaries| Graph
+```
 
 ---
 
@@ -208,7 +266,9 @@ ENVIRONMENT=development
 | **Analytics** | `GET` | `/admin/kb/analytics/effectiveness` | Retrieve aggregate performance statistics, average relevance scores, and top used files. |
 | **Analytics** | `GET` | `/admin/kb/analytics/call/{session_id}`| Get specific document retrieval timeline logs for a particular call session. |
 | **Telephony** | `POST` | `/api/calls/initiate` | Outbound trigger to call a lead phone number via Twilio Voice. |
-| **Telephony** | `POST` | `/api/webhook/twilio-voice` | Twilio Voice webhook call response handler. |
+| **Telephony** | `POST` | `/api/webhook/twilio/voice` | Twilio Voice webhook call response handler. |
+| **Telephony** | `GET` | `/api/webhook/twilio/audio/{call_sid}` | Audio fetch endpoint for Twilio `<Play>` TTS. |
+| **Telephony** | `POST` | `/api/webhook/twilio/status` | Twilio Status callback to handle failed calls and voicemails. |
 | **WhatsApp** | `POST` | `/api/whatsapp/webhook` | Incoming Twilio webhook that handles WhatsApp conversational user interactions. |
 
 ---
