@@ -184,6 +184,17 @@ async def _score_and_assign_lead(
                         }
                         await queue_manager.enqueue_job(JobType.SEND_WHATSAPP.value, job)
                         logger.info(f"[SCORE] Scheduled WhatsApp follow-up for WARM lead in language '{lead_lang}'")
+                        
+                # Always enqueue the summary generation job after scoring
+                try:
+                        summary_job = {
+                                "session_id": str(session_id),
+                                "lead_id": str(lead_id)
+                        }
+                        await queue_manager.enqueue_job(JobType.SEND_SUMMARY.value, summary_job)
+                        logger.info(f"[SCORE] Enqueued SEND_SUMMARY for session {session_id}")
+                except Exception as e:
+                        logger.error(f"[SCORE] Failed to enqueue SEND_SUMMARY: {e}")
         
         except Exception as e:
                 logger.error(f"Error scoring lead: {e}")
@@ -322,6 +333,10 @@ async def recording_webhook(request: Request) -> Response:
                 detected_lang = language_detector.detect_language(transcript)
                 
                 logger.info(f"User said: {transcript} (Lang: {detected_lang})")
+                
+                print(f"\n{'='*60}")
+                print(f"🗣️  USER SAID: {transcript}")
+                print(f"{'='*60}\n")
 
                 # 1.5 Retrieve KB Context
                 kb_context = None
@@ -373,6 +388,11 @@ async def recording_webhook(request: Request) -> Response:
                 is_ending = outcome in ["HOT", "COLD"]
                 
                 logger.info(f"LangGraph response: {reply_text} (Target Lang: {target_lang}, Outcome: {outcome})")
+                
+                print(f"\n{'='*60}")
+                print(f"🤖  AI REPLIED: {reply_text}")
+                print(f"   (Outcome: {outcome})")
+                print(f"{'='*60}\n")
 
                 # 3. Save conversation turn to database (in background so we don't delay TTS)
                 import asyncio
@@ -405,23 +425,6 @@ async def recording_webhook(request: Request) -> Response:
                                 queue_manager=queue_manager,
                                 classification_override=outcome
                         )
-                        
-                        # 6.1 Save call recording (Phase 2B) - Background Queue
-                        try:
-                                await queue_manager.enqueue_job(
-                                        "process_recording",
-                                        payload={
-                                                "call_session_id": session_id,
-                                                "recording_url": recording_url,
-                                                "twilio_recording_sid": call_sid,
-                                                "twilio_call_sid": call_sid,
-                                                "duration_seconds": int(duration) if duration else 0
-                                        },
-                                        priority=1
-                                )
-                                logger.info(f"[RECORDING] Enqueued recording job for session {session_id}")
-                        except Exception as e:
-                                logger.error(f"[RECORDING] Failed to enqueue recording job: {e}")
                         
                         # End call with summary or LLM's final response
                         final_reply = reply_text if is_ending else "Thanks for chatting with us! Our team will be in touch shortly. Goodbye!"

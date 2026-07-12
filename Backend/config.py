@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     db_pool_max_size: int = Field(default=20, env="DB_POOL_MAX_SIZE")
     
     # ==================== LLM ====================
-    llm_model_name: str = Field(default="mixtral-8x7b-32768", env="LLM_MODEL_NAME")
+    llm_model_name: str = Field(default="llama3-8b-8192", env="LLM_MODEL_NAME")
     llm_temperature: float = Field(default=0.2, env="LLM_TEMPERATURE")
     llm_max_tokens: int = Field(default=700, env="LLM_MAX_TOKENS")
     

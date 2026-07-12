@@ -143,8 +143,6 @@ class BackgroundWorker:
                             await self._process_assign_rm(job)
                         elif job_type == JobType.UPDATE_SCORE:
                             await self._process_update_score(job)
-                        elif job_type == JobType.PROCESS_RECORDING:
-                            await self._process_recording(job)
                         
                         # Mark as complete
                         await self.queue_manager.mark_job_complete(job["id"])
@@ -298,40 +296,6 @@ _{generated_summary.get('one_line_summary', '')}_"""
             raise ValueError(f"Scoring failed for lead {lead_id}")
         
         logger.info(f"[WORKER] Score updated: {result['classification']}")
-
-    async def _process_recording(self, job: Dict[str, Any]):
-        """
-        Process call recording job.
-        
-        Args:
-            job: Job dict with payload
-        """
-        payload = job["payload"]
-        call_session_id = payload.get("call_session_id")
-        recording_url = payload.get("recording_url")
-        twilio_recording_sid = payload.get("twilio_recording_sid")
-        twilio_call_sid = payload.get("twilio_call_sid")
-        duration_seconds = payload.get("duration_seconds", 0)
-        
-        logger.info(f"Processing recording for session {call_session_id}")
-        
-        from services.call_recording_service import CallRecordingService
-        from uuid import UUID
-        
-        recording_service = CallRecordingService(db_client=self.db_client)
-        result = await recording_service.save_call_recording(
-            call_session_id=UUID(call_session_id),
-            recording_url=recording_url,
-            twilio_recording_sid=twilio_recording_sid,
-            twilio_call_sid=twilio_call_sid,
-            duration_seconds=duration_seconds,
-            recorded_at=datetime.utcnow()
-        )
-        
-        if result.get("error"):
-            raise Exception(f"Recording processing failed: {result.get('error')}")
-            
-        logger.info(f"[WORKER] Recording processed successfully for {call_session_id}")
 
 
 async def main():

@@ -7,7 +7,6 @@ import { Toaster } from "react-hot-toast";
 import LandingPage from "./pages/LandingPage";
 import LeadsPage from "./pages/LeadsPage";
 import LeadDetailPage from "./pages/LeadDetailPage";
-import CallsPage from "./pages/CallsPage";
 import AnalyticsPage from "./pages/AnalyticsPage";
 import AppendixPage from "./pages/AppendixPage";
 import RMPage from "./pages/RMPage";
@@ -27,7 +26,6 @@ function App() {
               <Routes>
                 <Route path="leads" element={<LeadsPage />} />
                 <Route path="leads/:id" element={<LeadDetailPage />} />
-                <Route path="calls" element={<CallsPage />} />
                 <Route path="analytics" element={<AnalyticsPage />} />
                 <Route path="appendix" element={<AppendixPage />} />
                 <Route path="rm" element={<RMPage />} />
