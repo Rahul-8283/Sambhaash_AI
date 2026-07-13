@@ -174,7 +174,7 @@ export const LandingPage: React.FC = () => {
           {...fadeIn}
           transition={{ delay: 0.2 }}
         >
-          Automate your outbound phone calls and WhatsApp follow-ups with a smart multilingual AI that answers questions, handles objections, and routes hot prospects directly to your team.
+          A premium multilingual voice AI platform that automates outbound phone calls and WhatsApp follow-ups to overcome India's language barrier in lead generation.
         </motion.p>
 
         <motion.div
@@ -219,6 +219,58 @@ export const LandingPage: React.FC = () => {
             <div className="text-5xl font-black text-[#d4a373] font-display">10x</div>
             <p className="text-[#3d2b1f]/80 font-bold">Increase in lead engagement rates</p>
           </div>
+        </div>
+      </section>
+
+      {/* Problem & Solution Section */}
+      <section className="relative z-10 py-24 px-6 max-w-7xl mx-auto border-t border-[#d4a373]/20">
+        <div className="grid md:grid-cols-2 gap-16 items-center">
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="space-y-8"
+          >
+            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-[#faedcd] border border-[#d4a373]/30 text-[#a87440] shadow-sm relative z-10">
+              <span className="text-xs font-bold uppercase tracking-wider">The Problem & Our Solution</span>
+            </div>
+            <h2 className="text-4xl md:text-6xl font-black text-[#3d2b1f] font-display leading-[1.1] relative z-10">
+              Why We Built <br/>
+              <span className="bg-gradient-to-r from-[#b5835a] to-[#d4a373] bg-clip-text text-transparent">Sambhaash AI</span>
+            </h2>
+            <div className="space-y-6 relative z-10">
+              <p className="text-lg text-[#3d2b1f]/80 leading-relaxed font-sans">
+                India's linguistic diversity makes unified business communication incredibly difficult. Traditional telecalling faces immense manual overhead and massive drop-off rates due to language barriers.
+              </p>
+              <p className="text-lg text-[#3d2b1f]/80 leading-relaxed font-sans">
+                We built Sambhaash AI to solve this. By orchestrating Sarvam's BulBul V3 Text-to-Speech API, Groq's low-latency Llama 3, and Whisper STT, we created an AI agent that converses natively in 10 regional Indian languages with sub-second latency, completely automating lead engagement and qualification.
+              </p>
+            </div>
+          </motion.div>
+          
+          <motion.div
+            initial={{ opacity: 0, x: 30 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            className="grid grid-cols-2 gap-6 relative z-10"
+          >
+            <div className="p-8 rounded-xl bg-[#faedcd] border border-[#faedcd] hover:border-[#d4a373]/50 hover:scale-[1.03] transition-all duration-300 group shadow-sm flex flex-col relative z-10 translate-y-8">
+               <div className="absolute inset-0 bg-[#fefae0]/40 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-0" />
+               <div className="w-12 h-12 rounded-xl bg-[#d4a373]/20 flex items-center justify-center text-[#d4a373] mb-6 group-hover:scale-110 transition-all duration-300 shadow-inner shrink-0 relative z-10">
+                 <Globe size={24} />
+               </div>
+               <h3 className="text-xl font-bold mb-3 text-[#2d1e18] font-display relative z-10">10+ Languages</h3>
+               <p className="text-[#3d2b1f]/80 leading-relaxed font-medium relative z-10">Breaking the language barrier across India natively.</p>
+            </div>
+            <div className="p-8 rounded-xl bg-[#faedcd] border border-[#faedcd] hover:border-[#d4a373]/50 hover:scale-[1.03] transition-all duration-300 group shadow-sm flex flex-col relative z-10">
+               <div className="absolute inset-0 bg-[#fefae0]/40 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none z-0" />
+               <div className="w-12 h-12 rounded-xl bg-[#d4a373]/20 flex items-center justify-center text-[#d4a373] mb-6 group-hover:scale-110 transition-all duration-300 shadow-inner shrink-0 relative z-10">
+                 <Cpu size={24} />
+               </div>
+               <h3 className="text-xl font-bold mb-3 text-[#2d1e18] font-display relative z-10">Sub-second Latency</h3>
+               <p className="text-[#3d2b1f]/80 leading-relaxed font-medium relative z-10">Human-like response speeds using cutting edge models.</p>
+            </div>
+          </motion.div>
         </div>
       </section>
 

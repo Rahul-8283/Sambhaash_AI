@@ -109,9 +109,13 @@ The overall functional flow of Sambhaash AI covers the entire lifecycle—from t
 
 ## 📽️ Demo & Deliverables
 
-- **Demo Video Link (Mandatory):** [Paste link]  
-- **Deployment Link (Recommended):** [Paste link]  
-- **Pitch Deck / PPT (Optional):** [Paste link]  
+- **Demo Video Link (Mandatory):**  
+  [![Demo Video](https://img.shields.io/badge/Watch_Demo_Video-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://canva.link/6810z8dp5k71r8l)
+- **Deployment Links (Recommended):**  
+  - **Frontend Live App:** [https://sambhaash-ai.vercel.app](https://sambhaash-ai.vercel.app)
+  - **Backend API Server:** [https://sambhaash-api.onrender.com](https://sambhaash-api.onrender.com)
+- **Pitch Deck / PPT (Optional):**  
+  [![Pitch Deck](https://img.shields.io/badge/View_Pitch_Deck-00C4CC?style=for-the-badge&logo=canva&logoColor=white)](https://canva.link/6810z8dp5k71r8l)
 
 ---
 
