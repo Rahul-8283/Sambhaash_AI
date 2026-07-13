@@ -110,7 +110,7 @@ The overall functional flow of Sambhaash AI covers the entire lifecycle—from t
 ## 📽️ Demo & Deliverables
 
 - **Demo Video Link (Mandatory):**  
-  [![Demo Video](https://img.shields.io/badge/Watch_Demo_Video-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://canva.link/6810z8dp5k71r8l)
+  [![Demo Video](https://img.shields.io/badge/Watch_Demo_Video-FF0000?style=for-the-badge&logo=youtube&logoColor=white)](https://drive.google.com/file/d/17FMGtdVOxNpcWDcGHkcJEZXT6wxLfA2F/view)
 - **Deployment Links (Recommended):**  
   - **Frontend Live App:** [https://sambhaash-ai.vercel.app](https://sambhaash-ai.vercel.app)
   - **Backend API Server:** [https://sambhaash-api.onrender.com](https://sambhaash-api.onrender.com)
@@ -121,7 +121,7 @@ The overall functional flow of Sambhaash AI covers the entire lifecycle—from t
 
 ## ✅ Tasks & Bonus Checklist
 
-- [ ] All team members completed the mandatory social task  
+- [x] All team members completed the mandatory social task  
 - [ ] Bonus Task 1 – Badge sharing  
 - [ ] Bonus Task 2 – Blog/article  
 
