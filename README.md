@@ -32,6 +32,45 @@ The overall functional flow of Sambhaash AI covers the entire lifecycle—from t
   <img src="Images/flowchart.png" alt="Sambhaash AI Architecture Diagram" width="800" />
 </p>
 
+```mermaid
+graph TD
+    Admin([Admin])
+    Customer([Customer])
+    Agent([RM Agent])
+    
+    ReactUI[React Admin Dashboard]
+    Supabase[(Supabase DB)]
+    PgVector[(PgVector RAG DB)]
+    RedisQueue[[Redis Task Queue]]
+    WhatsApp[WhatsApp API]
+    Twilio[Twilio SIP/Telephony]
+    
+    FastAPI{FastAPI Backend}
+    LangGraph((LangGraph Orchestrator))
+    Whisper[Groq Whisper STT]
+    Llama[Groq Llama 3 8B]
+    Sarvam[Sarvam BulBul V3 TTS]
+
+    Admin -->|Uploads Leads| ReactUI
+    ReactUI -->|Stores Leads| Supabase
+    
+    Supabase -->|Fetches Pending Leads| FastAPI
+    FastAPI -->|Initiates Call| Twilio
+    Twilio <-->|Audio Stream| Customer
+    
+    Twilio -->|Audio Bytes| Whisper
+    Whisper -->|Transcribed Text| LangGraph
+    LangGraph <-->|Semantic Search| PgVector
+    LangGraph <-->|Context & State| Llama
+    Llama -->|Generated Text| Sarvam
+    Sarvam -->|Synthesized Audio| Twilio
+    
+    LangGraph -->|Sentiment & Intent Scoring| RedisQueue
+    RedisQueue -->|High Intent Hot| Agent
+    RedisQueue -->|Warm Leads| WhatsApp
+    RedisQueue -->|Call Logs| Supabase
+```
+
 ---
 
 ## Tech Stack
