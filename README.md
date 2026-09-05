@@ -79,6 +79,14 @@ graph TD
     RedisQueue -->|Call Logs| Supabase
 ```
 
+### How It Works (The Lifecycle)
+
+1. **Lead Ingestion & Queuing:** Administrators upload campaign lists via the React dashboard. Leads are securely stored in **Supabase**, and outreach jobs are asynchronously scheduled into a **Redis task queue** to prevent bottlenecks.
+2. **Telephony & Real-Time STT:** When a call connects via **Twilio SIP**, the live bidirectional audio stream is captured. The user's speech is chunked and streamed to **Groq Whisper** for ultra-fast, sub-second Speech-to-Text (STT) transcription.
+3. **Cognitive Processing & RAG:** The transcribed text enters our **LangGraph** orchestration pipeline. Here, the system queries a **pgvector** database (using Hugging Face embeddings) to fetch relevant knowledge base articles, ensuring the AI can handle complex, domain-specific objections accurately via **Llama 3 (8B)**.
+4. **Synthesis (TTS) & Action:** The generated response text is instantly synthesized into high-fidelity, emotionally resonant regional audio using **Sarvam AI (BulBul V3)** and streamed back to the user.
+5. **Intelligent Handoff:** Post-call, LangGraph evaluates the entire transcript's sentiment and intent. **"Hot"** leads instantly trigger a live handoff to a Relationship Manager (RM), while **"Warm"** leads are automatically nurtured via our context-aware **WhatsApp Follow-up Agent**.
+
 ---
 
 ## Tech Stack
@@ -97,6 +105,20 @@ graph TD
 
 ### Hosting & DevOps  
 <img src="https://img.shields.io/badge/Render-46E3B7?style=for-the-badge&logo=render&logoColor=white" /> <img src="https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white" /> <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" />
+
+---
+
+## Platform Previews
+
+<div align="center">
+  <img src="Images/sam1.webp" alt="Dashboard Preview 1" width="800" />
+  <br /><br />
+  <img src="Images/sam11.webp" alt="Dashboard Preview 2" width="800" />
+  <br /><br />
+  <img src="Images/sam2.webp" alt="Dashboard Preview 3" width="800" />
+  <br /><br />
+  <img src="Images/sam3.webp" alt="Dashboard Preview 4" width="800" />
+</div>
 
 ---
 
@@ -145,9 +167,9 @@ python -m uvicorn main:app --reload
 
 - **Rahul L S** ([GitHub](https://github.com/Rahul-8283) | [LinkedIn](https://www.linkedin.com/in/rahul-ls))  
 - **Kesav** ([GitHub](https://github.com/kesavvvvvv) | [LinkedIn](https://www.linkedin.com/in/kesav-satya-sai-nimmagadda-673164317))
-- **Kishore B** ([GitHub](https://github.com/KishoreB25) | [LinkedIn](https://www.linkedin.com/in/kishore-b-245a66343))
-- **Prajwal Priyadarshan G** ([GitHub](https://github.com/prajwal-priyadarshan) | [LinkedIn](https://www.linkedin.com/in/prajwal-priyadarshan/))
 - **Kabilan K** ([GitHub](https://github.com/KKabilan07) | [LinkedIn](https://www.linkedin.com/in/kabilank07/))
+- **Prajwal Priyadarshan G** ([GitHub](https://github.com/prajwal-priyadarshan) | [LinkedIn](https://www.linkedin.com/in/prajwal-priyadarshan/))
+- **Kishore B** ([GitHub](https://github.com/KishoreB25) | [LinkedIn](https://www.linkedin.com/in/kishore-b-245a66343))
 
 ---
 
