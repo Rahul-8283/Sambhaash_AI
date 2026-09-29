@@ -268,7 +268,7 @@ GET /admin/kb/analytics/document-impact/{doc_id}
 
 **From .env** (already set):
 ```
-SUPABASE_URL=https://cyzauakzjwwivbzkzxnx.supabase.co
+SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=...
 SUPABASE_BUCKET_NAME=knowledge-base-documents
 DATABASE_URL=postgresql+asyncpg://...
