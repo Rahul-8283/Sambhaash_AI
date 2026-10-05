@@ -22,6 +22,7 @@ from services.database.repository import Repository
 from services.scoring.scoring_engine import ScoringEngine
 from services.database.models import LeadStatus
 from orchestration.outcome import classify_outcome, user_texts_from_history
+from orchestration.history import history_to_messages as conversation_messages
 from services.llm.kb_context_injection import KBContextInjectionService
 from services.call_recording_service import CallRecordingService
 from worker.queue_manager import QueueManager, JobType
@@ -373,19 +374,22 @@ async def recording_webhook(request: Request) -> Response:
                 # Extract the pre-formatted string from the KB retrieval dict
                 kb_text = kb_context.get("formatted_context", "") if kb_context else ""
                 
+                # Rebuild the call so far from the stored turns, so the model has memory
+                history = []
+                if repository and session_id:
+                        call_session = await repository.get_call_session(UUID(session_id))
+                        history = conversation_messages(call_session.get("conversation_history") if call_session else [])
+
                 input_state = {
-                    "messages": [HumanMessage(content=transcript)],
+                    "messages": history + [HumanMessage(content=transcript)],
                     "session_id": session_id,
                     "lead_id": lead_id,
                     "lead_language": detected_lang,
                     "kb_context": kb_text
                 }
                 
-                # The thread_id tells the Supabase checkpointer which row to update
-                config = {"configurable": {"thread_id": session_id}}
-                
-                # Run the state machine
-                final_state = await app.ainvoke(input_state, config=config)
+                # Run the state machine (memory comes from the stored turns above)
+                final_state = await app.ainvoke(input_state)
                 
                 # Extract the AI's final response and outcome
                 ai_message = final_state["messages"][-1].content if final_state.get("messages") else "I'm sorry, I encountered an error."
@@ -402,16 +406,15 @@ async def recording_webhook(request: Request) -> Response:
                 print(f"   (Outcome: {outcome})")
                 print(f"{'='*60}\n")
 
-                # 3. Save conversation turn to database (in background so we don't delay TTS)
-                import asyncio
-                asyncio.create_task(_save_conversation_turn(
+                # 3. Save the turn before the next call can read the history
+                await _save_conversation_turn(
                         session_id=session_id,
                         call_sid=call_sid,
                         user_text=transcript,
                         ai_response=reply_text,
                         detected_lang=detected_lang,
                         repository=repository
-                ))
+                )
 
                 # 4. TTS Generation
                 audio_bytes = await manager.generate_tts(text=reply_text, language=target_lang)

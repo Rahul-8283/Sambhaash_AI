@@ -2,6 +2,7 @@ from typing import Dict, Any
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from orchestration.state import AgentState, llm
 from orchestration.outcome import classify_outcome
+from utils.language import reply_language_instruction
 import re
 
 def _has_word(text: str, *phrases: str) -> bool:
@@ -32,7 +33,7 @@ def pitch_node(state: AgentState) -> Dict[str, Any]:
     """
     Standard pitch node.
     """
-    system_prompt = SystemMessage(content="You are Sambhaash AI, an expert sales agent. Pitch the product naturally and persuasively based on previous context.")
+    system_prompt = SystemMessage(content="You are Sambhaash AI, an expert sales agent. Pitch the product naturally and persuasively based on previous context. " + reply_language_instruction(state.get("lead_language")))
     
     response = llm.invoke([system_prompt] + state["messages"])
     
@@ -50,7 +51,7 @@ def rag_node(state: AgentState) -> Dict[str, Any]:
         f"{kb_content}"
     )
     
-    system_prompt = SystemMessage(content=prompt_text)
+    system_prompt = SystemMessage(content=prompt_text + " " + reply_language_instruction(state.get("lead_language")))
     
     response = llm.invoke([system_prompt] + state["messages"])
     
@@ -60,7 +61,7 @@ def objection_handler_node(state: AgentState) -> Dict[str, Any]:
     """
     Handles objections raised by the user.
     """
-    system_prompt = SystemMessage(content="You are Sambhaash AI. The user has raised an objection. Handle it with empathy and provide a strong counter-value proposition.")
+    system_prompt = SystemMessage(content="You are Sambhaash AI. The user has raised an objection. Handle it with empathy and provide a strong counter-value proposition. " + reply_language_instruction(state.get("lead_language")))
     
     objections = state.get("detected_objections", [])
     objections.append(state["messages"][-1].content)

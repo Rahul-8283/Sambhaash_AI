@@ -9,7 +9,6 @@ from orchestration.nodes import (
     objection_handler_node,
     scoring_node
 )
-from orchestration.checkpointer import SupabaseCallSessionCheckpointer
 
 # Initialize the StateGraph with our defined AgentState
 workflow = StateGraph(AgentState)
@@ -50,9 +49,7 @@ workflow.add_edge("pitch_node", "scoring_node")
 # The scoring node is the end of this single conversational turn
 workflow.add_edge("scoring_node", END)
 
-# Instantiate our custom Database Checkpointer
-checkpointer = SupabaseCallSessionCheckpointer()
-
-# Compile the graph into a runnable application
-# We pass the checkpointer so LangGraph automatically persists state to Supabase
-app = workflow.compile(checkpointer=checkpointer)
+# Compile without a checkpointer. Conversation memory is rebuilt from the
+# call's stored turns on every invocation (see orchestration/history.py). The old
+# checkpointer restored empty messages and collided with the same DB column.
+app = workflow.compile()
