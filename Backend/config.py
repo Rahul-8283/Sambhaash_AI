@@ -74,6 +74,10 @@ class Settings(BaseSettings):
     score_hot_threshold: float = Field(default=0.75, env="SCORE_HOT_THRESHOLD")
     score_warm_threshold: float = Field(default=0.50, env="SCORE_WARM_THRESHOLD")
     
+    # ==================== PHONE ====================
+    # Used when a lead's number is stored without a country code (e.g. "7989683240")
+    default_country_code: str = Field(default="91", env="DEFAULT_COUNTRY_CODE")
+
     # ==================== RM SETTINGS ====================
     default_rm_name: str = Field(default="Auto", env="DEFAULT_RM_NAME")
     auto_assign_hot_leads: bool = Field(default=True, env="AUTO_ASSIGN_HOT_LEADS")

@@ -8,6 +8,7 @@ from services.database.supabase_client import get_db_client
 from services.messaging.whatsapp_service import WhatsAppService
 from services.llm.llm_client import LLMClient
 from config import get_config
+from utils.phone import normalize_phone
 
 logger = logging.getLogger(__name__)
 
@@ -37,9 +38,9 @@ async def receive_whatsapp(
         if not from_number or not body:
             return Response(content="Missing From or Body parameter", status_code=400)
             
-        # Clean phone number (extract digits/country code)
-        clean_phone = from_number.replace("whatsapp:", "").strip()
-        
+        # Normalize to E.164 so it matches how leads are stored
+        clean_phone = normalize_phone(from_number)
+
         # Look up lead by phone
         lead = await repo.get_lead_by_phone(clean_phone)
         if not lead:

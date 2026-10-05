@@ -17,6 +17,7 @@ from services.database.supabase_client import get_db_client, SupabaseClient
 from services.database.repository import Repository
 from services.database.models import LeadStatus
 from api.auth import get_current_user
+from utils.phone import normalize_phone
 
 logger = logging.getLogger(__name__)
 
@@ -31,14 +32,11 @@ class LeadCreate(BaseModel):
     
     @validator('phone')
     def phone_must_be_valid(cls, v):
-        """Validate phone format"""
-        # Remove spaces and special chars except +
-        clean_phone = v.replace(" ", "").replace("-", "")
-        if not clean_phone.replace("+", "").isdigit():
-            raise ValueError("Phone must contain only digits and optional +")
-        if len(clean_phone) < 10:
-            raise ValueError("Phone must be at least 10 digits")
-        return clean_phone
+        """Validate phone format and normalize to E.164"""
+        try:
+            return normalize_phone(v)
+        except ValueError as e:
+            raise ValueError(str(e))
     
     class Config:
         example = {
@@ -485,7 +483,8 @@ async def batch_upload_csv(
                 
                 if not phone:
                     raise ValueError("Phone is required")
-                
+                phone = normalize_phone(phone)
+
                 # Check if exists
                 existing = await repo.get_lead_by_phone(phone)
                 if existing:
@@ -583,7 +582,8 @@ async def batch_upload_json(
                 
                 if not phone:
                     raise ValueError("Phone is required")
-                
+                phone = normalize_phone(phone)
+
                 # Check if exists
                 existing = await repo.get_lead_by_phone(phone)
                 if existing:

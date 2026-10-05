@@ -10,6 +10,8 @@ from services.database.repository import Repository
 from services.telephony.twilio_client import TwilioClient
 from services.database.models import LeadStatus
 from services.ngrok_setup import load_ngrok_url
+from utils.phone import normalize_phone
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -128,6 +130,19 @@ class CallInitiator:
         except Exception as e:
             logger.error(f"[CALL_INIT] Error finding NEW leads: {e}", exc_info=False)
     
+    @staticmethod
+    def _is_permanent_failure(error: Exception) -> bool:
+        """
+        True when retrying the same lead cannot succeed: an invalid phone number,
+        or Twilio rejecting the request with a 4xx (bad number, unverified trial
+        number, etc). Network errors and Twilio 5xx responses are transient.
+        """
+        if isinstance(error, ValueError):
+            return True
+        if isinstance(error, requests.exceptions.HTTPError) and error.response is not None:
+            return 400 <= error.response.status_code < 500
+        return False
+
     async def initiate_call_for_lead(self, lead: dict) -> bool:
         """
         Initiate a Twilio call for a lead.
@@ -138,6 +153,10 @@ class CallInitiator:
         Returns:
             True if call initiated successfully, False otherwise
         """
+        # Resolved before the try so the exception handler can always use them
+        lead_id = None
+        phone = lead.get("phone")
+
         try:
             # Handle UUID conversion - lead['id'] may already be UUID from asyncpg
             lead_id_raw = lead.get("id")
@@ -152,6 +171,9 @@ class CallInitiator:
             if not phone:
                 logger.warning(f"Lead {lead_id} has no phone number")
                 return False
+
+            # Dial E.164 numbers only; raises ValueError for unusable numbers
+            phone = normalize_phone(phone)
             
             # Check if Twilio is configured
             if not self.twilio_client.configured:
@@ -221,18 +243,21 @@ class CallInitiator:
             logger.error(f"[CALL_INIT] Exception initiating call for {phone}: {e}", exc_info=False)
             # Cleanup pending session if exists
             try:
-                lead_id_raw = lead.get("id")
-                if isinstance(lead_id_raw, UUID):
-                    lead_id = lead_id_raw
-                else:
-                    lead_id = UUID(str(lead_id_raw))
                 pending_session_key = f"pending_{lead_id}"
                 if pending_session_key in call_sessions:
                     del call_sessions[pending_session_key]
             except:
                 pass
             
-            # Mark lead as REJECTED so we don't infinitely retry the crash
+            if lead_id is None:
+                return False
+
+            # Only mark REJECTED for permanent failures. Transient errors leave the
+            # lead NEW so the next poll retries it.
+            if not self._is_permanent_failure(e):
+                logger.warning(f"[CALL_INIT] Transient failure for lead {lead_id}; will retry on next poll")
+                return False
+
             try:
                 await self.repository.update_lead(
                     lead_id=lead_id,

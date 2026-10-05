@@ -158,10 +158,12 @@ async def _score_and_assign_lead(
                 
                 logger.info(f"✅ Created lead score: {score_record['id']}")
                 
-                # Update lead status
+                # Update lead status. COLD leads must NOT go back to NEW: the call
+                # initiator dials every NEW lead each poll cycle, so that would
+                # re-call people who just declined, indefinitely.
                 await repository.update_lead(
                         lead_id=lead_id,
-                        status=LeadStatus.INTERESTED.value if classification in ("HOT", "WARM") else LeadStatus.NEW.value
+                        status=LeadStatus.INTERESTED.value if classification in ("HOT", "WARM") else LeadStatus.FOLLOW_UP.value
                 )
                 
                 # Auto-actions based on classification

@@ -1,6 +1,6 @@
 # Sambhaash AI — Code Audit
 
-Full line-by-line review of the codebase (~15.6k lines backend Python, ~5.3k lines frontend TypeScript). This documents everything found — architectural defects, dead code, functional bugs, and security issues — with file:line references. Nothing listed here has been fixed yet; this is a findings document only. Sections 10 and 11 were added in a follow-up pass that also cross-checked the written docs (`Backend/README.md`, `Backend/DOCS/*.md`, root `README.md`, `instructions.txt`) against the code.
+Full line-by-line review of the codebase (~15.6k lines backend Python, ~5.3k lines frontend TypeScript). This documents everything found — architectural defects, dead code, functional bugs, and security issues — with file:line references. Nothing listed here has been fixed yet; this is a findings document only. **Fix log:** §10.5 (COLD re-dial loop) is fixed on branch `fix/remediation`; everything else is still open. Sections 10 and 11 were added in a follow-up pass that also cross-checked the written docs (`Backend/README.md`, `Backend/DOCS/*.md`, root `README.md`, `instructions.txt`) against the code.
 
 **Headline finding:** the product's three flagship features — the LangGraph conversational orchestrator, the pgvector RAG knowledge base, and the 10-language voice/WhatsApp support — are each either silently broken or fake in the current live code path. Details below.
 
@@ -202,6 +202,8 @@ The backend stores lead classification as uppercase (`"HOT"`/`"WARM"`/`"COLD"`, 
 - **`src/pages/ProfileSettingsPage.tsx:56-82`** — the editable "Role" field is never sent to the backend; it's persisted only to `localStorage`, giving a false impression of a saved server-side setting.
 - **`src/pages/AppendixPage.tsx:89-91`** — "Clear All" button is just `alert("Please delete documents individually")` — implies bulk delete but does nothing.
 
+- **`src/types/index.ts:9`** — `LeadStatus = "Not Called" | "Calling" | "Connected" | "No Answer" | "Failed" | "Completed"`, but the backend's lead statuses are `NEW | CONTACTED | INTERESTED | CONVERTED | REJECTED | FOLLOW_UP` (`models.py:28-35`). The TypeScript type does not describe real data, so `RMPage.tsx:79,254` (`lead.status === "Completed"`) can never match a real lead and the "converted" count/badge only works through `rmAssignment.converted`. Same root cause as the classification casing bug in §8.1; the two should be fixed together by aligning frontend types to the backend enums.
+
 ### 8.3 Dead / orphaned frontend code
 
 - **`src/pages/CallsPage.tsx`** (120 lines, fully implemented) — not registered in any route in `App.tsx`; the only link to it (`Footer.tsx:32`) points at a route that doesn't exist and redirects to `/dashboard/leads` via the catch-all. A fully built call-recordings page is unreachable (consistent with its backend route also never being mounted — section 5).
@@ -282,6 +284,8 @@ The recollection that the sandbox "is not working" is plausible and has identifi
 
 ### 10.5 COLD — the score is saved, but the lead loops back into the call queue (new, high-impact)
 
+> **FIXED on `fix/remediation`** (`webhook_routes.py:161-167`): COLD leads are now set to `FOLLOW_UP` instead of `NEW`, so the call initiator (which only selects `NEW`) no longer re-dials them. The live DB enum `leadstatus` already contained `FOLLOW_UP`, so no migration was needed. Verified with a stubbed repository: COLD → `FOLLOW_UP` (no RM, no WhatsApp), WARM → `INTERESTED` (+ WhatsApp job), HOT → `INTERESTED` (+ RM assignment). Still open in this section: no nurture/retry schedule exists for `FOLLOW_UP` leads, and the description below is kept as the original finding.
+
 The note said COLD is "just saving in db". Checked: the `lead_scores` row *is* saved, but the surrounding logic is wrong:
 
 - `webhook_routes.py:164` sets lead status to `LeadStatus.NEW` for COLD (`INTERESTED` only for HOT/WARM). `CallInitiator.find_and_call_new_leads` (`call_initiator.py:108-112`) selects every `NEW` lead every 30 s (`run_worker.py:69`). **A COLD lead — someone who said "no" — is therefore re-dialed on the next scheduler cycle, and again after every call, indefinitely.** The `REJECTED` comment at `call_initiator.py:215` ("so it doesn't infinitely loop") shows this hazard was considered for failures but not for COLD.
@@ -356,3 +360,41 @@ The written docs describe a system that differs from the code in many places. Do
 ### 11.6 What to do once the code is fixed
 
 This section is the checklist of doc edits the code fixes will require, so the docs are updated together with the fixes instead of drifting again: rewrite `Backend/README.md` as one document; fix the sandbox webhook URL; correct the stack table (§11.3) in every doc that repeats it; delete or mark `MESSAGING_WORKER_GUIDE.md` examples that use unimplemented message types; and only then update the root `README.md` feature claims (multilingual, RAG, live handoff, scoring) to match what actually ships.
+
+---
+
+## 12. Runtime verification (run locally with real `.env` files)
+
+The project was installed and started locally to confirm the static findings. Setup: macOS, Python 3.14.7 (project targets 3.11), fresh venv, `pip install -r requirements.txt`, API started with `MODE=production` (skips the ngrok tunnel; `.env` unchanged), worker **not** started. Only read-only GET requests and read-only SQL `SELECT`s were run. The Docker daemon was not running, so Redis was unavailable.
+
+### 12.1 What works
+
+- **Frontend:** `npx tsc -b` passes with zero errors; `npm run build` succeeds (single 1.13 MB JS chunk, over Vite's 500 kB warning).
+- **Backend imports:** `config`, `orchestration.*` (including the hand-written checkpointer against the newest LangGraph 1.2.12 / langgraph-checkpoint 4.2.0), `webhook_routes` and `main` all import cleanly. So the unpinned-version risk in §7 has not broken imports yet; it is still untested at call time.
+- **Startup:** the API boots, the Supabase pool connects, `GET /health` → 200, `/docs` → 200.
+- **DB-backed reads work:** `GET /api/rm/Auto/queue` → 200 (empty), `GET /admin/kb/analytics/effectiveness` → 200.
+
+### 12.2 New bugs found at runtime
+
+- **`GET /api/rm/leaderboard` returns HTTP 500** (`function round(double precision, integer) does not exist`). `repository.py:698-701` and `722-725` cast to `::float` before `ROUND(..., 2)`; PostgreSQL only has `round(numeric, int)`, so the cast must be `::numeric`. The identical expression is in `get_rm_stats` (`repository.py:693-703`) which backs `GET /api/rm/{rm_name}/dashboard`, so that endpoint should fail the same way (same query pattern; not called during this run). The RM leaderboard and RM performance dashboard are therefore broken in addition to §10.3.
+- **`GET /api/queue/stats` returns HTTP 500** when Redis is down (`Error 61 connecting to localhost:6379`) instead of a clear "queue unavailable" response; the raw connection error is returned to the caller (compare §4, leaked internal errors). More importantly, `docker-compose`/README both assume Redis is available, and nothing in the API startup checks for it, so the API reports healthy while the queue is dead.
+- **Ngrok opens automatically in the default dev config.** With `MODE=development` and an `NGROK_AUTH_TOKEN` (the documented setup), starting the API publishes a public tunnel to an API whose call/WhatsApp trigger endpoints have no authentication (§4). Nothing warns about this; the only mitigation is running with `MODE=production` locally.
+
+### 12.3 Static findings confirmed against the live server / DB
+
+| Finding | Evidence |
+|---|---|
+| `/ready` documented but missing (§11.2) | `GET /ready` → 404 |
+| Call Recordings router never mounted (§5) | `GET /admin/recordings` → 404 |
+| KB analytics presents invented numbers (§4) | `effectiveness` with **0** calls analysed still returns `avg_relevance_score: 0.75` |
+| `call_sessions.duration_seconds` never written (§11.4) | 8 real sessions in the DB, `SUM(duration_seconds) = 0` |
+| COLD leads are saved but the lead is looped/reset (§10.5) | 3 `lead_scores` rows, all `COLD`; leads currently `CONTACTED` ×3 and `REJECTED` ×2, none `NEW` |
+| RM allocation is free-text (§10.3) | `rm_assignments` holds two manual names ("Sneha Gupta", "Amit Patel"), none from the `"Auto"` default, so those came from the frontend's hardcoded RM list |
+| Protected route behaves as designed | `GET /api/leads` without a token → 401 (the only router that enforces auth, §4) |
+
+### 12.4 Environment notes for working on the project
+
+- **Python version:** only 3.14 was available locally, but the Dockerfile targets 3.11 (§11.3). It installed and imported fine, but use 3.11 for any behaviour you intend to ship.
+- **Never start `run_worker.py` while `NEW` leads exist** unless you intend real calls: the call initiator dials every `NEW` lead within 30 s (§10.5). At the time of this check there were no `NEW` leads, so starting it would not have called anyone, but creating a lead via the API or CSV would.
+- **The `.env` keys present are complete for the core flow** (Supabase, Groq, HF, Sarvam, Twilio incl. WhatsApp from-number, Redis, ngrok). Not set and worth adding: `TWILIO_WEBHOOK_BASE_URL` (otherwise webhooks default to `http://localhost:8000`, which Twilio cannot reach unless the ngrok auto-detect works, and that auto-detect reads the wrong JSON key, §5), and `DEFAULT_RM_NAME` if you don't want `"Auto"`.
+- **Supabase is a shared, live database** (real leads and sessions exist). Point a separate Supabase project at development before running fix branches that write data.
