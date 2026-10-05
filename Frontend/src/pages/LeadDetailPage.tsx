@@ -209,20 +209,20 @@ export const LeadDetailPage: React.FC = () => {
                     <Badge
                       variant="custom"
                       customBgColor={
-                        lead.currentScore.classification === "Hot"
+                        lead.currentScore.classification === "HOT"
                           ? "bg-rose-100/50"
-                          : lead.currentScore.classification === "Warm"
+                          : lead.currentScore.classification === "WARM"
                             ? "bg-amber-100/50"
-                            : lead.currentScore.classification === "Cold"
+                            : lead.currentScore.classification === "COLD"
                               ? "bg-blue-100/50"
                               : "bg-[#faedcd]/40"
                       }
                       customTextColor={
-                        lead.currentScore.classification === "Hot"
+                        lead.currentScore.classification === "HOT"
                           ? "text-rose-800 border border-rose-200/50"
-                          : lead.currentScore.classification === "Warm"
+                          : lead.currentScore.classification === "WARM"
                             ? "text-amber-800 border border-amber-200/50"
-                            : lead.currentScore.classification === "Cold"
+                            : lead.currentScore.classification === "COLD"
                               ? "text-blue-800 border border-blue-200/50"
                               : "text-[#3d2b1f]/70 border border-[#faedcd]"
                       }

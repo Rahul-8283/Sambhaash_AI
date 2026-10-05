@@ -248,8 +248,8 @@ async def mark_lead_converted(
         logger.error(f"Invalid lead_id format: {lead_id}")
         raise HTTPException(status_code=400, detail="Invalid lead_id format")
     except Exception as e:
-        logger.error(f"Error marking lead as converted: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.exception(f"Error marking lead {lead_id} as converted: {e}")
+        raise HTTPException(status_code=500, detail="Failed to mark lead as converted")
 
 
 @router.get("/{rm_name}/dashboard", response_model=RMStatsResponse)

@@ -17,6 +17,7 @@ from twilio.rest import Client
 
 from config import get_config
 from services.database.repository import Repository
+from utils.language import to_language_code
 
 logger = logging.getLogger(__name__)
 
@@ -75,6 +76,21 @@ Questions? Call us: {phone_number}"""
 
 या हमारे साथ जुड़ें:
 https://rupeezy.app/app/{lead_id}"""
+        },
+        "conversion_en": {
+            "language": "en",
+            "message": """🎉 Congratulations {name}!
+
+Your loan has been approved!
+
+Amount: ₹{amount}
+Tenure: {tenure} months
+Interest rate: {interest_rate}%
+
+Get your money instantly:
+https://rupeezy.app/dashboard/{lead_id}
+
+Thank you! 🙏"""
         },
         "conversion_hi": {
             "language": "hi",
@@ -138,7 +154,7 @@ https://rupeezy.app/dashboard/{lead_id}
             name = lead.get("name", "Friend")
             
             # Select template
-            template_key = f"warm_follow_up_{language}"
+            template_key = f"warm_follow_up_{to_language_code(language)}"
             template = self.TEMPLATES.get(template_key)
             if not template:
                 template = self.TEMPLATES["warm_follow_up_en"]
@@ -203,7 +219,7 @@ https://rupeezy.app/dashboard/{lead_id}
             name = lead.get("name", "Friend")
             
             # Select template
-            template_key = f"conversion_{language}"
+            template_key = f"conversion_{to_language_code(language)}"
             template = self.TEMPLATES.get(template_key)
             if not template:
                 template = self.TEMPLATES.get("conversion_hi")

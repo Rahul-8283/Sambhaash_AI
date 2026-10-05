@@ -14,6 +14,7 @@ import asyncio
 import logging
 from typing import Dict, Any, Optional
 from datetime import datetime
+from uuid import UUID
 
 from worker.queue_manager import QueueManager, JobStatus, JobType
 from services.messaging.whatsapp_service import WhatsAppService
@@ -228,10 +229,17 @@ class BackgroundWorker:
         # Extract required data
         history = session.get("conversation_history", [])
         
+        # Use the lead's latest stored score; the session's own classification is never written
+        latest_score = await self.repository.get_latest_score(UUID(str(lead_id)))
+        final_score = latest_score.get("interest_score") if latest_score else None
+        final_classification = latest_score.get("classification") if latest_score else None
+
         # Generate structured summary
         generated_summary = summary_generator.generate(
-            memory_snapshot={"current_classification": session.get("classification")},
-            transcript=history
+            memory_snapshot={"current_classification": final_classification},
+            transcript=history,
+            final_score=final_score,
+            final_classification=final_classification,
         )
         
         # Save to database

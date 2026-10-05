@@ -16,17 +16,17 @@ export const STATUS_COLORS: Record<LeadStatus | "Connected" | "No Answer" | "Fai
 
 // Score colors
 export const SCORE_COLORS: Record<ScoreClassification, string> = {
-  "Hot": "bg-rose-100/50 text-rose-800 border border-rose-200/50",
-  "Warm": "bg-amber-100/50 text-amber-800 border border-amber-200/50",
-  "Cold": "bg-blue-100/50 text-blue-800 border border-blue-200/50",
-  "Unscored": "bg-[#faedcd]/40 text-[#3d2b1f]/70 border border-[#faedcd]",
+  "HOT": "bg-rose-100/50 text-rose-800 border border-rose-200/50",
+  "WARM": "bg-amber-100/50 text-amber-800 border border-amber-200/50",
+  "COLD": "bg-blue-100/50 text-blue-800 border border-blue-200/50",
+  "UNSCORED": "bg-[#faedcd]/40 text-[#3d2b1f]/70 border border-[#faedcd]",
 };
 
 export const SCORE_ICONS: Record<ScoreClassification, string> = {
-  "Hot": "🔥",
-  "Warm": "🟡",
-  "Cold": "❄️",
-  "Unscored": "❓",
+  "HOT": "🔥",
+  "WARM": "🟡",
+  "COLD": "❄️",
+  "UNSCORED": "❓",
 };
 
 // Priority colors

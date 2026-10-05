@@ -237,10 +237,10 @@ export const LeadsPage: React.FC = () => {
                 className="w-full px-3 py-2 bg-white/70 border border-[#faedcd] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d4a373]/30 focus:border-[#d4a373] text-[#3d2b1f] font-medium"
               >
                 <option value="">All Scores</option>
-                <option value="Hot">Hot 🔥</option>
-                <option value="Warm">Warm 🟡</option>
-                <option value="Cold">Cold ❄️</option>
-                <option value="Unscored">Unscored ❓</option>
+                <option value="HOT">Hot 🔥</option>
+                <option value="WARM">Warm 🟡</option>
+                <option value="COLD">Cold ❄️</option>
+                <option value="UNSCORED">Unscored ❓</option>
               </select>
             </div>
 
@@ -370,7 +370,7 @@ export const LeadsPage: React.FC = () => {
                     return (
                       <Badge
                         variant="score"
-                        value={score?.classification || "Unscored"}
+                        value={score?.classification || "UNSCORED"}
                         showIcon
                       />
                     );

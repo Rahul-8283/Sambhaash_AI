@@ -4,6 +4,8 @@ import base64
 import logging
 from typing import Optional
 
+from utils.language import to_language_code
+
 # Setup basic logger if not configured
 logger = logging.getLogger(__name__)
 
@@ -56,7 +58,7 @@ class SarvamTTSService:
         Returns:
             bytes: Raw audio bytes.
         """
-        target_language = self.LANGUAGE_MAP.get(language.lower(), "en-IN")
+        target_language = self.LANGUAGE_MAP.get(to_language_code(language), "en-IN")
         
         payload = {
             "inputs": [text],

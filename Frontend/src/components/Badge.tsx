@@ -29,7 +29,7 @@ export const Badge: React.FC<BadgeProps> = ({
   let icon = "";
 
   const isScoreClassification = (v: string): v is ScoreClassification => 
-    ["Hot", "Warm", "Cold", "Unscored"].includes(v);
+    ["HOT", "WARM", "COLD", "UNSCORED"].includes(v);
 
   if (variant === "status" && STATUS_COLORS[value]) {
     const colors = STATUS_COLORS[value];

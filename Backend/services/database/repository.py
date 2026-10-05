@@ -696,7 +696,7 @@ class Repository:
             COUNT(CASE WHEN converted = TRUE THEN 1 END) as converted,
             COUNT(CASE WHEN converted = FALSE THEN 1 END) as pending,
             ROUND(
-                COUNT(CASE WHEN converted = TRUE THEN 1 END)::float / 
+                COUNT(CASE WHEN converted = TRUE THEN 1 END)::numeric /
                 NULLIF(COUNT(*), 0) * 100, 2
             ) as conversion_rate
         FROM rm_assignments
@@ -720,7 +720,7 @@ class Repository:
             COUNT(*) as total_assigned,
             COUNT(CASE WHEN converted = TRUE THEN 1 END) as converted,
             ROUND(
-                COUNT(CASE WHEN converted = TRUE THEN 1 END)::float / 
+                COUNT(CASE WHEN converted = TRUE THEN 1 END)::numeric /
                 NULLIF(COUNT(*), 0) * 100, 2
             ) as conversion_rate
         FROM rm_assignments

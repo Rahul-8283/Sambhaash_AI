@@ -7,7 +7,7 @@ import type { ReactNode } from "react";
 
 // ============ Lead Types ============
 export type LeadStatus = "Not Called" | "Calling" | "Connected" | "No Answer" | "Failed" | "Completed";
-export type ScoreClassification = "Hot" | "Warm" | "Cold" | "Unscored";
+export type ScoreClassification = "HOT" | "WARM" | "COLD" | "UNSCORED";
 export type LeadPriority = "High" | "Medium" | "Low";
 
 export interface ConversationTurn {

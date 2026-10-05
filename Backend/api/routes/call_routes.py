@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import logging
 
+import requests
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
@@ -55,8 +56,24 @@ async def send_whatsapp_message(payload: OutboundCallRequest):
 
 @router.get("/status/{call_sid}")
 async def get_call_status(call_sid: str):
+	client = TwilioClient()
+	try:
+		call = client.get_call(call_sid)
+	except requests.exceptions.HTTPError as e:
+		if e.response is not None and e.response.status_code == 404:
+			raise HTTPException(status_code=404, detail="Call not found")
+		logger.error(f"Twilio call status lookup failed for {call_sid}: {e}")
+		raise HTTPException(status_code=502, detail="Could not fetch call status from Twilio")
+	except Exception as e:
+		logger.error(f"Twilio call status lookup failed for {call_sid}: {e}")
+		raise HTTPException(status_code=502, detail="Could not fetch call status from Twilio")
+
 	return {
 		"call_sid": call_sid,
-		"status": "tracked_by_twilio",
-		"message": "Use Twilio Console or add a status callback webhook for live updates.",
+		"status": call.get("status"),
+		"duration": call.get("duration"),
+		"to": call.get("to"),
+		"from": call.get("from"),
+		"start_time": call.get("start_time"),
+		"end_time": call.get("end_time"),
 	}

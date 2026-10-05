@@ -70,7 +70,7 @@ class TwilioClient:
 				if os.path.exists(ngrok_file):
 					with open(ngrok_file, "r") as f:
 						data = json.load(f)
-						base = data.get("url", base)
+						base = data.get("ngrok_url") or base
 			except Exception:
 				pass
 				
@@ -151,6 +151,16 @@ class TwilioClient:
 		data = response.json()
 		logger.info(f"[TWILIO] Call created successfully: SID={data.get('sid')}, Status={data.get('status')}")
 		return TwilioCallResult(sid=data.get("sid"), status=data.get("status", "unknown"), raw=data)
+
+	def get_call(self, call_sid: str) -> dict[str, Any]:
+		"""Fetch a call resource from Twilio. Raises requests.HTTPError on failure (404 if unknown)."""
+		response = requests.get(
+			f"{TWILIO_API_BASE}/Accounts/{self._auth()[0]}/Calls/{call_sid}.json",
+			auth=self._auth(),
+			timeout=30,
+		)
+		response.raise_for_status()
+		return response.json()
 
 	def send_whatsapp_message(self, to_number: str, body: str) -> dict[str, Any]:
 		"""Send a WhatsApp message through the Twilio sandbox."""

@@ -39,7 +39,7 @@ export const RMPage: React.FC = () => {
     try {
       // Get leads with Hot classification
       const response = await apiService.getLeads({
-        classification: ["Hot"]
+        classification: ["HOT"]
       }, { page: 1, limit: 100 });
       
       setLeads(response.data);
@@ -285,7 +285,7 @@ export const RMPage: React.FC = () => {
                             />
                           </div>
                           <span className="text-sm font-extrabold text-[#d4a373]">
-                            {score ? `${Math.round(score.compositeScore * 100)}%` : "Unscored"}
+                            {score ? `${Math.round(score.compositeScore * 100)}%` : "UNSCORED"}
                           </span>
                         </div>
                       </td>
