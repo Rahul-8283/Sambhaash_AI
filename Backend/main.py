@@ -82,19 +82,21 @@ def create_app() -> FastAPI:
     
     # ==================== MIDDLEWARE ====================
     
-    # CORS Middleware
+    config = get_config()
+
+    # CORS Middleware: explicit origins only (credentials are not allowed with "*")
     app.add_middleware(
         CORSMiddleware,
-        allow_origins=["*"],  # Allow all origins for development
+        allow_origins=[o.strip() for o in config.cors_origins.split(",") if o.strip()],
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    
+
     # Trusted Host Middleware
     app.add_middleware(
         TrustedHostMiddleware,
-        allowed_hosts=["*"]
+        allowed_hosts=[h.strip() for h in config.trusted_hosts.split(",") if h.strip()]
     )
     
     # ==================== ROUTES ====================
@@ -142,13 +144,11 @@ def create_app() -> FastAPI:
     @app.exception_handler(Exception)
     async def general_exception_handler(request, exc):
         """Handle general exceptions"""
-        logger.error(f"Unhandled exception: {str(exc)}")
+        # Log the real error server-side; never send exception text to the client
+        logger.exception(f"Unhandled exception on {request.method} {request.url.path}: {exc}")
         return JSONResponse(
             status_code=500,
-            content={
-                "error": "Internal server error",
-                "message": str(exc)
-            }
+            content={"error": "Internal server error"}
         )
     
     logger.info("[APP] FastAPI application created successfully")

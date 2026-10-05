@@ -15,9 +15,9 @@ from services.llm.kb_context_injection import KBContextInjectionService
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/admin/kb/analytics", tags=["admin-kb-analytics"])
+from api.auth import get_current_user
 
-
+router = APIRouter(prefix="/admin/kb/analytics", tags=["admin-kb-analytics"], dependencies=[Depends(get_current_user)])
 class KBUsageEntry(BaseModel):
     """Single KB usage entry from a call turn"""
     timestamp: str

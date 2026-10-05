@@ -11,9 +11,10 @@ from services.telephony.twilio_client import TwilioClient
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/calls", tags=["Calls"])
+from fastapi import Depends
+from api.auth import get_current_user
 
-
+router = APIRouter(prefix="/api/calls", tags=["Calls"], dependencies=[Depends(get_current_user)])
 class OutboundCallRequest(BaseModel):
 	phone_number: str = Field(..., description="Destination phone number in E.164 format")
 	webhook_path: str = Field(default="/api/webhook/twilio/voice", description="Twilio webhook path to use for the call")

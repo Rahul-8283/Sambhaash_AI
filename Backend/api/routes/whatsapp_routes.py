@@ -9,6 +9,7 @@ from services.messaging.whatsapp_service import WhatsAppService
 from services.llm.llm_client import LLMClient
 from config import get_config
 from utils.phone import normalize_phone
+from api.twilio_auth import verify_twilio_signature
 
 logger = logging.getLogger(__name__)
 
@@ -21,7 +22,7 @@ async def get_repository() -> Repository:
     return Repository(db)
 
 
-@router.post("")
+@router.post("", dependencies=[Depends(verify_twilio_signature)])
 async def receive_whatsapp(
     request: Request,
     repo: Repository = Depends(get_repository)

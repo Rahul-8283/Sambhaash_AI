@@ -4,6 +4,7 @@ Creates all tables in the database from SQLAlchemy models
 """
 
 import asyncio
+import re
 import sys
 import os
 from pathlib import Path
@@ -27,7 +28,9 @@ async def init_database():
     if database_url.startswith("postgresql+asyncpg://"):
         database_url = database_url.replace("postgresql+asyncpg://", "postgresql://")
     
-    print(f"📡 Connecting to: {database_url}")
+    # Print the target without the password
+    safe_url = re.sub(r"(://[^:/@]+):[^@]*@", r"\1:***@", database_url)
+    print(f"📡 Connecting to: {safe_url}")
     
     # Connect to database
     conn = await asyncpg.connect(database_url)

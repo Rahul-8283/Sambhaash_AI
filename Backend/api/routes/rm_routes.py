@@ -22,9 +22,9 @@ from services.database.supabase_client import get_db_client
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/rm", tags=["RM Management"])
+from api.auth import get_current_user
 
-
+router = APIRouter(prefix="/api/rm", tags=["RM Management"], dependencies=[Depends(get_current_user)])
 # ==================== PYDANTIC MODELS ====================
 
 class RMQueueLeadResponse(BaseModel):

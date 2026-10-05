@@ -19,8 +19,9 @@ from services.storage_client import get_storage_client, SupabaseStorageClient
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/admin/kb", tags=["admin-kb"])
+from api.auth import get_current_user
 
+router = APIRouter(prefix="/admin/kb", tags=["admin-kb"], dependencies=[Depends(get_current_user)])
 # ==================== PYDANTIC MODELS ====================
 
 

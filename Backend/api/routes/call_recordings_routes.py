@@ -15,9 +15,9 @@ from services.call_recording_service import get_recording_service, CallRecording
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/admin/recordings", tags=["admin-recordings"])
+from api.auth import get_current_user
 
-
+router = APIRouter(prefix="/admin/recordings", tags=["admin-recordings"], dependencies=[Depends(get_current_user)])
 # ==================== PYDANTIC MODELS ====================
 
 class RecordingMetadata(BaseModel):

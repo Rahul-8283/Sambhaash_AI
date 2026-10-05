@@ -6,8 +6,10 @@ from worker.queue_manager import QueueManager
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/queue", tags=["queue"])
+from fastapi import Depends
+from api.auth import get_current_user
 
+router = APIRouter(prefix="/api/queue", tags=["queue"], dependencies=[Depends(get_current_user)])
 def get_queue_manager() -> QueueManager:
     return QueueManager()
 

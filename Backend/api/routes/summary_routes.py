@@ -8,8 +8,9 @@ from services.database.repository import Repository
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/summaries", tags=["summaries"])
+from api.auth import get_current_user
 
+router = APIRouter(prefix="/api/v1/summaries", tags=["summaries"], dependencies=[Depends(get_current_user)])
 @router.get("/")
 async def get_all_summaries() -> Dict[str, Any]:
     """

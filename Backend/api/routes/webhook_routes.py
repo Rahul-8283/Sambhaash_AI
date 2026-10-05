@@ -6,10 +6,12 @@ from typing import Any, Dict, Optional
 from uuid import UUID
 from datetime import datetime
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import Response
 
 from config import get_config
+from api.auth import get_current_user
+from api.twilio_auth import verify_twilio_signature
 from services.stt.language_detector import LanguageDetector
 from services.stt.whisper_service import WhisperService
 from services.telephony.twilio_client import TwilioClient
@@ -202,7 +204,7 @@ async def _score_and_assign_lead(
                 logger.error(f"Error scoring lead: {e}")
 
 
-@router.api_route("/voice", methods=["GET", "POST"])
+@router.api_route("/voice", methods=["GET", "POST"], dependencies=[Depends(verify_twilio_signature)])
 async def voice_webhook(request: Request) -> Response:
         """Initial Twilio Voice webhook for inbound calls."""
 
@@ -240,7 +242,7 @@ async def voice_webhook(request: Request) -> Response:
         return Response(content=twiml, media_type="application/xml")
 
 
-@router.post("/recording")
+@router.post("/recording", dependencies=[Depends(verify_twilio_signature)])
 async def recording_webhook(request: Request) -> Response:
         """Receive a Twilio recording, transcribe it, classify language, hit LLM, generate TTS, and reply."""
 
@@ -460,7 +462,7 @@ async def recording_webhook(request: Request) -> Response:
                         media_type="application/xml",
                 )
 
-@router.get("/audio/{call_sid}")
+@router.get("/audio/{call_sid}", dependencies=[Depends(get_current_user)])
 async def fetch_audio(call_sid: str) -> Response:
         """Endpoint for Twilio <Play> to fetch the generated audio bytes."""
         audio_data = audio_cache.get(call_sid)
@@ -471,7 +473,7 @@ async def fetch_audio(call_sid: str) -> Response:
         
         return Response(content=audio_data, media_type="audio/wav")
 
-@router.post("/whatsapp")
+@router.post("/whatsapp", dependencies=[Depends(verify_twilio_signature)])
 async def whatsapp_webhook(request: Request) -> Response:
         """Optional Twilio WhatsApp sandbox webhook."""
 
@@ -486,7 +488,7 @@ async def whatsapp_webhook(request: Request) -> Response:
         )
         return Response(content=reply, media_type="application/xml")
 
-@router.post("/status")
+@router.post("/status", dependencies=[Depends(verify_twilio_signature)])
 async def status_webhook(
         request: Request,
         session_id: Optional[str] = None,

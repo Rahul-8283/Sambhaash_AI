@@ -74,6 +74,17 @@ class Settings(BaseSettings):
     score_hot_threshold: float = Field(default=0.75, env="SCORE_HOT_THRESHOLD")
     score_warm_threshold: float = Field(default=0.50, env="SCORE_WARM_THRESHOLD")
     
+    # ==================== SECURITY ====================
+    # Verify X-Twilio-Signature on Twilio webhooks. Only disable for local debugging.
+    twilio_validate_signatures: bool = Field(default=True, env="TWILIO_VALIDATE_SIGNATURES")
+    # Comma-separated list of frontend origins allowed to call the API
+    cors_origins: str = Field(default="http://localhost:5173", env="CORS_ORIGINS")
+    # Comma-separated Host headers the API accepts (ngrok/Render hostnames included)
+    trusted_hosts: str = Field(
+        default="localhost,127.0.0.1,*.ngrok-free.dev,*.ngrok-free.app,*.ngrok.app,*.onrender.com",
+        env="TRUSTED_HOSTS"
+    )
+
     # ==================== PHONE ====================
     # Used when a lead's number is stored without a country code (e.g. "7989683240")
     default_country_code: str = Field(default="91", env="DEFAULT_COUNTRY_CODE")
