@@ -11,7 +11,7 @@ interface TopNavProps {
 export const TopNav: React.FC<TopNavProps> = ({ onMenuClick, hideMenuButton }) => {
   const navigate = useNavigate();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [notifications] = useState(3);
+  const [notifications] = useState(0);
 
   const [currentUser, setCurrentUser] = React.useState({
     name: "ADMIN",

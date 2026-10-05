@@ -233,7 +233,10 @@ export const LeadDetailPage: React.FC = () => {
                 </div>
                 <div className="mt-3 pt-3 border-t border-[#faedcd]">
                   <p className="text-sm font-semibold text-[#3d2b1f]/75 line-clamp-2 italic font-sans">
-                    {session.conversationHistory[session.conversationHistory.length - 1]?.text || "No speech recorded."}
+                    {(() => {
+                      const lastTurn = session.conversationHistory[session.conversationHistory.length - 1];
+                      return lastTurn?.user || lastTurn?.text || "No speech recorded.";
+                    })()}
                   </p>
                 </div>
               </div>

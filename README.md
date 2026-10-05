@@ -126,7 +126,7 @@ graph TD
 
 ### Requirements:
 - Node.js & npm
-- Python 3.9+ & pip
+- Python 3.11 (matches the Dockerfile) & pip
 - Docker (for Redis)
 - API Keys: Supabase, Groq, Hugging Face, Sarvam, Twilio, Ngrok
 
@@ -141,7 +141,7 @@ npm run dev
 # 2. Backend Setup
 cd ../Backend
 python -m venv venv
-source venv/Scripts/activate # On Windows: venv\Scripts\activate
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env # Configure environment variables
 

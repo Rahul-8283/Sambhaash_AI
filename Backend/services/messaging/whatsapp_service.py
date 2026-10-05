@@ -9,6 +9,7 @@ Flow:
 5. Updates database with delivery status
 """
 
+import asyncio
 import logging
 from typing import Dict, Optional, Any
 from datetime import datetime
@@ -320,7 +321,9 @@ https://rupeezy.app/dashboard/{lead_id}
             from_number = self.whatsapp_from.replace('whatsapp:', '')
             
             # Send via Twilio
-            msg = self.twilio_client.messages.create(
+            # The Twilio SDK call is blocking; run it off the event loop
+            msg = await asyncio.to_thread(
+                self.twilio_client.messages.create,
                 from_=f"whatsapp:{from_number}",
                 to=f"whatsapp:{phone}",
                 body=message

@@ -11,8 +11,12 @@ export type ScoreClassification = "HOT" | "WARM" | "COLD" | "UNSCORED";
 export type LeadPriority = "High" | "Medium" | "Low";
 
 export interface ConversationTurn {
-  role: "user" | "assistant";
-  text: string;
+  role?: "user" | "assistant";
+  text?: string;
+  // Shape the backend actually stores per turn
+  user?: string;
+  ai?: string;
+  language?: string;
   timestamp: string;
 }
 

@@ -9,6 +9,7 @@ from uuid import UUID
 import uuid
 import logging
 import json
+import math
 
 from .supabase_client import SupabaseClient, SupabaseClientError
 from .models import (
@@ -16,6 +17,32 @@ from .models import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+KB_SEARCH_CANDIDATE_LIMIT = 5000
+
+
+def _parse_embedding(raw: Any) -> Optional[List[float]]:
+    """Stored embeddings are JSON text; return None if they cannot be read."""
+    if raw is None:
+        return None
+    try:
+        values = json.loads(raw) if isinstance(raw, str) else list(raw)
+        return [float(v) for v in values]
+    except (TypeError, ValueError):
+        return None
+
+
+def _vector_norm(vector: List[float]) -> float:
+    return math.sqrt(sum(v * v for v in vector))
+
+
+def _cosine_similarity(query: List[float], query_norm: float, chunk: List[float]) -> float:
+    chunk_norm = _vector_norm(chunk)
+    if query_norm == 0.0 or chunk_norm == 0.0:
+        return 0.0
+    dot = sum(q * c for q, c in zip(query, chunk))
+    return dot / (query_norm * chunk_norm)
 
 
 class Repository:
@@ -739,64 +766,82 @@ class Repository:
         top_k: int = 5,
         language: Optional[str] = None,
         objection_type: Optional[str] = None,
+        min_score: float = 0.0,
     ) -> List[Dict[str, Any]]:
         """
-        Search knowledge base using vector similarity (pgvector).
-        
+        Search knowledge base by cosine similarity between the query embedding and
+        each stored chunk embedding.
+
+        Embeddings are stored as JSON text, so similarity is computed here rather than
+        in SQL. Chunks without a usable embedding are skipped.
+
         Args:
-            query_embedding: 384-dimensional embedding vector
+            query_embedding: Query vector (same dimension as the stored embeddings)
             top_k: Number of top results
             language: Optional language filter
             objection_type: Optional objection type filter
-        
+            min_score: Drop results whose similarity is below this value
+
         Returns:
-            List of similar knowledge base entries with similarity scores
+            Knowledge base entries sorted by similarity, each with a real "score"
         """
         try:
-            embedding_json = json.dumps(query_embedding)
-            
-            # Build query with optional filters
             filters = []
-            params = [embedding_json, top_k]
-            param_count = 2
-            
+            params: List[Any] = []
+
             if language:
-                param_count += 1
-                filters.append(f"language = ${param_count}")
                 params.append(language)
-            
+                filters.append(f"kb.language = ${len(params)}")
+
             if objection_type:
-                param_count += 1
-                filters.append(f"objection_type = ${param_count}")
                 params.append(objection_type)
-            
-            where_clause = " AND ".join(filters) if filters else "1=1"
-            
-            # Note: pgvector is stored as JSON string, so we'll use LIMIT instead of vector ops
-            # For full pgvector support, ensure PostgreSQL has pgvector extension installed
+                filters.append(f"kb.objection_type = ${len(params)}")
+
+            where_clause = " AND ".join(filters) if filters else "TRUE"
+
+            # Cap the candidate set so a very large KB cannot stall a live call
+            params.append(KB_SEARCH_CANDIDATE_LIMIT)
             query = f"""
-            SELECT 
+            SELECT
                 kb.id,
                 kb.document_id,
                 kb.content as text,
+                kb.embedding,
                 kb.language,
                 kb.objection_type,
                 kb.benefit_type,
                 kb.source_section,
                 kb.created_at,
                 doc.file_name,
-                doc.document_type,
-                -- Placeholder similarity (uses $1 so asyncpg doesn't crash on unused param)
-                0.8 + (0 * length($1::text)) as score
+                doc.document_type
             FROM knowledge_base kb
             JOIN documents doc ON kb.document_id = doc.id
-            WHERE {where_clause}
+            WHERE {where_clause} AND kb.embedding IS NOT NULL
             ORDER BY kb.created_at DESC
-            LIMIT $2
+            LIMIT ${len(params)}
             """
-            
-            results = await self.db.execute_query(query, params)
-            logger.info(f"[KB_SEARCH] Found {len(results)} results for vector search (top_k={top_k})")
+
+            rows = await self.db.execute_query(query, params)
+
+            query_norm = _vector_norm(query_embedding)
+            scored = []
+            for row in rows:
+                chunk_vector = _parse_embedding(row.get("embedding"))
+                if chunk_vector is None or len(chunk_vector) != len(query_embedding):
+                    continue
+                score = _cosine_similarity(query_embedding, query_norm, chunk_vector)
+                if score < min_score:
+                    continue
+                result = {k: v for k, v in row.items() if k != "embedding"}
+                result["score"] = round(score, 4)
+                scored.append(result)
+
+            scored.sort(key=lambda r: r["score"], reverse=True)
+            results = scored[:top_k]
+            logger.info(
+                f"[KB_SEARCH] {len(results)} results (top_k={top_k}, min_score={min_score}, "
+                f"candidates={len(rows)})"
+            )
             return results
         except Exception as e:
             logger.error(f"[KB_SEARCH] Vector search error: {e}")

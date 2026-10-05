@@ -228,7 +228,7 @@ Person 4: Scoring + Storage + Routing
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Python 3.12+
+- Python 3.11 (matches the Dockerfile)
 - Supabase account + API keys
 - OpenAI API key
 - Groq API key
@@ -251,7 +251,7 @@ cp .env.example .env
 
 ### Run Backend
 ```bash
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+uvicorn main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ---
@@ -281,30 +281,38 @@ GET    /api/rm/dashboard            # RM dashboard
 
 ## 📝 Environment Variables (.env)
 
+Copy `Backend/.env.example` to `Backend/.env` and fill it in. The code reads these
+(see `Backend/config.py`):
+
 ```env
 # Supabase
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=your-key
+DATABASE_URL=postgresql://...
 
-# LLM APIs
-OPENAI_API_KEY=sk-...
+# LLM / STT / TTS
 GROQ_API_KEY=gsk_...
+HF_API_KEY=hf_...
+SARVAM_API_KEY=...
 
 # Telephony
 TWILIO_ACCOUNT_SID=AC...
 TWILIO_AUTH_TOKEN=...
 TWILIO_PHONE_NUMBER=+1...
+TWILIO_WHATSAPP_FROM=whatsapp:+1...
+TWILIO_WEBHOOK_BASE_URL=https://your-public-url   # ngrok or deployed URL
 
-# TTS
-SARVAM_API_KEY=...
+# Security
+CORS_ORIGINS=http://localhost:5173                 # comma-separated frontend origins
+TRUSTED_HOSTS=localhost,127.0.0.1                  # add your ngrok/Render hostnames
+TWILIO_VALIDATE_SIGNATURES=true                    # keep true outside local debugging
 
-# WhatsApp
-WHATSAPP_BUSINESS_ACCOUNT_ID=...
-WHATSAPP_TOKEN=...
+# Phone numbers without a country code are read with this code
+DEFAULT_COUNTRY_CODE=91
 
-# Env
-ENVIRONMENT=development
-DEBUG=true
+# Queue and environment
+REDIS_URL=redis://localhost:6379
+MODE=development
 ```
 
 ---
@@ -328,7 +336,7 @@ Current implementation focus:
 
 ### Core files
 - `main.py` — FastAPI app entry
-- `config.py` — loads env vars from `Backend/env`
+- `config.py` — loads env vars from `Backend/.env`
 - `api/routes/webhook_routes.py` — Twilio webhooks
 - `api/routes/call_routes.py` — outbound call + WhatsApp trigger endpoints
 - `api/routes/health.py` — health/readiness checks
@@ -342,7 +350,8 @@ Current implementation focus:
 - `GET /ready`
 - `GET|POST /api/webhook/twilio/voice`
 - `POST /api/webhook/twilio/recording`
-- `POST /api/webhook/twilio/whatsapp`
+- `POST /api/webhook/whatsapp` (LLM reply for WARM leads)
+- `POST /api/webhook/twilio/whatsapp` (canned-reply stub)
 - `POST /api/calls/outbound`
 - `POST /api/calls/whatsapp`
 - `GET /api/calls/status/{call_sid}`
@@ -381,7 +390,7 @@ Run from repo root (`.\Sambhaash_AI`).
 python -m pip install -r .\Backend\requirements.txt
 ```
 
-Make sure `Backend/env` exists and contains at least:
+Make sure `Backend/.env` exists (copy `.env.example`) and contains at least:
 - `OPENAI_API_KEY`
 - `TWILIO_ACCOUNT_SID`
 - `TWILIO_AUTH_TOKEN`
@@ -391,7 +400,7 @@ Make sure `Backend/env` exists and contains at least:
 Start backend:
 
 ```powershell
-uvicorn Backend.main:app --host 0.0.0.0 --port 8000 --reload
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
 ---
@@ -430,7 +439,7 @@ ngrok http 8000
 Copy the HTTPS forwarding URL from ngrok, e.g.:
 - `https://abcd-12-34-56-78.ngrok-free.app`
 
-Optional but recommended: set this in `Backend/env`:
+Optional but recommended: set this in `Backend/.env`:
 - `TWILIO_WEBHOOK_BASE_URL=https://abcd-12-34-56-78.ngrok-free.app`
 
 Restart backend after env updates.
@@ -455,8 +464,8 @@ Restart backend after env updates.
 If you do not get transcription:
 - confirm ngrok URL is live
 - verify Twilio number webhook method is POST
-- verify OpenAI key in `Backend/env`
-- verify Twilio account SID/token in `Backend/env`
+- verify the Groq key in `Backend/.env`
+- verify Twilio account SID/token in `Backend/.env`
 
 ---
 
@@ -466,7 +475,7 @@ You already joined sandbox (good ✅).
 
 1. In Twilio Console → **Messaging** → **Try it out** → **WhatsApp Sandbox**.
 2. Set **When a message comes in** webhook URL to:
-   - `https://<your-ngrok-url>/api/webhook/twilio/whatsapp`
+   - `https://<your-ngrok-url>/api/webhook/whatsapp`
    - Method: `HTTP POST`
 3. From your WhatsApp, send a test message to sandbox number (`+14155238886`).
 4. You should receive auto XML-driven response:
@@ -508,4 +517,4 @@ If any credentials were ever committed to git history, rotate them immediately:
 - Supabase keys
 - Any other provider secrets
 
-Keep secrets only in `Backend/env` (ignored by git).
+Keep secrets only in `Backend/.env` (ignored by git).

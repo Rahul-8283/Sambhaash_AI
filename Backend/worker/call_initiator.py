@@ -15,9 +15,6 @@ import requests
 
 logger = logging.getLogger(__name__)
 
-# Import call_sessions cache from webhook routes
-# This allows us to register sessions before calls are made
-from api.routes.webhook_routes import call_sessions
 
 
 class CallInitiator:
@@ -188,18 +185,6 @@ class CallInitiator:
             
             logger.info(f"Created call session: {call_session['id']}")
             
-            # Pre-register session in webhook cache
-            # This way when Twilio calls back, the session info is ready
-            # We'll update it with actual call_sid once we get it back
-            pending_session_key = f"pending_{lead_id}"
-            call_sessions[pending_session_key] = {
-                "lead_id": str(lead_id),
-                "session_id": str(call_session['id']),
-                "turn_count": 0,
-                "phone": phone,
-                "pending": True
-            }
-            logger.debug(f"Pre-registered session in cache: {pending_session_key}")
             
             # Initiate Twilio call
             result = self.twilio_client.create_outbound_call(
@@ -214,12 +199,6 @@ class CallInitiator:
                 logger.info(f"[CALL] Call SID: {call_sid}")
                 logger.info(f"[CALL] Session ID: {call_session['id']}")
                 
-                # Move from pending to actual call_sid
-                if pending_session_key in call_sessions:
-                    call_sessions[call_sid] = call_sessions.pop(pending_session_key)
-                    call_sessions[call_sid]["pending"] = False
-                    logger.debug(f"Moved session from {pending_session_key} to {call_sid}")
-                
                 # Update lead status to CONTACTED
                 await self.repository.update_lead(
                     lead_id=lead_id,
@@ -229,9 +208,6 @@ class CallInitiator:
                 return True
             else:
                 logger.error(f"Failed to initiate call: {result.status}")
-                # Cleanup pending session
-                if pending_session_key in call_sessions:
-                    del call_sessions[pending_session_key]
                 # Mark as REJECTED so it doesn't infinitely loop
                 await self.repository.update_lead(
                     lead_id=lead_id,
@@ -241,13 +217,6 @@ class CallInitiator:
         
         except Exception as e:
             logger.error(f"[CALL_INIT] Exception initiating call for {phone}: {e}", exc_info=False)
-            # Cleanup pending session if exists
-            try:
-                pending_session_key = f"pending_{lead_id}"
-                if pending_session_key in call_sessions:
-                    del call_sessions[pending_session_key]
-            except:
-                pass
             
             if lead_id is None:
                 return False

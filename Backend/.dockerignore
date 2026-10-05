@@ -1,0 +1,16 @@
+# Secrets and local state must never be baked into the image
+.env
+.env.*
+ngrok_url.json
+worker.log
+*.wav
+
+# Local tooling
+venv/
+.venv/
+__pycache__/
+*.pyc
+.git/
+.gitignore
+.claude/
+DOCS/

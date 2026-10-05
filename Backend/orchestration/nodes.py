@@ -1,6 +1,13 @@
 from typing import Dict, Any
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from orchestration.state import AgentState, llm
+from orchestration.outcome import classify_outcome
+import re
+
+def _has_word(text: str, *phrases: str) -> bool:
+    """True if any phrase appears as a whole word (case-insensitive)."""
+    pattern = r"\b(?:" + "|".join(re.escape(p) for p in phrases) + r")\b"
+    return re.search(pattern, text, re.IGNORECASE) is not None
 
 def analyze_intent_node(state: AgentState) -> Dict[str, Any]:
     """
@@ -11,12 +18,12 @@ def analyze_intent_node(state: AgentState) -> Dict[str, Any]:
     if not messages:
         return {"current_node": "pitch_node"}
     
-    last_message = messages[-1].content.lower()
+    last_message = messages[-1].content
     
     # Simple heuristic routing for now (can be upgraded to LLM-based structured output)
-    if "?" in last_message or "how" in last_message or "what" in last_message:
+    if "?" in last_message or _has_word(last_message, "how", "what"):
         return {"current_node": "rag_node"}
-    elif "expensive" in last_message or "not interested" in last_message or "no" in last_message:
+    elif _has_word(last_message, "expensive", "not interested", "no"):
         return {"current_node": "objection_handler_node"}
     else:
         return {"current_node": "pitch_node"}
@@ -69,14 +76,9 @@ def scoring_node(state: AgentState) -> Dict[str, Any]:
     messages = state.get("messages", [])
     if len(messages) < 2:
         return {"outcome": "UNKNOWN"}
-        
-    last_user_message = messages[-2].content.lower() if isinstance(messages[-2], HumanMessage) else ""
     
-    if "yes" in last_user_message or "interested" in last_user_message:
-        outcome = "HOT"
-    elif "no" in last_user_message or "stop" in last_user_message:
-        outcome = "COLD"
-    else:
-        outcome = "WARM"
+    # Score the whole call: the newest decisive statement from the caller wins
+    user_texts = [m.content for m in reversed(messages) if isinstance(m, HumanMessage)]
+    outcome = classify_outcome(user_texts)
         
     return {"outcome": outcome, "current_node": "end"}

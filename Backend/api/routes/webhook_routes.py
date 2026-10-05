@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import logging
 import json
 from typing import Any, Dict, Optional
@@ -20,6 +21,7 @@ from services.database.supabase_client import get_db_client
 from services.database.repository import Repository
 from services.scoring.scoring_engine import ScoringEngine
 from services.database.models import LeadStatus
+from orchestration.outcome import classify_outcome, user_texts_from_history
 from services.llm.kb_context_injection import KBContextInjectionService
 from services.call_recording_service import CallRecordingService
 from worker.queue_manager import QueueManager, JobType
@@ -329,7 +331,9 @@ async def recording_webhook(request: Request) -> Response:
                 stt = WhisperService()
                 language_detector = LanguageDetector()
                 
-                transcript = stt.transcribe_recording_url(
+                # Blocking download + transcription: run off the event loop
+                transcript = await asyncio.to_thread(
+                        stt.transcribe_recording_url,
                         recording_url=recording_url,
                         twilio_account_sid=settings.twilio_account_sid or "",
                         twilio_auth_token=settings.twilio_auth_token or "",
@@ -533,7 +537,11 @@ async def status_webhook(
                                 
                                 # If it's still 'CONTACTED', it means the user hung up before max_turns or the LLM formally ended it!
                                 if lead and lead.get("status") == LeadStatus.CONTACTED.value:
-                                        logger.info(f"[TWILIO STATUS] Lead {lead_id} hung up abruptly. Auto-scoring as WARM...")
+                                        # Classify from what the caller actually said (WARM if no clear signal)
+                                        call_session = await repository.get_call_session(UUID(session_id))
+                                        history = (call_session or {}).get("conversation_history", [])
+                                        outcome = classify_outcome(user_texts_from_history(history))
+                                        logger.info(f"[TWILIO STATUS] Lead {lead_id} hung up abruptly. Auto-scoring as {outcome}...")
                                         queue_manager = QueueManager()
                                         scoring_engine = ScoringEngine(repository)
                                         await _score_and_assign_lead(
@@ -542,7 +550,7 @@ async def status_webhook(
                                                 repository=repository,
                                                 scoring_engine=scoring_engine,
                                                 queue_manager=queue_manager,
-                                                classification_override="WARM"
+                                                classification_override=outcome
                                         )
                         except Exception as e:
                                 logger.error(f"[TWILIO STATUS] Error auto-scoring on hangup: {e}")

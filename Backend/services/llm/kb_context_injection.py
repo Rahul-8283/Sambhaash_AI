@@ -39,6 +39,7 @@ class KBContextInjectionService:
         """
         self.db_client = db_client
         self.rag_engine = rag_engine
+        self.embedder: Optional[EmbedderService] = None
         self.repository: Optional[Repository] = None
         self._initialized = False
     
@@ -55,6 +56,9 @@ class KBContextInjectionService:
         
         if not self.rag_engine:
             self.rag_engine = RAGEngine()
+
+        if not self.embedder:
+            self.embedder = EmbedderService()
         
         self._initialized = True
     
@@ -92,14 +96,14 @@ class KBContextInjectionService:
             logger.info(f"[KB_CTX] Retrieving context for call {call_session_id}, lead {lead_id}")
             
             # 1. Generate Embedding for User Query
-            embedder = EmbedderService()
-            query_embedding = embedder.embed_text(user_text)
+            query_embedding = self.embedder.embed_text(user_text)
             
             # 2. Query knowledge base for relevant chunks using pgvector
             logger.debug(f"[KB_CTX] Running vector search for: {user_text[:30]}")
             search_results = await self.repository.vector_search_knowledge_base(
                 query_embedding=query_embedding,
-                top_k=top_k
+                top_k=top_k,
+                min_score=min_score,
             )
             
             if not search_results:

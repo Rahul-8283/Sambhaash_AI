@@ -17,7 +17,7 @@ from datetime import datetime, timedelta
 from uuid import uuid4
 from enum import Enum
 
-import redis
+import redis.asyncio as redis
 from config import get_config
 
 logger = logging.getLogger(__name__)
@@ -108,7 +108,7 @@ class QueueManager:
         
         # Store job details
         job_key = f"{self.job_prefix}{job_id}"
-        self.redis_client.set(
+        await self.redis_client.set(
             job_key,
             json.dumps(job),
             ex=86400 * 7  # Expire after 7 days
@@ -116,7 +116,7 @@ class QueueManager:
         
         # Add to queue (sorted by priority, then creation time)
         queue_key = f"{self.queue_prefix}{job_type}"
-        self.redis_client.zadd(
+        await self.redis_client.zadd(
             queue_key,
             {job_id: -priority}  # Negative for reverse sort
         )
@@ -137,37 +137,33 @@ class QueueManager:
         """
         queue_key = f"{self.queue_prefix}{job_type}"
         
-        # Get oldest job (lowest score)
-        jobs = self.redis_client.zrange(queue_key, 0, 0)
-        if not jobs:
+        # ZPOPMIN removes the oldest job in one atomic step, so two workers
+        # can never receive the same job.
+        popped = await self.redis_client.zpopmin(queue_key, count=1)
+        if not popped:
             return None
         
-        job_id = jobs[0]
+        job_id, score = popped[0]
         
-        # Fetch job details
         job_key = f"{self.job_prefix}{job_id}"
-        job_data = self.redis_client.get(job_key)
+        job_data = await self.redis_client.get(job_key)
         if not job_data:
-            # Job expired, remove from queue
-            self.redis_client.zrem(queue_key, job_id)
+            # Job expired; it has already been removed from the queue
             return None
         
         job = json.loads(job_data)
         
-        # Check if delayed
+        # Not due yet: put it back with its original score
         if job.get("delay_until"):
             delay_until = datetime.fromisoformat(job["delay_until"])
             if datetime.utcnow() < delay_until:
-                # Not ready yet, return None
+                await self.redis_client.zadd(queue_key, {job_id: score})
                 return None
         
         # Mark as processing
         job["status"] = JobStatus.PROCESSING.value
         job["updated_at"] = datetime.utcnow().isoformat()
-        self.redis_client.set(job_key, json.dumps(job), ex=86400 * 7)
-        
-        # Remove from queue
-        self.redis_client.zrem(queue_key, job_id)
+        await self.redis_client.set(job_key, json.dumps(job), ex=86400 * 7)
         
         logger.info(f"📤 Dequeued job: {job_id}")
         
@@ -185,7 +181,7 @@ class QueueManager:
         """
         try:
             job_key = f"{self.job_prefix}{job_id}"
-            job_data = self.redis_client.get(job_key)
+            job_data = await self.redis_client.get(job_key)
             if not job_data:
                 logger.warning(f"Job not found: {job_id}")
                 return False
@@ -196,10 +192,10 @@ class QueueManager:
             
             # Store in history
             history_key = f"{self.history_prefix}completed:{job_id}"
-            self.redis_client.set(history_key, json.dumps(job), ex=86400 * 30)
+            await self.redis_client.set(history_key, json.dumps(job), ex=86400 * 30)
             
             # Update job
-            self.redis_client.set(job_key, json.dumps(job), ex=86400 * 7)
+            await self.redis_client.set(job_key, json.dumps(job), ex=86400 * 7)
             
             logger.info(f"✅ Job completed: {job_id}")
             return True
@@ -221,7 +217,7 @@ class QueueManager:
         """
         try:
             job_key = f"{self.job_prefix}{job_id}"
-            job_data = self.redis_client.get(job_key)
+            job_data = await self.redis_client.get(job_key)
             if not job_data:
                 logger.warning(f"Job not found: {job_id}")
                 return False
@@ -236,14 +232,14 @@ class QueueManager:
             
             # Check if should retry
             if job["retries"] < job["max_retries"]:
-                # Exponential backoff: 1s, 4s, 16s
+                # Exponential backoff: 1s, 2s, 4s
                 delay_seconds = 2 ** (job["retries"] - 1)
                 job["status"] = JobStatus.RETRYING.value
                 job["delay_until"] = (datetime.utcnow() + timedelta(seconds=delay_seconds)).isoformat()
                 
                 # Re-add to queue
                 queue_key = f"{self.queue_prefix}{job['type']}"
-                self.redis_client.zadd(
+                await self.redis_client.zadd(
                     queue_key,
                     {job_id: -job["priority"]}
                 )
@@ -254,12 +250,12 @@ class QueueManager:
                 # Max retries exceeded, move to DLQ
                 job["status"] = JobStatus.FAILED.value
                 dlq_key = f"{self.dlq_prefix}{job_id}"
-                self.redis_client.set(dlq_key, json.dumps(job), ex=86400 * 30)
+                await self.redis_client.set(dlq_key, json.dumps(job), ex=86400 * 30)
                 
                 logger.error(f"❌ Job failed (moved to DLQ): {job_id}")
             
             # Update job
-            self.redis_client.set(job_key, json.dumps(job), ex=86400 * 7)
+            await self.redis_client.set(job_key, json.dumps(job), ex=86400 * 7)
             return job["retries"] < job["max_retries"]
             
         except Exception as e:
@@ -277,7 +273,7 @@ class QueueManager:
             Job dict with status or None if not found
         """
         job_key = f"{self.job_prefix}{job_id}"
-        job_data = self.redis_client.get(job_key)
+        job_data = await self.redis_client.get(job_key)
         if not job_data:
             return None
         
@@ -300,13 +296,13 @@ class QueueManager:
         # Count jobs in each queue
         for job_type in JobType:
             queue_key = f"{self.queue_prefix}{job_type.value}"
-            count = self.redis_client.zcard(queue_key)
+            count = await self.redis_client.zcard(queue_key)
             stats["queues"][job_type.value] = count
             stats["total_pending"] += count
         
         # Count DLQ jobs
         dlq_pattern = f"{self.dlq_prefix}*"
-        dlq_keys = self.redis_client.keys(dlq_pattern)
+        dlq_keys = [key async for key in self.redis_client.scan_iter(match=dlq_pattern)]
         stats["dlq_size"] = len(dlq_keys)
         
         logger.info(f"Queue stats: {stats['total_pending']} pending, {stats['dlq_size']} DLQ")
@@ -324,11 +320,15 @@ class QueueManager:
             List of failed jobs
         """
         dlq_pattern = f"{self.dlq_prefix}*"
-        dlq_keys = self.redis_client.keys(dlq_pattern)[:limit]
+        dlq_keys = []
+        async for key in self.redis_client.scan_iter(match=dlq_pattern):
+            dlq_keys.append(key)
+            if len(dlq_keys) >= limit:
+                break
         
         jobs = []
         for key in dlq_keys:
-            job_data = self.redis_client.get(key)
+            job_data = await self.redis_client.get(key)
             if job_data:
                 jobs.append(json.loads(job_data))
         
@@ -346,7 +346,7 @@ class QueueManager:
         """
         try:
             dlq_key = f"{self.dlq_prefix}{job_id}"
-            job_data = self.redis_client.get(dlq_key)
+            job_data = await self.redis_client.get(dlq_key)
             if not job_data:
                 logger.warning(f"DLQ job not found: {job_id}")
                 return False
@@ -361,17 +361,17 @@ class QueueManager:
             
             # Re-add to queue
             queue_key = f"{self.queue_prefix}{job['type']}"
-            self.redis_client.zadd(
+            await self.redis_client.zadd(
                 queue_key,
                 {job_id: -job["priority"]}
             )
             
             # Update job
             job_key = f"{self.job_prefix}{job_id}"
-            self.redis_client.set(job_key, json.dumps(job), ex=86400 * 7)
+            await self.redis_client.set(job_key, json.dumps(job), ex=86400 * 7)
             
             # Remove from DLQ
-            self.redis_client.delete(dlq_key)
+            await self.redis_client.delete(dlq_key)
             
             logger.info(f"🔄 DLQ job retried: {job_id}")
             return True
@@ -391,8 +391,8 @@ class QueueManager:
             int: Number of jobs cleared
         """
         queue_key = f"{self.queue_prefix}{job_type}"
-        count = self.redis_client.zcard(queue_key)
-        self.redis_client.delete(queue_key)
+        count = await self.redis_client.zcard(queue_key)
+        await self.redis_client.delete(queue_key)
         
         logger.warning(f"Cleared {count} jobs from {job_type} queue")
         return count

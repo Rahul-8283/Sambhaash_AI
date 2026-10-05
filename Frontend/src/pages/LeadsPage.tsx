@@ -137,15 +137,19 @@ export const LeadsPage: React.FC = () => {
     
     setLoading(true);
     try {
-      await Promise.all(selectedLeads.map(lead => apiService.deleteLead(lead.id)));
+      const outcomes = await Promise.allSettled(selectedLeads.map(lead => apiService.deleteLead(lead.id)));
+      const failed = outcomes.filter(o => o.status === "rejected").length;
       setSelectedLeads([]);
       // Refresh leads
       const result = await apiService.getLeads(filters, { page, limit: 20 });
       setLeads(result.data);
       setTotal(result.total);
+      if (failed > 0) {
+        alert(`${failed} of ${outcomes.length} leads could not be deleted.`);
+      }
     } catch (error) {
       console.error("Failed to delete leads:", error);
-      alert("Failed to delete some leads.");
+      alert("Failed to delete leads.");
     } finally {
       setLoading(false);
     }

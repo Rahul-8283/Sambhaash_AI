@@ -35,7 +35,7 @@ const QueueDashboard: React.FC = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const handleRetry = async (jobId: string) => {
+  const handleRetry = async (jobId: string): Promise<boolean> => {
     try {
       setIsRetrying(jobId);
       await apiService.retryDlqJob(jobId);
@@ -44,19 +44,26 @@ const QueueDashboard: React.FC = () => {
       setDlqJobs(prev => prev.filter(job => job.id !== jobId));
       // Refresh stats
       fetchData();
+      return true;
     } catch (error) {
       console.error('Error retrying job:', error);
       toast.error('Failed to retry job');
+      return false;
     } finally {
       setIsRetrying(null);
     }
   };
 
   const handleRetryAll = async () => {
+    let succeeded = 0;
     for (const job of dlqJobs) {
-      await handleRetry(job.id);
+      if (await handleRetry(job.id)) succeeded += 1;
     }
-    toast.success('All jobs queued for retry');
+    if (succeeded === dlqJobs.length) {
+      toast.success('All jobs queued for retry');
+    } else {
+      toast.error(`${dlqJobs.length - succeeded} of ${dlqJobs.length} jobs could not be retried`);
+    }
   };
 
   if (isLoading && !stats) {
