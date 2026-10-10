@@ -76,7 +76,7 @@ export const RMPage: React.FC = () => {
   const totalHotLeads = leads.length;
   const assignedLeadsCount = leads.filter(l => l.rmAssignment?.rmName).length;
   const unassignedLeadsCount = totalHotLeads - assignedLeadsCount;
-  const convertedLeadsCount = leads.filter(l => l.status === "Completed" || l.rmAssignment?.converted).length;
+  const convertedLeadsCount = leads.filter(l => l.status === "CONVERTED" || l.rmAssignment?.converted).length;
 
   const handleAssignClick = (lead: Lead) => {
     setSelectedLeadForAssign(lead);
@@ -251,7 +251,7 @@ export const RMPage: React.FC = () => {
                 {filteredLeads.map((lead) => {
                   const score = lead.currentScore;
                   const isAssigned = !!lead.rmAssignment?.rmName;
-                  const isConverted = lead.status === "Completed" || lead.rmAssignment?.converted;
+                  const isConverted = lead.status === "CONVERTED" || lead.rmAssignment?.converted;
                   
                   return (
                     <motion.tr 

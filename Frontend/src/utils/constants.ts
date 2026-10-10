@@ -6,12 +6,26 @@ import type { LeadStatus, ScoreClassification, UserRole } from "../types/index";
 
 // Status colors - supports LeadStatus AND Call statuses
 export const STATUS_COLORS: Record<LeadStatus | "Connected" | "No Answer" | "Failed" | string, string> = {
-  "Not Called": "bg-[#faedcd]/40 text-[#3d2b1f]/70 border border-[#faedcd]",
-  "Calling": "bg-[#d4a373]/20 text-[#d4a373] border border-[#d4a373]/30",
+  "NEW": "bg-[#faedcd]/40 text-[#3d2b1f]/70 border border-[#faedcd]",
+  "CONTACTED": "bg-[#d4a373]/20 text-[#d4a373] border border-[#d4a373]/30",
+  "INTERESTED": "bg-amber-100/50 text-amber-800 border border-amber-200/50",
+  "CONVERTED": "bg-emerald-100/50 text-emerald-800 border border-emerald-200/50",
+  "REJECTED": "bg-rose-100/50 text-rose-800 border border-rose-200/50",
+  "FOLLOW_UP": "bg-blue-100/50 text-blue-800 border border-blue-200/50",
+  // Call statuses (recordings page)
   "Connected": "bg-emerald-100/50 text-emerald-800 border border-emerald-200/50",
   "No Answer": "bg-amber-100/50 text-amber-800 border border-amber-200/50",
   "Failed": "bg-rose-100/50 text-rose-800 border border-rose-200/50",
-  "Completed": "bg-emerald-100/50 text-emerald-800 border border-emerald-200/50",
+};
+
+// Human labels for the lead lifecycle
+export const STATUS_LABELS: Record<LeadStatus, string> = {
+  NEW: "New",
+  CONTACTED: "Contacted",
+  INTERESTED: "Interested",
+  CONVERTED: "Converted",
+  REJECTED: "Rejected",
+  FOLLOW_UP: "Follow up",
 };
 
 // Score colors

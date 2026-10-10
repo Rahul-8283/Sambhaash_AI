@@ -7,12 +7,12 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Upload, Filter } from "lucide-react";
 import { apiService } from "../services/apiService";
-import type { Lead, LeadFilters } from "../types";
+import type { Lead, LeadFilters, LeadStatus } from "../types";
 import DataTable from "../components/DataTable";
 import Badge from "../components/Badge";
 import Modal from "../components/Modal";
 import { formatDateTime, formatPhoneNumber } from "../utils/formatters";
-import { LANGUAGE_MAP } from "../utils/constants";
+import { LANGUAGE_MAP, STATUS_LABELS } from "../utils/constants";
 
 export const LeadsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -216,12 +216,9 @@ export const LeadsPage: React.FC = () => {
                 className="w-full px-3 py-2 bg-white/70 border border-[#faedcd] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d4a373]/30 focus:border-[#d4a373] text-[#3d2b1f] font-medium"
               >
                 <option value="">All Statuses</option>
-                <option value="Not Called">Not Called</option>
-                <option value="Calling">Calling</option>
-                <option value="Connected">Connected</option>
-                <option value="No Answer">No Answer</option>
-                <option value="Failed">Failed</option>
-                <option value="Completed">Completed</option>
+                {(Object.keys(STATUS_LABELS) as LeadStatus[]).map((status) => (
+                  <option key={status} value={status}>{STATUS_LABELS[status]}</option>
+                ))}
               </select>
             </div>
 

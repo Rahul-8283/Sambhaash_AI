@@ -6,7 +6,8 @@
 import type { ReactNode } from "react";
 
 // ============ Lead Types ============
-export type LeadStatus = "Not Called" | "Calling" | "Connected" | "No Answer" | "Failed" | "Completed";
+// The backend's lead lifecycle (models.LeadStatus)
+export type LeadStatus = "NEW" | "CONTACTED" | "INTERESTED" | "CONVERTED" | "REJECTED" | "FOLLOW_UP";
 export type ScoreClassification = "HOT" | "WARM" | "COLD" | "UNSCORED";
 export type LeadPriority = "High" | "Medium" | "Low";
 

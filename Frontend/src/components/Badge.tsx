@@ -4,8 +4,8 @@
 
 import React from "react";
 import clsx from "clsx";
-import { STATUS_COLORS, SCORE_COLORS, SCORE_ICONS, PRIORITY_COLORS } from "../utils/constants";
-import type { ScoreClassification } from "../types";
+import { STATUS_COLORS, STATUS_LABELS, SCORE_COLORS, SCORE_ICONS, PRIORITY_COLORS } from "../utils/constants";
+import type { LeadStatus, ScoreClassification } from "../types";
 
 interface BadgeProps {
   variant?: "status" | "score" | "priority" | "custom";
@@ -64,7 +64,7 @@ export const Badge: React.FC<BadgeProps> = ({
       )}
     >
       {icon && <span>{icon}</span>}
-      {value}
+      {variant === "status" ? STATUS_LABELS[value as LeadStatus] ?? value : value}
     </span>
   );
 };
