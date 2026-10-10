@@ -38,6 +38,10 @@ export const AnalyticsPage: React.FC = () => {
     );
   }
 
+  const topDocuments: any[] = metrics.most_used_documents ?? [];
+  const hasRelevanceData = (metrics.calls_with_kb_usage ?? 0) > 0;
+  const relevance: number = metrics.avg_relevance_score ?? 0;
+
   // Earth-sand themed chart color steps
   const COLORS = ['#d4a373', '#b5835a', '#faedcd', '#e6ccb2', '#9c6644'];
 
@@ -63,12 +67,12 @@ export const AnalyticsPage: React.FC = () => {
         />
         <MetricCard
           label="Avg Queries / Call"
-          value={metrics.avg_documents_per_call.toFixed(1)}
+          value={(metrics.avg_documents_per_call ?? 0).toFixed(1)}
           icon={<Target className="text-[#d4a373]" size={20} />}
         />
         <MetricCard
           label="AI Knowledge Coverage"
-          value={`${metrics.kb_coverage_percentage.toFixed(1)}%`}
+          value={`${(metrics.kb_coverage_percentage ?? 0).toFixed(1)}%`}
           icon={<CheckCircle className="text-[#d4a373]" size={20} />}
         />
       </div>
@@ -78,8 +82,13 @@ export const AnalyticsPage: React.FC = () => {
         <div className="glass rounded-lg p-6 border border-[#faedcd]/60 shadow-xl bg-white/40">
           <h2 className="text-xl font-black text-[#2d1e18] font-display mb-6">Top Knowledge Assets</h2>
           <div className="h-80 w-full">
+            {topDocuments.length === 0 ? (
+              <p className="h-full flex items-center justify-center text-center text-sm font-semibold text-[#3d2b1f]/60">
+                No knowledge documents have been used in calls yet.
+              </p>
+            ) : (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={metrics.most_used_documents} layout="vertical" margin={{ left: 10, right: 10 }}>
+              <BarChart data={topDocuments} layout="vertical" margin={{ left: 10, right: 10 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#faedcd" horizontal={false} />
                 <XAxis type="number" tick={{ fill: '#3d2b1f', fontSize: 10, fontWeight: '600' }} />
                 <YAxis 
@@ -99,12 +108,13 @@ export const AnalyticsPage: React.FC = () => {
                   }} 
                 />
                 <Bar dataKey="usage_count" radius={[0, 8, 8, 0]}>
-                  {metrics.most_used_documents.map((_entry: any, index: number) => (
+                  {topDocuments.map((_entry: any, index: number) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
+            )}
           </div>
         </div>
 
@@ -112,7 +122,7 @@ export const AnalyticsPage: React.FC = () => {
         <div className="glass rounded-lg p-6 border border-[#faedcd]/60 shadow-xl flex flex-col justify-center items-center text-center bg-white/40">
           <h2 className="text-xl font-black text-[#2d1e18] font-display mb-2">AI Response Accuracy</h2>
           <div className="text-6xl font-black text-[#d4a373] mb-4 font-display tracking-tight">
-            {(metrics.avg_relevance_score * 100).toFixed(0)}%
+            {hasRelevanceData ? `${(relevance * 100).toFixed(0)}%` : "No data yet"}
           </div>
           <p className="text-[#3d2b1f]/70 font-semibold max-w-xs text-sm">
             Average confidence score of AI-retrieved knowledge across all customer interactions.
@@ -120,7 +130,7 @@ export const AnalyticsPage: React.FC = () => {
           <div className="mt-8 w-full bg-[#faedcd]/50 rounded-lg h-4 overflow-hidden border border-[#faedcd]/60">
             <div 
               className="bg-[#d4a373] h-full transition-all duration-1000 rounded-lg" 
-              style={{ width: `${metrics.avg_relevance_score * 100}%` }}
+              style={{ width: `${hasRelevanceData ? relevance * 100 : 0}%` }}
             />
           </div>
         </div>
