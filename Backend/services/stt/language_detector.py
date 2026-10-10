@@ -28,6 +28,16 @@ INDIC_SCRIPT_RANGES = {
 # Language codes the rest of the pipeline (TTS, templates) can use
 SUPPORTED_CODES = {"en", "hi", "mr", "bn", "pa", "gu", "or", "ta", "te", "kn", "ml"}
 
+# Function words that exist in only one of the two languages
+HINDI_MARKERS = {
+	"है", "हैं", "मुझे", "हूँ", "हूं", "चाहिए", "नहीं", "क्या", "आप", "मैं", "हम",
+	"और", "में", "रहा", "रही", "कृपया", "हमें", "आपको", "उन्हें", "लेकिन",
+}
+MARATHI_MARKERS = {
+	"आहे", "आहेत", "मला", "तुम्ही", "आणि", "नाही", "काय", "होय", "करा", "करतो",
+	"करते", "मी", "तुला", "आम्ही", "पाहिजे", "हवी", "हवे", "तुमचे", "आपण", "सांगा",
+}
+
 HINGLISH_HINTS = {
 	"hai",
 	"haan",
@@ -61,9 +71,20 @@ class LanguageDetector:
 
 	@staticmethod
 	def _devanagari_language(cleaned: str) -> str:
-		"""Devanagari is shared by Hindi and Marathi; the statistical detector tells them apart."""
+		"""
+		Devanagari is shared by Hindi and Marathi. The statistical detector is wrong
+		on short clips ("मुझे मदद चाहिए" comes back as Marathi), so function words
+		that belong to only one language decide first; the statistical result is
+		used only when it is very confident, and Hindi is the default.
+		"""
+		words = set(re.findall(r"[\u0900-\u097F]+", cleaned))
+		marathi = len(words & MARATHI_MARKERS)
+		hindi = len(words & HINDI_MARKERS)
+		if marathi != hindi:
+			return "mr" if marathi > hindi else "hi"
 		try:
-			return "mr" if detect(cleaned) == "mr" else "hi"
+			top = detect_langs(cleaned)[0]
+			return "mr" if top.lang == "mr" and top.prob >= 0.95 else "hi"
 		except Exception:
 			return "hi"
 

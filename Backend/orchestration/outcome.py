@@ -16,10 +16,19 @@ _HOT_PATTERN = re.compile(r"\b(?:" + "|".join(map(re.escape, HOT_PHRASES)) + r")
 _COLD_PATTERN = re.compile(r"\b(?:" + "|".join(map(re.escape, COLD_PHRASES)) + r")\b", re.IGNORECASE)
 
 
+# "not interested" contains "interested": a refusal must not be read as interest
+_NEGATED_INTEREST = re.compile(
+    r"\b(?:not|never|no|\w+n't)\s+(?:\w+\s+){0,2}interested\b",
+    re.IGNORECASE,
+)
+
+
 def classify_utterance(text: str) -> Optional[str]:
     """Return "HOT" or "COLD" if the utterance carries a clear signal, else None."""
     if not text:
         return None
+    if _NEGATED_INTEREST.search(text):
+        return "COLD"
     if _HOT_PATTERN.search(text):
         return "HOT"
     if _COLD_PATTERN.search(text):
