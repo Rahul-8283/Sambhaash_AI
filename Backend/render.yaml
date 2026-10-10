@@ -28,8 +28,6 @@ services:
         sync: false
       - key: SUPABASE_BUCKET_NAME
         sync: false
-      - key: HF_API_KEY
-        sync: false
       - key: GROQ_API_KEY
         sync: false
       - key: TWILIO_ACCOUNT_SID

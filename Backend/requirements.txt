@@ -25,7 +25,7 @@ asyncpg>=0.29.0
 
 # Vector Operations & Embeddings
 numpy>=1.26.4
-huggingface-hub>=0.25.0
+fastembed>=0.7.0
 
 # Language Detection
 langdetect>=1.0.9

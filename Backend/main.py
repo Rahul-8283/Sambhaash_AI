@@ -4,6 +4,7 @@ Entry point for the backend server
 """
 
 import os
+import asyncio
 import logging
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
@@ -54,6 +55,13 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.warning(f"[APP] Database connection failed - running in degraded mode: {str(e)}")
     
+    try:
+        # Load the embedding model before the first call needs it
+        from services.llm.embedder import EmbedderService
+        await asyncio.to_thread(EmbedderService().warm_up)
+    except Exception as e:
+        logger.warning(f"[APP] Embedding model failed to load, KB retrieval will be unavailable: {e}")
+
     yield
     
     # SHUTDOWN

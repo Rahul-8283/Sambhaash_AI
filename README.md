@@ -25,7 +25,7 @@ To solve this, Sambhaash AI acts as an autonomous telephony orchestrator that se
 ## Key Features
 
 - **High-Fidelity Multilingual Speech Engine:** Full support for 10 major Indian languages using Sarvam BulBul V3 and Groq Whisper.
-- **Dynamic RAG Knowledge Base:** Real-time semantic knowledge retrieval during live calls using Hugging Face embeddings and pgvector to handle complex client objections on the fly.
+- **Dynamic RAG Knowledge Base:** Real-time semantic knowledge retrieval during live calls using local sentence-transformer embeddings and pgvector to handle complex client objections on the fly.
 - **Intelligent Lead Routing:** Analyzes call sentiment and automatically routes "Hot" leads directly to human Relationship Managers (RMs).
 - **WhatsApp Follow-up Agent:** Automatically engages "Warm" leads post-call via context-aware WhatsApp chats to nurture them toward conversion.
 - **Unified Admin Dashboard:** A beautiful React-based command center to upload CSV leads, monitor real-time AI accuracy, and view call transcripts.
@@ -83,7 +83,7 @@ graph TD
 
 1. **Lead Ingestion & Queuing:** Administrators upload campaign lists via the React dashboard. Leads are securely stored in **Supabase**, and outreach jobs are asynchronously scheduled into a **Redis task queue** to prevent bottlenecks.
 2. **Telephony & Real-Time STT:** When a call connects via **Twilio SIP**, the live bidirectional audio stream is captured. The user's speech is chunked and streamed to **Groq Whisper** for ultra-fast, sub-second Speech-to-Text (STT) transcription.
-3. **Cognitive Processing & RAG:** The transcribed text enters our **LangGraph** orchestration pipeline. Here, the system queries a **pgvector** database (using Hugging Face embeddings) to fetch relevant knowledge base articles, ensuring the AI can handle complex, domain-specific objections accurately via **Llama 3 (8B)**.
+3. **Cognitive Processing & RAG:** The transcribed text enters our **LangGraph** orchestration pipeline. Here, the system queries a **pgvector** database (using local MiniLM embeddings) to fetch relevant knowledge base articles, ensuring the AI can handle complex, domain-specific objections accurately via **Llama 3 (8B)**.
 4. **Synthesis (TTS) & Action:** The generated response text is instantly synthesized into high-fidelity, emotionally resonant regional audio using **Sarvam AI (BulBul V3)** and streamed back to the user.
 5. **Intelligent Handoff:** Post-call, LangGraph evaluates the entire transcript's sentiment and intent. **"Hot"** leads instantly trigger a live handoff to a Relationship Manager (RM), while **"Warm"** leads are automatically nurtured via our context-aware **WhatsApp Follow-up Agent**.
 
@@ -128,7 +128,7 @@ graph TD
 - Node.js & npm
 - Python 3.11 (matches the Dockerfile) & pip
 - Docker (for Redis)
-- API Keys: Supabase, Groq, Hugging Face, Sarvam, Twilio, Ngrok
+- API Keys: Supabase, Groq, Sarvam, Twilio, Ngrok
 
 ### Setup Instructions:
 ```bash

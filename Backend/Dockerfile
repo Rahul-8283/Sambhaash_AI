@@ -16,6 +16,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy application code (secrets and local files are excluded by .dockerignore)
 COPY . .
 
+# Bake the embedding model into the image so containers start without a download
+RUN python -c "from services.llm.embedder import EmbedderService; EmbedderService().warm_up()"
+
 # Run as a non-root user
 RUN useradd -m -u 1000 sambhaash && chown -R sambhaash:sambhaash /app
 USER sambhaash

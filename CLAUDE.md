@@ -123,7 +123,7 @@ With `MODE=development`, the **API process** opens the tunnel on startup (`servi
 
 ## Other docs
 
-`instructions.txt` (root) is the end-to-end local run checklist. `Backend/DOCS/` holds feature guides (`AUTOMATIC_CALL_SETUP.md`, `MESSAGING_WORKER_GUIDE.md`, `PHASE_2A_GUIDE.md`). `Backend/README.md` still carries the original per-person ownership split and some stale stack claims (it names OpenAI/mixtral where the code uses Groq Llama and HF embeddings) — `CODE_AUDIT.md` §11 catalogues that drift.
+`instructions.txt` (root) is the end-to-end local run checklist. `Backend/DOCS/` holds feature guides (`AUTOMATIC_CALL_SETUP.md`, `MESSAGING_WORKER_GUIDE.md`, `PHASE_2A_GUIDE.md`). `Backend/README.md` still carries the original per-person ownership split and some stale stack claims (it names OpenAI/mixtral where the code uses Groq Llama and local fastembed embeddings) — `CODE_AUDIT.md` §11 catalogues that drift.
 
 ## Git workflow
 

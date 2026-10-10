@@ -1,132 +1,101 @@
 # services/llm/embedder.py
 """
-Lightweight Cloud Embedding Service (0MB Local RAM!)
-Uses Hugging Face Free Inference API to extract 384-dimensional vectors 
-for both development and production. This eliminates local PyTorch and 
-sentence-transformers completely, dropping local RAM usage to almost 0MB!
+Local embedding service.
+
+Runs sentence-transformers/all-MiniLM-L6-v2 (384-dim) through fastembed's ONNX
+runtime: no API key, no network call per query, no PyTorch. The vectors are the
+same ones the Hugging Face Inference API produced, so chunks embedded earlier
+stay searchable (cosine similarity of old vs new vectors is 1.0).
 """
 
-import os
 import logging
+import threading
+from pathlib import Path
 from typing import List, Optional, Tuple
+
 import numpy as np
-from huggingface_hub import InferenceClient
+
 from config import get_config
 
 logger = logging.getLogger(__name__)
 
 
 class EmbeddingError(RuntimeError):
-    """The embedding backend failed (credits exhausted, bad token, outage, ...)."""
+    """The embedding backend failed (model unavailable, bad input, ...)."""
+
+
+# One model per process, shared by every EmbedderService instance
+_model = None
+_model_lock = threading.Lock()
+
+
+def _load_model(model_name: str):
+    global _model
+    if _model is not None:
+        return _model
+    with _model_lock:
+        if _model is None:
+            from fastembed import TextEmbedding
+
+            cache_dir = get_config().embedding_cache_dir
+            Path(cache_dir).mkdir(parents=True, exist_ok=True)
+            logger.info(f"[EMBEDDER] Loading {model_name} (cache: {cache_dir})")
+            _model = TextEmbedding(model_name=model_name, cache_dir=cache_dir)
+            logger.info("[EMBEDDER] Model ready")
+    return _model
 
 
 class EmbedderService:
-    """
-    Lightweight embedding service that uses Hugging Face cloud endpoints
-    for both development and production to completely avoid local PyTorch RAM usage.
-    """
+    """Embeds text into normalized 384-dimensional vectors, locally."""
 
     MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
     EMBEDDING_DIM = 384
 
     def __init__(self, model_name: Optional[str] = None):
-        """
-        Initialize embedder.
-        """
         self.model_name = model_name or self.MODEL_NAME
-        # We always use the Cloud API to save local RAM and disk space
-        self.use_cloud = True
-        self.model = None
-        
-        logger.info(f"[EMBEDDER] Initialized — using Hugging Face Cloud Inference API for 384-dim embeddings ({self.model_name})")
-        # Grab Hugging Face API key/token from central config
-        self.settings = get_config()
-        self.hf_token = self.settings.hf_api_key
-        
-        # Initialize official Hugging Face Inference Client
-        self.client = InferenceClient(api_key=self.hf_token)
+
+    def warm_up(self) -> None:
+        """Load the model now so the first live call does not pay for it."""
+        _load_model(self.model_name)
 
     def get_embedding_dimension(self) -> int:
-        """Get embedding vector dimension"""
         return self.EMBEDDING_DIM
 
-    def embed_text(self, text: str, normalize: bool = True) -> List[float]:
-        """
-        Convert single text to embedding vector.
-        """
-        if not text or not isinstance(text, str):
-            raise ValueError("embed_text needs a non-empty string")
-
+    def _embed(self, texts: List[str], normalize: bool) -> List[List[float]]:
         try:
-            emb = self.client.feature_extraction(
-                model=self.model_name,
-                text=text
-            )
-            # The client returns a numpy array. Let's process it
-            vector = emb.tolist() if hasattr(emb, "tolist") else list(emb)
-            
-            # If it's a 2D or 3D list (e.g. [[val, val, ...]]), mean-pool or extract the sentence embedding
-            if isinstance(vector, list) and len(vector) > 0 and isinstance(vector[0], list):
-                vector_arr = np.array(vector)
-                if len(vector_arr.shape) > 1:
-                    vector = np.mean(vector_arr, axis=0).tolist()
-            
-            if len(vector) == self.EMBEDDING_DIM:
-                if normalize:
-                    vec_arr = np.array(vector)
-                    norm = np.linalg.norm(vec_arr)
-                    if norm > 0:
-                        vector = (vec_arr / norm).tolist()
-                return vector
-            else:
-                # Padding or truncating to expected size
-                if len(vector) < self.EMBEDDING_DIM:
-                    return vector + [0.0] * (self.EMBEDDING_DIM - len(vector))
-                return vector[:self.EMBEDDING_DIM]
+            model = _load_model(self.model_name)
+            vectors = [np.asarray(v, dtype=float) for v in model.embed(texts)]
         except Exception as e:
             # Never hand back a zero vector: it scores 0 against everything, so a
-            # dead backend would look like "no relevant knowledge" and, on upload,
-            # would store unsearchable chunks.
-            logger.error(f"[EMBEDDER] Cloud encoding failed: {e}")
-            raise EmbeddingError(f"Embedding backend failed: {e}") from e
+            # broken backend would look like "no relevant knowledge" and, on
+            # upload, would store unsearchable chunks.
+            logger.error(f"[EMBEDDER] Encoding failed: {e}")
+            raise EmbeddingError(f"Embedding failed: {e}") from e
+
+        result = []
+        for vec in vectors:
+            if vec.shape[0] != self.EMBEDDING_DIM:
+                raise EmbeddingError(
+                    f"Model returned {vec.shape[0]} dimensions, expected {self.EMBEDDING_DIM}"
+                )
+            if normalize:
+                norm = np.linalg.norm(vec)
+                if norm > 0:
+                    vec = vec / norm
+            result.append(vec.tolist())
+        return result
+
+    def embed_text(self, text: str, normalize: bool = True) -> List[float]:
+        """Embed one text. Raises ValueError on empty input, EmbeddingError on failure."""
+        if not text or not isinstance(text, str):
+            raise ValueError("embed_text needs a non-empty string")
+        return self._embed([text], normalize)[0]
 
     def embed_texts(self, texts: List[str], normalize: bool = True, batch_size: int = 32) -> List[List[float]]:
-        """
-        Convert multiple texts to embedding vectors.
-        """
+        """Embed many texts (order preserved). Raises EmbeddingError on failure."""
         if not texts:
-            logger.warning("[EMBEDDER] Empty text list provided")
             return []
-
-        try:
-            # huggingface_hub client.feature_extraction natively supports list of inputs and handles batches!
-            embs = self.client.feature_extraction(
-                model=self.model_name,
-                text=texts
-            )
-            # Process result array
-            embs_arr = np.array(embs)
-            
-            all_embeddings = []
-            for i, emb in enumerate(embs_arr):
-                vector = emb.tolist() if hasattr(emb, "tolist") else list(emb)
-                if len(vector) == self.EMBEDDING_DIM:
-                    if normalize:
-                        vec_arr = np.array(vector)
-                        norm = np.linalg.norm(vec_arr)
-                        if norm > 0:
-                            vector = (vec_arr / norm).tolist()
-                    all_embeddings.append(vector)
-                else:
-                    if len(vector) < self.EMBEDDING_DIM:
-                        vector = vector + [0.0] * (self.EMBEDDING_DIM - len(vector))
-                    else:
-                        vector = vector[:self.EMBEDDING_DIM]
-                    all_embeddings.append(vector)
-            return all_embeddings
-        except Exception as e:
-            logger.error(f"[EMBEDDER] Cloud batch encoding failed: {e}")
-            raise EmbeddingError(f"Embedding backend failed: {e}") from e
+        return self._embed(list(texts), normalize)
 
     def similarity(
         self,

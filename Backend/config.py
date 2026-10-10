@@ -50,7 +50,9 @@ class Settings(BaseSettings):
     openai_api_key: str = Field(default="sk-test-default", env="OPENAI_API_KEY")
     groq_api_key: str = Field(default="sk-test-default", env="GROQ_API_KEY")
     google_api_key: str = Field(default="sk-test-default", env="GOOGLE_API_KEY")
-    hf_api_key: str = Field(default="sk-test-default", env="HF_API_KEY")
+    hf_api_key: str = Field(default="sk-test-default", env="HF_API_KEY")  # unused: embeddings run locally
+    # Where fastembed keeps the downloaded ONNX model (must survive restarts)
+    embedding_cache_dir: str = Field(default=".cache/fastembed", env="EMBEDDING_CACHE_DIR")
     
     # ==================== TWILIO ====================
     twilio_account_sid: str = Field(default="sk-test-default", env="TWILIO_ACCOUNT_SID")
@@ -161,7 +163,6 @@ def _validate_config(config: Settings) -> None:
     required_fields = [
         ("database_url", "DATABASE_URL"),
         ("groq_api_key", "GROQ_API_KEY"),
-        ("hf_api_key", "HF_API_KEY"),
     ]
     
     for field, env_name in required_fields:
