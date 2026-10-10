@@ -158,22 +158,50 @@ def get_config() -> Settings:
     return _config
 
 
+_PLACEHOLDER = "sk-test-default"
+_DEFAULT_DATABASE_URL = "postgresql+asyncpg://postgres:password@localhost:5432/sambhaash_ai_test"
+
+# (attribute, environment variable) that a real deployment must set
+_REQUIRED_SECRETS = [
+    ("database_url", "DATABASE_URL"),
+    ("supabase_service_role_key", "SUPABASE_SERVICE_ROLE_KEY"),
+    ("groq_api_key", "GROQ_API_KEY"),
+    ("sarvam_api_key", "SARVAM_API_KEY"),
+    ("twilio_account_sid", "TWILIO_ACCOUNT_SID"),
+    ("twilio_auth_token", "TWILIO_AUTH_TOKEN"),
+]
+
+
+def unconfigured_settings(config: "Settings") -> list[str]:
+    """Environment variables that are empty or still hold their placeholder default."""
+    missing = []
+    for attribute, env_name in _REQUIRED_SECRETS:
+        value = getattr(config, attribute)
+        if not value or value in (_PLACEHOLDER, _DEFAULT_DATABASE_URL):
+            missing.append(env_name)
+    return missing
+
+
 def _validate_config(config: Settings) -> None:
     """
-    Validate critical configuration values.
-    
+    Check that real credentials are configured.
+
+    Every secret has a placeholder default so the app can import without a
+    .env (tests, tooling), which meant the old check could never fail. Now a
+    production deployment refuses to start with placeholders; development only
+    warns, because individual features degrade at call time instead.
+
     Raises:
-        ValueError: If critical config is missing
+        ValueError: in production when required settings are missing
     """
-    required_fields = [
-        ("database_url", "DATABASE_URL"),
-        ("groq_api_key", "GROQ_API_KEY"),
-    ]
-    
-    for field, env_name in required_fields:
-        if not getattr(config, field):
-            raise ValueError(f"Missing required environment variable: {env_name}")
-    
+    missing = unconfigured_settings(config)
+    production = "production" in (config.mode.lower(), config.environment.lower())
+
+    if missing and production:
+        raise ValueError(f"Missing required environment variables: {', '.join(missing)}")
+    if missing:
+        print(f"[CONFIG] WARNING: not configured (features using them will fail): {', '.join(missing)}")
+
     print(f"[CONFIG] Configuration validated (environment: {config.environment})")
 
 
