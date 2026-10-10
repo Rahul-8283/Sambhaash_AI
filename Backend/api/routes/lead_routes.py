@@ -64,6 +64,7 @@ class LeadUpdate(BaseModel):
     email: Optional[EmailStr] = Field(None)
     language: Optional[str] = Field(None)
     status: Optional[str] = Field(None, description="new, contacted, interested, converted, rejected, follow_up")
+    notes: Optional[str] = Field(None, max_length=5000, description="Internal notes (needs migration 002)")
     
     @validator('email', pre=True)
     def blank_email_is_none(cls, v):
@@ -115,6 +116,13 @@ class LeadDetailResponse(LeadResponse):
     latest_score: Optional[Dict[str, Any]] = None
     last_call_session: Optional[Dict[str, Any]] = None
     total_calls: int = 0
+    # camelCase fields the dashboard's lead detail page reads
+    callSessions: List[Dict[str, Any]] = []
+    scoreHistory: List[Dict[str, Any]] = []
+    objections: List[Dict[str, Any]] = []
+    totalCalls: int = 0
+    lastCalledAt: Optional[str] = None
+    notes: Optional[str] = None
 
 
 class LeadListResponse(BaseModel):
@@ -278,18 +286,23 @@ async def get_lead(
         # Get latest score
         latest_score = await repo.get_latest_score(UUID(lead_id))
         
-        # Get last call session
-        sessions = await repo.list_sessions_by_lead(UUID(lead_id), limit=1)
-        last_session = sessions[0] if sessions else None
-        
-        # Count total calls
+        # Everything the detail page shows: sessions (with transcripts), scores, objections
         all_sessions = await repo.list_sessions_by_lead(UUID(lead_id), limit=1000)
+        last_session = all_sessions[0] if all_sessions else None
         total_calls = len(all_sessions)
-        
+        scores = await repo.list_scores_by_lead(UUID(lead_id))
+        objections = await repo.list_objections_by_lead(UUID(lead_id))
+
         result = _format_lead_response(lead)
         result["latest_score"] = _format_dict(latest_score) if latest_score else None
         result["last_call_session"] = _format_dict(last_session) if last_session else None
         result["total_calls"] = total_calls
+        result["totalCalls"] = total_calls
+        result["callSessions"] = [_format_session(s) for s in all_sessions]
+        result["scoreHistory"] = [_format_score(s) for s in scores]
+        result["objections"] = [_format_objection(o) for o in objections]
+        result["lastCalledAt"] = _format_datetime(last_session.get("created_at")) if last_session else None
+        result["notes"] = lead.get("notes")
         
         logger.info(f"Retrieved lead: {lead_id}")
         return result
@@ -343,6 +356,14 @@ async def update_lead(
             updates["language"] = lead_update.language
         if lead_update.status is not None:
             updates["status"] = lead_update.status
+        if lead_update.notes is not None:
+            # SELECT * only carries the column once migration 002 has been applied
+            if "notes" not in existing:
+                raise HTTPException(
+                    status_code=503,
+                    detail="Notes are not enabled yet: apply scripts/migrations/002_lead_notes.sql"
+                )
+            updates["notes"] = lead_update.notes
         
         if not updates:
             # No updates, return existing
@@ -667,9 +688,9 @@ def _format_lead_response(lead: Dict[str, Any]) -> Dict[str, Any]:
     
     current_score = None
     if lead.get("score_classification"):
-        # Capitalize the classification (e.g., "WARM" -> "Warm") for the frontend
+        # The frontend and database both use HOT / WARM / COLD
         raw_class = lead.get("score_classification", "")
-        formatted_class = raw_class.capitalize() if isinstance(raw_class, str) else raw_class
+        formatted_class = raw_class.upper() if isinstance(raw_class, str) else raw_class
         
         current_score = {
             "id": "",
@@ -703,6 +724,54 @@ def _format_lead_response(lead: Dict[str, Any]) -> Dict[str, Any]:
         "updatedAt": _format_datetime(lead.get("updated_at")),
         "currentScore": current_score,
         "rmAssignment": rm_assignment
+    }
+
+
+def _parse_json(value: Any, default: Any) -> Any:
+    """JSON columns can come back as text or already parsed."""
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except ValueError:
+            return default
+    return value if value is not None else default
+
+
+def _format_session(session: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "id": str(session.get("id", "")),
+        "leadId": str(session.get("lead_id", "")),
+        "conversationHistory": _parse_json(session.get("conversation_history"), []),
+        "languageDetected": session.get("language_detected") or "",
+        "durationSeconds": session.get("duration_seconds") or 0,
+        "createdAt": _format_datetime(session.get("created_at")),
+        "summary": _parse_json(session.get("summary"), None),
+    }
+
+
+def _format_score(score: Dict[str, Any]) -> Dict[str, Any]:
+    raw_class = score.get("classification") or ""
+    return {
+        "id": str(score.get("id", "")),
+        "leadId": str(score.get("lead_id", "")),
+        "callSessionId": str(score.get("call_session_id", "")),
+        "interestScore": float(score.get("interest_score") or 0.0),
+        "engagementScore": float(score.get("engagement_score") or 0.0),
+        "sentimentScore": float(score.get("sentiment_score") or 0.0),
+        "compositeScore": float(score.get("composite_score") or 0.0),
+        "classification": str(raw_class).upper(),
+        "timestamp": _format_datetime(score.get("timestamp")),
+    }
+
+
+def _format_objection(objection: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "id": str(objection.get("id", "")),
+        "callSessionId": str(objection.get("call_session_id", "")),
+        "objectionType": str(objection.get("objection_type") or ""),
+        "objectionText": str(objection.get("objection_text") or ""),
+        "resolved": bool(objection.get("resolved")),
+        "timestamp": _format_datetime(objection.get("timestamp")),
     }
 
 

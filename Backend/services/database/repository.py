@@ -280,7 +280,7 @@ class Repository:
         if not updates:
             return await self.get_lead(lead_id)
         
-        allowed_fields = {"name", "email", "status", "language"}
+        allowed_fields = {"name", "email", "status", "language", "notes"}
         update_fields = {k: v for k, v in updates.items() if k in allowed_fields}
         
         if not update_fields:
@@ -442,6 +442,31 @@ class Repository:
         logger.info(f"✅ Created lead score: lead={lead_id} score={composite:.2f} class={classification}")
         return result
     
+    async def list_scores_by_lead(self, lead_id: UUID, limit: int = 50) -> List[Dict[str, Any]]:
+        """
+        Score history for a lead, newest first.
+        """
+        query = """
+        SELECT * FROM lead_scores
+        WHERE lead_id = $1
+        ORDER BY timestamp DESC
+        LIMIT $2
+        """
+        return await self.db.execute_query(query, (str(lead_id), limit))
+
+    async def list_objections_by_lead(self, lead_id: UUID, limit: int = 100) -> List[Dict[str, Any]]:
+        """
+        Objections raised across all of a lead's calls, newest first.
+        """
+        query = """
+        SELECT o.* FROM objections_log o
+        JOIN call_sessions cs ON o.call_session_id = cs.id
+        WHERE cs.lead_id = $1
+        ORDER BY o.timestamp DESC
+        LIMIT $2
+        """
+        return await self.db.execute_query(query, (str(lead_id), limit))
+
     async def get_latest_score(self, lead_id: UUID) -> Optional[Dict[str, Any]]:
         """
         Get the latest score for a lead.
