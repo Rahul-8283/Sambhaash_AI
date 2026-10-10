@@ -160,6 +160,8 @@ async def get_audio_stream(recording_id: str, db: SupabaseClient = Depends(get_d
         client = await get_storage_client()
         audio_bytes = await client.download_file(recording["storage_path"])
         return Response(content=audio_bytes, media_type="audio/wav")
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"[RECORDINGS] Audio stream error: {e}")
         raise HTTPException(status_code=500, detail="Failed to stream audio")

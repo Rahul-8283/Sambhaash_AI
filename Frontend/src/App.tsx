@@ -13,6 +13,8 @@ import RMPage from "./pages/RMPage";
 import ProfileSettingsPage from "./pages/ProfileSettingsPage";
 import QueueDashboard from "./pages/QueueDashboard";
 import CallSummaries from "./pages/CallSummaries";
+import CallsPage from "./pages/CallsPage";
+import ErrorBoundary from "./components/ErrorBoundary";
 
 function App() {
   return (
@@ -23,6 +25,7 @@ function App() {
         <Route path="/dashboard/*" element={
           <ProtectedRoute>
             <MainLayout>
+              <ErrorBoundary>
               <Routes>
                 <Route path="leads" element={<LeadsPage />} />
                 <Route path="leads/:id" element={<LeadDetailPage />} />
@@ -31,9 +34,11 @@ function App() {
                 <Route path="rm" element={<RMPage />} />
                 <Route path="queue" element={<QueueDashboard />} />
                 <Route path="summaries" element={<CallSummaries />} />
+                <Route path="calls" element={<CallsPage />} />
                 <Route path="settings/profile" element={<ProfileSettingsPage />} />
                 <Route path="*" element={<Navigate to="/dashboard/leads" replace />} />
               </Routes>
+              </ErrorBoundary>
             </MainLayout>
           </ProtectedRoute>
         } />
@@ -43,4 +48,4 @@ function App() {
   );
 }
 
-export default App;
+export default App;

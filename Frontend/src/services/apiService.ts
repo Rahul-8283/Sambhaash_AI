@@ -374,6 +374,16 @@ class ApiService {
   }
 
   // --- Recordings Endpoints ---
+  /**
+   * An <audio> element cannot send the Bearer token, so fetch the audio through
+   * axios (which attaches it) and hand back a local object URL. Callers should
+   * URL.revokeObjectURL() it when done.
+   */
+  public async getRecordingAudioUrl(id: string): Promise<string> {
+    const response = await this.api.get(`/admin/recordings/audio/${id}`, { responseType: 'blob' });
+    return URL.createObjectURL(response.data as Blob);
+  }
+
   public async getRecordings(page: number = 1, limit: number = 20): Promise<RecordingsListResponse> {
     const response: AxiosResponse<RecordingsListResponse> = await this.api.get('/admin/recordings', {
       params: { page, limit }

@@ -1,18 +1,51 @@
 import React, { useState, useEffect } from 'react';
 import { apiService } from '../services/apiService';
 import type { RecordingMetadata } from '../services/apiService';
-import { PhoneCall, Clock } from 'lucide-react';
+import { PhoneCall, Clock, Play } from 'lucide-react';
+
+/** Loads the audio on demand through the authenticated API, then plays it. */
+const RecordingAudio: React.FC<{ id: string }> = ({ id }) => {
+  const [url, setUrl] = useState<string | null>(null);
+  const [state, setState] = useState<'idle' | 'loading' | 'error'>('idle');
+
+  useEffect(() => () => { if (url) URL.revokeObjectURL(url); }, [url]);
+
+  const load = async () => {
+    setState('loading');
+    try {
+      setUrl(await apiService.getRecordingAudioUrl(id));
+      setState('idle');
+    } catch {
+      setState('error');
+    }
+  };
+
+  if (url) {
+    return <audio controls autoPlay src={url} className="w-[300px] h-10 outline-none shadow-sm" />;
+  }
+  return (
+    <button
+      onClick={load}
+      disabled={state === 'loading'}
+      className="flex items-center gap-2 px-3 py-2 bg-[#d4a373] text-white text-xs font-bold rounded-lg hover:bg-[#b5835a] disabled:opacity-50 cursor-pointer"
+    >
+      <Play size={14} />
+      {state === 'loading' ? 'Loading...' : state === 'error' ? 'Retry' : 'Play'}
+    </button>
+  );
+};
 
 const CallsPage: React.FC = () => {
   const [recordings, setRecordings] = useState<RecordingMetadata[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [page] = useState(1);
+  const [page, setPage] = useState(1);
+  const pageSize = 20;
   const [total, setTotal] = useState(0);
 
   const fetchRecordings = async () => {
     try {
       setIsLoading(true);
-      const res = await apiService.getRecordings(page, 20);
+      const res = await apiService.getRecordings(page, pageSize);
       setRecordings(res.recordings);
       setTotal(res.total);
     } catch (error) {
@@ -75,7 +108,7 @@ const CallsPage: React.FC = () => {
                   <tr key={rec.id} className="border-b border-[#faedcd]/40 hover:bg-[#faedcd]/10 transition-colors group">
                     <td className="p-4">
                       {rec.storage_url ? (
-                        <audio controls src={`${apiService.api.defaults.baseURL}/admin/recordings/audio/${rec.id}`} className="w-[300px] h-10 custom-audio-player outline-none shadow-sm" preload="none" />
+                        <RecordingAudio id={rec.id} />
                       ) : (
                         <span className="text-xs text-gray-400 font-medium">No Audio</span>
                       )}
@@ -113,6 +146,28 @@ const CallsPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {total > pageSize && (
+        <div className="flex items-center justify-between text-sm font-semibold text-[#3d2b1f]/70">
+          <span>Page {page} of {Math.ceil(total / pageSize)}</span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-3 py-1.5 rounded-lg border border-[#faedcd] bg-white/60 disabled:opacity-40 cursor-pointer"
+            >
+              Previous
+            </button>
+            <button
+              onClick={() => setPage((p) => p + 1)}
+              disabled={page * pageSize >= total}
+              className="px-3 py-1.5 rounded-lg border border-[#faedcd] bg-white/60 disabled:opacity-40 cursor-pointer"
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
