@@ -190,3 +190,39 @@ def test_objection_is_logged_then_resolved_when_caller_comes_round(call):
     # the same session continues; the caller now agrees
     _post_turn(client, query)
     assert repo.written("objection_resolved")
+
+
+def _status(client, **fields):
+    lead_id = fields.pop("lead_id", str(uuid.uuid4()))
+    session_id = str(uuid.uuid4())
+    response = client.post(
+        f"/api/webhook/twilio/status?session_id={session_id}&lead_id={lead_id}",
+        data={"CallSid": "CA-s", **fields},
+    )
+    assert response.status_code == 200
+
+
+@pytest.mark.parametrize("call_status", ["failed", "busy", "no-answer", "canceled"])
+def test_unanswered_call_parks_lead_instead_of_crashing(call, call_status):
+    client, repo, *_ = call([])
+    _status(client, CallStatus=call_status)
+    updates = repo.written("lead")
+    assert updates and updates[0]["status"] == "FOLLOW_UP"
+
+
+def test_voicemail_is_parked(call):
+    client, repo, *_ = call([])
+    _status(client, CallStatus="completed", AnsweredBy="machine_start")
+    assert repo.written("lead")[0]["status"] == "FOLLOW_UP"
+
+
+def test_hangup_before_speaking_is_not_scored(call):
+    client, repo, *_ = call([])
+
+    async def contacted(lead_id):
+        return {"status": "CONTACTED", "phone": "+91"}
+
+    repo.get_lead = contacted
+    _status(client, CallStatus="completed")
+    assert repo.written("lead")[0]["status"] == "FOLLOW_UP"
+    assert not repo.written("score")

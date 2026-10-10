@@ -596,17 +596,19 @@ async def status_webhook(
         is_failed = call_status in ["failed", "busy", "no-answer", "canceled"]
         
         if is_voicemail or is_failed:
-                logger.warning(f"[TWILIO STATUS] Call {call_sid} failed or hit voicemail. Updating lead to FAILED...")
+                logger.warning(f"[TWILIO STATUS] Call {call_sid} failed or hit voicemail. Parking lead as FOLLOW_UP...")
                 if lead_id:
                         db_client = None
                         try:
                                 db_client = await get_db_client()
                                 repository = Repository(db_client)
+                                # There is no FAILED status. FOLLOW_UP keeps the lead out of the
+                                # NEW pool, so the dialer does not hammer a number that did not answer.
                                 await repository.update_lead(
                                         lead_id=UUID(lead_id),
-                                        status=LeadStatus.FAILED.value
+                                        status=LeadStatus.FOLLOW_UP.value
                                 )
-                                logger.info(f"[TWILIO STATUS] Successfully marked lead {lead_id} as FAILED")
+                                logger.info(f"[TWILIO STATUS] Marked lead {lead_id} as FOLLOW_UP")
                         except Exception as e:
                                 logger.error(f"[TWILIO STATUS] Error updating lead {lead_id} status: {e}")
         elif call_status == "completed":
@@ -623,6 +625,15 @@ async def status_webhook(
                                         # Classify from what the caller actually said (WARM if no clear signal)
                                         call_session = await repository.get_call_session(UUID(session_id))
                                         history = (call_session or {}).get("conversation_history", [])
+                                        if not user_texts_from_history(history):
+                                                # Answered but never spoke (hung up in the greeting): there is
+                                                # nothing to score, so do not invent an outcome.
+                                                await repository.update_lead(
+                                                        lead_id=UUID(lead_id),
+                                                        status=LeadStatus.FOLLOW_UP.value
+                                                )
+                                                logger.info(f"[TWILIO STATUS] Lead {lead_id} said nothing; marked FOLLOW_UP")
+                                                return Response(content="<Response></Response>", media_type="application/xml")
                                         outcome = classify_outcome(user_texts_from_history(history))
                                         logger.info(f"[TWILIO STATUS] Lead {lead_id} hung up abruptly. Auto-scoring as {outcome}...")
                                         queue_manager = QueueManager()
