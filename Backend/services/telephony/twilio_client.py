@@ -83,12 +83,14 @@ class TwilioClient:
 		greeting_text: str = "Hello from Sambhaash AI. Please speak after the beep.",
 		recording_callback_path: str = "/api/webhook/twilio/recording",
 		timeout_seconds: int = 60,
+		silence_timeout_seconds: int = 2,
 	) -> str:
 		callback_url = self.build_base_url(recording_callback_path)
 		inner_xml = (
 			f'<Say voice="alice">{_safe_text(greeting_text)}</Say>'
 			f'<Record action="{_safe_text(callback_url)}" '
 			f'method="POST" playBeep="true" maxLength="{int(timeout_seconds)}" '
+			f'timeout="{int(silence_timeout_seconds)}" '
 			f'trim="trim-silence" />'
 			'<Say voice="alice">Sorry, I could not hear anything. Please call again.</Say>'
 		)

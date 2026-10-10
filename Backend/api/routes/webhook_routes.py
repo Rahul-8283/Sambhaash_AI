@@ -36,7 +36,10 @@ router = APIRouter(prefix="/api/webhook/twilio", tags=["Twilio Webhooks"])
 
 # Simple in-memory cache to hold generated audio for Twilio to fetch via TwiML <Play>
 # In production, use Redis or S3 for multi-worker scaling
-audio_cache: dict[str, bytes] = {}
+# One entry per <Play> chunk. A chunk is either finished bytes or a task still
+# synthesizing; fetch_audio awaits a task, since Twilio only asks for a chunk
+# when it is ready to play it.
+audio_cache: dict[str, list] = {}
 
 # Cache for call sessions: {call_sid -> {session_id, lead_id, conversation_history, turn_count}}
 call_sessions: dict[str, dict] = {}
@@ -477,7 +480,7 @@ async def recording_webhook(request: Request) -> Response:
                 persist_language = (
                         lang_confident and new_code != to_language_code(previous_lang, default="")
                 )
-                _, audio_bytes, _ = await asyncio.gather(
+                _, tts_started, _ = await asyncio.gather(
                         _save_conversation_turn(
                                 session_id=session_id,
                                 call_sid=call_sid,
@@ -486,12 +489,13 @@ async def recording_webhook(request: Request) -> Response:
                                 detected_lang=detected_lang,
                                 repository=repository
                         ),
-                        manager.generate_tts(text=reply_text, language=target_lang),
+                        manager.start_tts(text=reply_text, language=target_lang),
                         _persist_language(repository, lead_id, session_id, new_code) if persist_language else asyncio.sleep(0),
                 )
 
-                # 5. Cache audio bytes for Twilio <Play> fetch
-                audio_cache[call_sid] = audio_bytes
+                # 5. Cache the chunks for Twilio's <Play> fetches
+                first_chunk, pending_chunks = tts_started
+                audio_cache[call_sid] = [first_chunk, *pending_chunks]
 
                 # 6. Check if max turns reached or LLM decided to end call
                 max_turns = settings.max_turns_per_session
@@ -512,20 +516,19 @@ async def recording_webhook(request: Request) -> Response:
                         # re-synthesizing it cost a second Sarvam call and ~2s on every hangup.
                         # Only the max-turns sign-off is new text that needs TTS.
                         if not is_ending:
-                                audio_bytes = await manager.generate_tts(
+                                audio_cache[call_sid] = [await manager.generate_tts(
                                         text="Thanks for chatting with us! Our team will be in touch shortly. Goodbye!",
                                         language=target_lang,
-                                )
-                                audio_cache[call_sid] = audio_bytes
-                        audio_url = client.build_base_url(f"/api/webhook/twilio/audio/{call_sid}")
+                                )]
+                        plays = _play_tags(client, call_sid)
                         
                         # Cleanup
                         del call_sessions[call_sid]
                         
-                        return _xml_response(f'<Response><Play>{audio_url}</Play><Hangup/></Response>')
+                        return _xml_response(f'<Response>{plays}<Hangup/></Response>')
                 
                 # 7. Build returning TwiML with next recording
-                audio_url = client.build_base_url(f"/api/webhook/twilio/audio/{call_sid}")
+                plays = _play_tags(client, call_sid)
                 # Carry the session in the URL: the in-process call_sessions cache is
                 # lost on a restart/reload or when another API process takes the turn,
                 # and a missing session makes the webhook create a bogus lead.
@@ -538,8 +541,8 @@ async def recording_webhook(request: Request) -> Response:
                 call_sessions[call_sid]["turn_count"] = turn_count
                 
                 twiml = f'''<Response>
-                    <Play>{audio_url}</Play>
-                    <Record action="{xml_escape(record_url)}" method="POST" playBeep="true" maxLength="60" trim="trim-silence" />
+                    {plays}
+                    <Record action="{xml_escape(record_url)}" method="POST" playBeep="true" maxLength="60" timeout="2" trim="trim-silence" />
                 </Response>'''
                 
                 return _xml_response(twiml)
@@ -551,19 +554,66 @@ async def recording_webhook(request: Request) -> Response:
                         media_type="application/xml",
                 )
 
+def _play_tags(client, call_sid: str) -> str:
+    """One <Play> per synthesized chunk, in order. Twilio plays them back to back."""
+    count = max(1, len(audio_cache.get(call_sid) or [1]))
+    return "".join(
+        f"<Play>{xml_escape(client.build_base_url(f'/api/webhook/twilio/audio/{call_sid}/{i}'))}</Play>"
+        for i in range(count)
+    )
+
+
 # No auth dependency: Twilio fetches this URL itself from <Play> and cannot send a
 # bearer token, nor does it sign media fetches (only webhook callbacks are signed).
 # Gating it broke every call -- Twilio got a 401, could not play the reply, and hung up.
+def _empty_audio() -> Response:
+        """A fresh Response each time: one instance must not be shared across requests."""
+        return Response(content=b"", media_type="audio/wav")
+
+
+# A chunk Twilio is about to play is normally already done; this only covers the
+# case where the previous chunk was shorter than the next one took to synthesize.
+CHUNK_WAIT_SECONDS = 10
+
+
+async def _chunk_bytes(call_sid: str, index: int) -> Optional[bytes]:
+        chunks = audio_cache.get(call_sid)
+        if not chunks or index >= len(chunks):
+                return None
+
+        item = chunks[index]
+        if isinstance(item, (bytes, bytearray)):
+                return bytes(item)
+
+        # still synthesizing: wait for it rather than return silence and lose the words
+        try:
+                data = await asyncio.wait_for(asyncio.shield(item), timeout=CHUNK_WAIT_SECONDS)
+        except Exception as exc:
+                logger.warning("Chunk %s for %s never arrived: %s", index, call_sid, exc)
+                return None
+
+        current = audio_cache.get(call_sid)
+        if current is not None and index < len(current):
+                current[index] = data  # memoize so a Twilio retry is served instantly
+        return data
+
+
 @router.get("/audio/{call_sid}")
 async def fetch_audio(call_sid: str) -> Response:
         """Endpoint for Twilio <Play> to fetch the generated audio bytes."""
-        audio_data = audio_cache.get(call_sid)
-        if not audio_data:
-            logger.error(f"No audio found in cache for CallSid: {call_sid}")
-            # Return an empty response so it skips silently instead of failing the call
-            return Response(content=b"", media_type="audio/wav")
-        
-        return Response(content=audio_data, media_type="audio/wav")
+        return await fetch_audio_chunk(call_sid, 0)
+
+
+@router.get("/audio/{call_sid}/{index}")
+async def fetch_audio_chunk(call_sid: str, index: int) -> Response:
+        """One chunk of the reply, awaited if it is still being synthesized."""
+        data = await _chunk_bytes(call_sid, index)
+        if not data:
+                logger.error(f"No audio found in cache for CallSid: {call_sid} (chunk {index})")
+                # Empty response so Twilio skips silently instead of failing the call
+                return _empty_audio()
+
+        return Response(content=data, media_type="audio/wav")
 
 @router.post("/whatsapp", dependencies=[Depends(verify_twilio_signature)])
 async def whatsapp_webhook(request: Request) -> Response:
