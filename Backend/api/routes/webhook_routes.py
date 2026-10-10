@@ -508,10 +508,15 @@ async def recording_webhook(request: Request) -> Response:
                                 classification_override=outcome
                         )
                         
-                        # End call with summary or LLM's final response
-                        final_reply = reply_text if is_ending else "Thanks for chatting with us! Our team will be in touch shortly. Goodbye!"
-                        audio_bytes = await manager.generate_tts(text=final_reply, language=target_lang)
-                        audio_cache[call_sid] = audio_bytes
+                        # End on the LLM's own reply, which was already synthesized above --
+                        # re-synthesizing it cost a second Sarvam call and ~2s on every hangup.
+                        # Only the max-turns sign-off is new text that needs TTS.
+                        if not is_ending:
+                                audio_bytes = await manager.generate_tts(
+                                        text="Thanks for chatting with us! Our team will be in touch shortly. Goodbye!",
+                                        language=target_lang,
+                                )
+                                audio_cache[call_sid] = audio_bytes
                         audio_url = client.build_base_url(f"/api/webhook/twilio/audio/{call_sid}")
                         
                         # Cleanup
