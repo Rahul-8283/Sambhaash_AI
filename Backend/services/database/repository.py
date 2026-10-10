@@ -10,6 +10,8 @@ import uuid
 import logging
 import json
 import math
+import time
+import asyncio
 
 from .supabase_client import SupabaseClient, SupabaseClientError
 from .models import (
@@ -20,6 +22,21 @@ logger = logging.getLogger(__name__)
 
 
 KB_SEARCH_CANDIDATE_LIMIT = 5000
+
+# The knowledge base is small (tens to hundreds of chunks) but each live call turn
+# paid a full Supabase round trip to read it -- 1.27s of a 10s turn, measured on a
+# real call, with the embeddings re-parsed from JSON text every time. Hold the
+# parsed vectors in the process instead. Writes invalidate explicitly; the TTL is a
+# safety net for any path that forgets to.
+KB_CACHE_TTL_SECONDS = 60
+_kb_cache: Optional[Dict[str, Any]] = None
+_kb_cache_lock = asyncio.Lock()
+
+
+def invalidate_kb_cache() -> None:
+    """Drop the cached knowledge-base vectors; the next search reloads them."""
+    global _kb_cache
+    _kb_cache = None
 
 
 def _parse_embedding(raw: Any) -> Optional[List[float]]:
@@ -644,6 +661,7 @@ class Repository:
                 datetime.utcnow()
             )
         )
+        invalidate_kb_cache()
         return result
     
     async def search_by_objection_type(
@@ -788,6 +806,68 @@ class Repository:
 
     # ==================== PGVECTOR SEARCH OPERATIONS ====================
 
+    async def _kb_candidates(self) -> Tuple[List[Tuple[Dict[str, Any], Optional[List[float]]]], bool]:
+        """
+        Every embedded knowledge-base chunk as (row, parsed vector), newest first.
+
+        Read once and held in the process: the rows are small and change only on
+        upload or document delete, both of which invalidate. Returns the candidates
+        and whether they came from the cache. Filters are applied by the caller, so
+        one candidate set serves every language / objection_type combination.
+
+        If the table is larger than the candidate cap the result is partial, and a
+        partial set is not cached -- filtering a truncated set in Python would not
+        match what SQL filtering would have returned.
+        """
+        global _kb_cache
+
+        now = time.monotonic()
+        cache = _kb_cache
+        if cache and now - cache["at"] < KB_CACHE_TTL_SECONDS:
+            return cache["rows"], True
+
+        async with _kb_cache_lock:
+            # another turn may have refreshed it while we waited on the lock
+            cache = _kb_cache
+            now = time.monotonic()
+            if cache and now - cache["at"] < KB_CACHE_TTL_SECONDS:
+                return cache["rows"], True
+
+            query = """
+            SELECT
+                kb.id,
+                kb.document_id,
+                kb.content as text,
+                kb.embedding,
+                kb.language,
+                kb.objection_type,
+                kb.benefit_type,
+                kb.source_section,
+                kb.created_at,
+                doc.file_name,
+                doc.document_type
+            FROM knowledge_base kb
+            JOIN documents doc ON kb.document_id = doc.id
+            WHERE kb.embedding IS NOT NULL
+            ORDER BY kb.created_at DESC
+            LIMIT $1
+            """
+            rows = await self.db.execute_query(query, [KB_SEARCH_CANDIDATE_LIMIT])
+
+            candidates = [
+                ({k: v for k, v in row.items() if k != "embedding"}, _parse_embedding(row.get("embedding")))
+                for row in rows
+            ]
+
+            if len(rows) < KB_SEARCH_CANDIDATE_LIMIT:
+                _kb_cache = {"at": time.monotonic(), "rows": candidates}
+            else:
+                logger.warning(
+                    "[KB_SEARCH] candidate cap of %s reached; not caching a partial knowledge base",
+                    KB_SEARCH_CANDIDATE_LIMIT,
+                )
+            return candidates, False
+
     async def vector_search_knowledge_base(
         self,
         query_embedding: List[float],
@@ -814,53 +894,23 @@ class Repository:
             Knowledge base entries sorted by similarity, each with a real "score"
         """
         try:
-            filters = []
-            params: List[Any] = []
-
-            if language:
-                params.append(language)
-                filters.append(f"kb.language = ${len(params)}")
-
-            if objection_type:
-                params.append(objection_type)
-                filters.append(f"kb.objection_type = ${len(params)}")
-
-            where_clause = " AND ".join(filters) if filters else "TRUE"
-
-            # Cap the candidate set so a very large KB cannot stall a live call
-            params.append(KB_SEARCH_CANDIDATE_LIMIT)
-            query = f"""
-            SELECT
-                kb.id,
-                kb.document_id,
-                kb.content as text,
-                kb.embedding,
-                kb.language,
-                kb.objection_type,
-                kb.benefit_type,
-                kb.source_section,
-                kb.created_at,
-                doc.file_name,
-                doc.document_type
-            FROM knowledge_base kb
-            JOIN documents doc ON kb.document_id = doc.id
-            WHERE {where_clause} AND kb.embedding IS NOT NULL
-            ORDER BY kb.created_at DESC
-            LIMIT ${len(params)}
-            """
-
-            rows = await self.db.execute_query(query, params)
+            candidates, cached = await self._kb_candidates()
 
             query_norm = _vector_norm(query_embedding)
             scored = []
-            for row in rows:
-                chunk_vector = _parse_embedding(row.get("embedding"))
+            for row, chunk_vector in candidates:
+                # filters are applied here rather than in SQL so one cached candidate
+                # set serves every language / objection_type combination
+                if language and row.get("language") != language:
+                    continue
+                if objection_type and row.get("objection_type") != objection_type:
+                    continue
                 if chunk_vector is None or len(chunk_vector) != len(query_embedding):
                     continue
                 score = _cosine_similarity(query_embedding, query_norm, chunk_vector)
                 if score < min_score:
                     continue
-                result = {k: v for k, v in row.items() if k != "embedding"}
+                result = dict(row)  # never hand out the cached dict itself
                 result["score"] = round(score, 4)
                 scored.append(result)
 
@@ -868,7 +918,7 @@ class Repository:
             results = scored[:top_k]
             logger.info(
                 f"[KB_SEARCH] {len(results)} results (top_k={top_k}, min_score={min_score}, "
-                f"candidates={len(rows)})"
+                f"candidates={len(candidates)}, cached={cached})"
             )
             return results
         except Exception as e:

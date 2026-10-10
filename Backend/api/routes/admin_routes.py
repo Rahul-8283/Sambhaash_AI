@@ -13,7 +13,7 @@ import io
 from datetime import datetime
 
 from services.database.supabase_client import get_db_client, SupabaseClient
-from services.database.repository import Repository
+from services.database.repository import Repository, invalidate_kb_cache
 from services.document_parser import DocumentParser, DocumentChunk
 from services.llm.embedder import EmbedderService, EmbeddingError
 from services.storage_client import get_storage_client, SupabaseStorageClient
@@ -402,6 +402,8 @@ async def delete_knowledge_document(
         # Delete KB entries (cascades due to foreign key)
         delete_query = "DELETE FROM documents WHERE id = $1"
         await repo.db.execute_update(delete_query, (doc_id,))
+        # the cascade removed KB chunks the search cache may still be holding
+        invalidate_kb_cache()
         
         logger.info(f"[ADMIN] Deleted document: {doc_id}")
         
