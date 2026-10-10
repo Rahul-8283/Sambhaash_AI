@@ -110,3 +110,6 @@ npm-debug.log
 
 # Keep .env.example for reference
 !.env.example
+
+# Audio produced by scripts/test_call.py
+*.wav

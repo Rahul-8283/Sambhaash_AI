@@ -46,15 +46,13 @@ npx tsc -b         # type-check only
 cd Backend && pytest        # ~90 tests, no network/DB/Redis/Twilio/Groq needed
 ```
 
-`Backend/tests/` covers outcome and language handling, scoring, TTS splitting, templates, the embedder's failure mode, rate limiting, Twilio signatures, KB analytics, and whole calls through the recording webhook (`test_call_flow.py`) using fakes from `tests/conftest.py`. Add a test with every behaviour change; `test_call_flow.py` is the place to prove a turn-loop fix. There is no frontend test runner; verify the frontend with `npx tsc -b` / `npm run build`. `Backend/test_initiator.py` and `Backend/scripts/test_call.py` are ad-hoc manual scripts, not part of the suite.
+`Backend/tests/` covers outcome and language handling, scoring, TTS splitting, templates, the embedder's failure mode, rate limiting, Twilio signatures, KB analytics, and whole calls through the recording webhook (`test_call_flow.py`) using fakes from `tests/conftest.py`. Add a test with every behaviour change; `test_call_flow.py` is the place to prove a turn-loop fix. There is no frontend test runner; verify the frontend with `npx tsc -b` / `npm run build`. `Backend/scripts/place_test_call.py` (places a real call, needs `--yes`), `scripts/list_leads.py` and `scripts/test_call.py` are manual scripts, not part of the suite.
 
 ## Architecture
 
 ### Two processes, no shared memory
 
 `main.py` (API) and `run_worker.py` (worker) are **separate processes** in every deployment (docker-compose, Render, local). The worker runs two concurrent loops via `asyncio.gather`: `CallInitiator.start_scheduler` (polls for `NEW` leads every 30s and dials them) and `BackgroundWorker.start_polling` (drains Redis job queues). Anything in a module-level dict — `call_sessions`, `audio_cache` in `api/routes/webhook_routes.py` — exists only in the API process. Never add cross-process state to a dict; it must go through Redis or Postgres.
-
-`start_all.py` is dead code; nothing invokes it.
 
 ### The call turn loop
 
@@ -83,7 +81,7 @@ The old `Orchestrator` stack (state machine, intent detector, memory manager, ob
 
 `services/scoring/` is live: `_score_and_assign_lead` calls `ScoringEngine.score_conversation` on the stored history and duration. A clear HOT/COLD keyword outcome from the graph still overrides the engine's classification. The calculators are English-only keyword lists with uncalibrated thresholds.
 
-`Backend/utils/audio_utils.py`, `utils/logger.py`, `utils/text_utils.py`, `utils/__init__.py` and `scripts/ingest_appendix.py` are all 0 bytes. `utils/phone.py` (E.164 normalization) and `utils/language.py` (language-code normalization + reply-language instruction) are real and used.
+`utils/phone.py` (E.164 normalization) and `utils/language.py` (language-code normalization + reply-language instruction) are real and used.
 
 ### Database access
 
