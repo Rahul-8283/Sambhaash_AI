@@ -65,7 +65,7 @@ A full conversational turn lives in `api/routes/webhook_routes.py::recording_web
 7. TTS bytes go into `audio_cache[call_sid]`; TwiML `<Play>` points at `/api/webhook/twilio/audio/{call_sid}` to fetch them.
 8. On `outcome in (HOT, COLD)` or `max_turns_per_session`, `_score_and_assign_lead` runs and the call hangs up.
 
-The graph is compiled **without** a checkpointer on purpose — memory comes from step 4. `orchestration/checkpointer.py` is unused leftover; do not reconnect it (it restored empty messages and collided on the same DB column).
+The graph is compiled **without** a checkpointer on purpose — memory comes from step 4. (The old checkpointer was deleted: it restored empty messages and collided on the same DB column.)
 
 ### LangGraph graph
 
@@ -75,9 +75,9 @@ Routing in `analyze_intent_node` and outcome detection in `orchestration/outcome
 
 ### Live path vs. dead code
 
-`services/llm/` contains ~5,000 lines of a second, far more sophisticated orchestration stack — `orchestrator.py`, `state_machine.py`, `intent_detector.py`, `memory_manager.py`, `prompt_builder.py`, `objection_handler.py`, `rag_engine.py`. **None of it is reachable from a request.** Only `embedder.py`, `kb_context_injection.py`, `summary_generator.py` and `language_policy.py` are live. Likewise `services/scoring/` (`ScoringEngine` and friends) is instantiated in the webhook but never actually called — `_score_and_assign_lead` computes a composite from hardcoded `70/70/70` defaults and an override from the graph's keyword outcome.
+The old `Orchestrator` stack (state machine, intent detector, memory manager, objection handler, RAG engine) was deleted; the LangGraph graph in `orchestration/` is the only conversational brain. `services/llm/` now holds `embedder.py`, `kb_context_injection.py`, `llm_client.py`, `summary_generator.py`, `prompt_builder.py` (summary prompt only) and `response_validator.py`.
 
-Whether to rewire or delete the unused `Orchestrator` path is an open product decision (`CODE_AUDIT.md` §1.2). Don't assume editing `services/llm/orchestrator.py` changes call behaviour.
+`services/scoring/` (`ScoringEngine` and friends) is instantiated in the webhook but never actually called: `_score_and_assign_lead` computes a composite from hardcoded `70/70/70` defaults and an override from the graph's keyword outcome. Wiring it in is the next planned change (`CODE_AUDIT.md` §1.3).
 
 `Backend/utils/audio_utils.py`, `utils/logger.py`, `utils/text_utils.py`, `utils/__init__.py` and `scripts/ingest_appendix.py` are all 0 bytes. `utils/phone.py` (E.164 normalization) and `utils/language.py` (language-code normalization + reply-language instruction) are real and used.
 
