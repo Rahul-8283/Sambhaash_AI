@@ -30,6 +30,17 @@ class LeadCreate(BaseModel):
     email: Optional[EmailStr] = Field(None, description="Email address")
     language: str = Field(default="hi", description="Preferred language")
     
+    @validator('email', pre=True)
+    def blank_email_is_none(cls, v):
+        """
+        The dashboard and landing-page forms post an empty string when the optional
+        email field is left blank; EmailStr rejects "", so treat it as absent.
+        The CSV/JSON bulk paths already do this with `.strip() or None`.
+        """
+        if isinstance(v, str) and not v.strip():
+            return None
+        return v
+
     @validator('phone')
     def phone_must_be_valid(cls, v):
         """Validate phone format and normalize to E.164"""
@@ -54,6 +65,17 @@ class LeadUpdate(BaseModel):
     language: Optional[str] = Field(None)
     status: Optional[str] = Field(None, description="new, contacted, interested, converted, rejected, follow_up")
     
+    @validator('email', pre=True)
+    def blank_email_is_none(cls, v):
+        """
+        The dashboard and landing-page forms post an empty string when the optional
+        email field is left blank; EmailStr rejects "", so treat it as absent.
+        The CSV/JSON bulk paths already do this with `.strip() or None`.
+        """
+        if isinstance(v, str) and not v.strip():
+            return None
+        return v
+
     @validator('status')
     def status_must_be_valid(cls, v):
         """Validate status"""

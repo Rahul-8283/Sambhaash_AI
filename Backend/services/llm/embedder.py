@@ -16,6 +16,10 @@ from config import get_config
 logger = logging.getLogger(__name__)
 
 
+class EmbeddingError(RuntimeError):
+    """The embedding backend failed (credits exhausted, bad token, outage, ...)."""
+
+
 class EmbedderService:
     """
     Lightweight embedding service that uses Hugging Face cloud endpoints
@@ -51,8 +55,7 @@ class EmbedderService:
         Convert single text to embedding vector.
         """
         if not text or not isinstance(text, str):
-            logger.warning("[EMBEDDER] Invalid text input")
-            return [0.0] * self.EMBEDDING_DIM
+            raise ValueError("embed_text needs a non-empty string")
 
         try:
             emb = self.client.feature_extraction(
@@ -81,10 +84,11 @@ class EmbedderService:
                     return vector + [0.0] * (self.EMBEDDING_DIM - len(vector))
                 return vector[:self.EMBEDDING_DIM]
         except Exception as e:
+            # Never hand back a zero vector: it scores 0 against everything, so a
+            # dead backend would look like "no relevant knowledge" and, on upload,
+            # would store unsearchable chunks.
             logger.error(f"[EMBEDDER] Cloud encoding failed: {e}")
-            
-        # Safety fallback to prevent crashes on API outages
-        return [0.0] * self.EMBEDDING_DIM
+            raise EmbeddingError(f"Embedding backend failed: {e}") from e
 
     def embed_texts(self, texts: List[str], normalize: bool = True, batch_size: int = 32) -> List[List[float]]:
         """
@@ -122,9 +126,7 @@ class EmbedderService:
             return all_embeddings
         except Exception as e:
             logger.error(f"[EMBEDDER] Cloud batch encoding failed: {e}")
-            
-        # Fallback to zero vectors in case of exception
-        return [[0.0] * self.EMBEDDING_DIM for _ in texts]
+            raise EmbeddingError(f"Embedding backend failed: {e}") from e
 
     def similarity(
         self,

@@ -7,12 +7,13 @@ Injects relevant KB articles into LLM prompts for better responses.
 import logging
 from typing import Optional, List, Dict, Any
 from uuid import UUID
+import asyncio
 import json
 
 from config import settings
 from services.database.supabase_client import get_db_client
 from services.database.repository import Repository
-from services.llm.embedder import EmbedderService
+from services.llm.embedder import EmbedderService, EmbeddingError
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +101,8 @@ class KBContextInjectionService:
             logger.info(f"[KB_CTX] Retrieving context for call {call_session_id}, lead {lead_id}")
             
             # 1. Generate Embedding for User Query
-            query_embedding = self.embedder.embed_text(user_text)
+            # blocking HTTP call: keep it off the event loop
+            query_embedding = await asyncio.to_thread(self.embedder.embed_text, user_text)
             
             # 2. Query knowledge base for relevant chunks using pgvector
             logger.debug(f"[KB_CTX] Running vector search for: {user_text[:30]}")
@@ -175,6 +177,17 @@ class KBContextInjectionService:
                 "kb_available": True
             }
         
+        except EmbeddingError as e:
+            logger.error(f"[KB_CTX] Knowledge base unavailable, call continues without it: {e}")
+            return {
+                "context_blocks": [],
+                "doc_ids_used": [],
+                "relevance_scores": [],
+                "total_tokens": 0,
+                "formatted_context": "",
+                "kb_available": False,
+                "error": "embedding_unavailable"
+            }
         except Exception as e:
             logger.error(f"[KB_CTX] Error retrieving context: {e}", exc_info=True)
             return {

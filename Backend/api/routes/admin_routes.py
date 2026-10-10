@@ -7,6 +7,7 @@ from fastapi import APIRouter, UploadFile, File, HTTPException, Query, Depends
 from pydantic import BaseModel, Field
 from typing import List, Optional, Dict, Any
 from uuid import UUID
+import asyncio
 import logging
 import io
 from datetime import datetime
@@ -14,7 +15,7 @@ from datetime import datetime
 from services.database.supabase_client import get_db_client, SupabaseClient
 from services.database.repository import Repository
 from services.document_parser import DocumentParser, DocumentChunk
-from services.llm.embedder import EmbedderService
+from services.llm.embedder import EmbedderService, EmbeddingError
 from services.storage_client import get_storage_client, SupabaseStorageClient
 
 logger = logging.getLogger(__name__)
@@ -197,6 +198,19 @@ async def upload_knowledge_base(
         
         # ==================== STEP 4: CREATE DATABASE RECORD ====================
         
+        # Embed first: if the embedding backend is down nothing is written, instead
+        # of a "document" whose chunks can never be found.
+        chunk_texts = [chunk.text for chunk in chunks]
+        try:
+            embeddings = await asyncio.to_thread(embedder.embed_texts, chunk_texts, True, 32)
+        except EmbeddingError:
+            raise HTTPException(
+                status_code=503,
+                detail="Embedding service unavailable. The document was not indexed; try again later."
+            )
+
+        logger.info(f"[ADMIN] Generated {len(embeddings)} embeddings")
+
         repo = Repository(db)
         doc_record = await repo.create_document(
             file_name=file.filename,
@@ -204,13 +218,6 @@ async def upload_knowledge_base(
             upload_user_id="admin"
         )
         document_id = UUID(str(doc_record["id"]))
-        
-        # ==================== STEP 5: GENERATE EMBEDDINGS ====================
-        
-        chunk_texts = [chunk.text for chunk in chunks]
-        embeddings = embedder.embed_texts(chunk_texts, batch_size=32)
-        
-        logger.info(f"[ADMIN] Generated {len(embeddings)} embeddings")
         
         # ==================== STEP 6: STORE IN KNOWLEDGE BASE ====================
         
@@ -246,8 +253,8 @@ async def upload_knowledge_base(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[ADMIN] Upload error: {e}")
-        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+        logger.exception(f"[ADMIN] Upload error: {e}")
+        raise HTTPException(status_code=500, detail="Upload failed")
 
 
 @router.get(
@@ -431,7 +438,10 @@ async def search_knowledge_base(
         logger.info(f"[ADMIN] KB search: query='{query}' top_k={top_k}")
         
         # Generate query embedding
-        query_embedding = embedder.embed_text(query)
+        try:
+            query_embedding = await asyncio.to_thread(embedder.embed_text, query)
+        except EmbeddingError:
+            raise HTTPException(status_code=503, detail="Embedding service unavailable")
         
         # Search repository
         repo = Repository(db)
@@ -464,6 +474,8 @@ async def search_knowledge_base(
             results=formatted_results,
             total_found=len(formatted_results)
         )
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"[ADMIN] Search error: {e}")
         raise HTTPException(status_code=500, detail="Search failed")
