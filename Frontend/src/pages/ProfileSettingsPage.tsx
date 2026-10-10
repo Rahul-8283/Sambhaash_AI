@@ -32,7 +32,7 @@ export const ProfileSettingsPage: React.FC = () => {
         setProfile({
           name: meta?.full_name || session.user.email?.split("@")[0] || "User",
           email: session.user.email || "",
-          role: savedRole,
+          role: meta?.role || savedRole,
           avatar: meta?.avatar_url || ""
         });
       } else {
@@ -60,7 +60,7 @@ export const ProfileSettingsPage: React.FC = () => {
     try {
       // ☁️ Update the user metadata directly in Supabase database!
       const { error } = await supabase.auth.updateUser({
-        data: { full_name: profile.name }
+        data: { full_name: profile.name, role: profile.role }
       });
 
       if (error) throw error;

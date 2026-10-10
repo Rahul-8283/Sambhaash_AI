@@ -86,8 +86,26 @@ const AppendixPage: React.FC = () => {
     }
   };
 
-  const handleClearAll = () => {
-    alert("Please delete documents individually for safety.");
+  const handleClearAll = async () => {
+    const targets = files.map((f) => (f as any).document_id as string).filter(Boolean);
+    if (targets.length === 0) return;
+    const confirmed = window.confirm(
+      `Delete all ${targets.length} document(s) and their AI indexing? This cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    setIsLoading(true);
+    setError(null);
+    const outcomes = await Promise.allSettled(targets.map((id) => apiService.deleteDocument(id)));
+    const failed = outcomes.filter((o) => o.status === "rejected").length;
+    await loadFiles();
+    if (failed > 0) {
+      setError(`${failed} of ${targets.length} documents could not be deleted.`);
+    } else {
+      setSuccessMessage(`Deleted ${targets.length} document(s)`);
+      setTimeout(() => setSuccessMessage(null), 3000);
+    }
+    setIsLoading(false);
   };
 
   const formatDate = (dateString: string): string => {

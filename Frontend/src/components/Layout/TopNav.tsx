@@ -61,7 +61,7 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick, hideMenuButton }) =
           setCurrentUser({
             name: meta?.full_name || session.user.email?.split("@")[0] || "User",
             email: session.user.email || "",
-            role: getSavedRole(), // 💾 Only role/designation is from local storage
+            role: meta?.role || getSavedRole(), // account metadata first, device copy as fallback
             avatar: meta?.avatar_url || ""
           });
         }
