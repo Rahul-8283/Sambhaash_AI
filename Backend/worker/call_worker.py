@@ -18,7 +18,6 @@ from uuid import UUID
 
 from worker.queue_manager import QueueManager, JobStatus, JobType
 from services.messaging.whatsapp_service import WhatsAppService
-from services.scoring.scoring_engine import ScoringEngine
 from services.database.supabase_client import get_db_client, close_db_client
 from services.database.repository import Repository
 from services.llm.llm_client import LLMClient
@@ -46,7 +45,6 @@ class BackgroundWorker:
         self.db_client: Optional[Any] = None
         self.repository: Optional[Repository] = None
         self.whatsapp_service: Optional[WhatsAppService] = None
-        self.scoring_engine: Optional[ScoringEngine] = None
         
         logger.info("Background Worker initialized")
 
@@ -56,7 +54,6 @@ class BackgroundWorker:
             self.db_client = await get_db_client()
             self.repository = Repository(self.db_client)
             self.whatsapp_service = WhatsAppService(self.repository)
-            self.scoring_engine = ScoringEngine(self.repository)
             
             logger.info("[WORKER] Worker startup complete")
         except Exception as e:
@@ -140,10 +137,6 @@ class BackgroundWorker:
                             await self._process_send_whatsapp(job)
                         elif job_type == JobType.SEND_SUMMARY:
                             await self._process_send_summary(job)
-                        elif job_type == JobType.ASSIGN_RM:
-                            await self._process_assign_rm(job)
-                        elif job_type == JobType.UPDATE_SCORE:
-                            await self._process_update_score(job)
                         
                         # Mark as complete
                         await self.queue_manager.mark_job_complete(job["id"])
@@ -265,45 +258,6 @@ _{generated_summary.get('one_line_summary', '')}_"""
             raise Exception(f"Summary send failed: {result.get('error')}")
         
         logger.info(f"[WORKER] Summary sent for session {session_id}")
-
-    async def _process_assign_rm(self, job: Dict[str, Any]):
-        """
-        Process RM assignment job.
-        
-        Args:
-            job: Job dict with payload
-        """
-        payload = job["payload"]
-        lead_id = payload.get("lead_id")
-        rm_name = payload.get("rm_name", "Auto")
-        
-        logger.info(f"Assigning lead {lead_id} to RM {rm_name}")
-        
-        # Assign lead to RM
-        result = await self.repository.assign_lead_to_rm(lead_id, rm_name)
-        
-        logger.info(f"[WORKER] Lead assigned to RM: {result}")
-
-    async def _process_update_score(self, job: Dict[str, Any]):
-        """
-        Process lead scoring update job.
-        
-        Args:
-            job: Job dict with payload
-        """
-        payload = job["payload"]
-        lead_id = payload.get("lead_id")
-        session_id = payload.get("session_id")
-        
-        logger.info(f"Updating score for lead {lead_id} (session: {session_id})")
-        
-        # Recalculate score
-        result = await self.scoring_engine.recalculate_scores_for_session(session_id, lead_id)
-        
-        if not result:
-            raise ValueError(f"Scoring failed for lead {lead_id}")
-        
-        logger.info(f"[WORKER] Score updated: {result['classification']}")
 
 
 async def main():

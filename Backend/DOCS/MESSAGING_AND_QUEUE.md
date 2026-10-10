@@ -10,9 +10,10 @@ Redis sorted sets, one per job type, drained with atomic `ZPOPMIN`. Job state is
 |---|---|---|
 | `send_whatsapp` | scoring (WARM) | `_process_send_whatsapp`: `warm_follow_up`, `conversion`, `custom` |
 | `send_summary` | scoring (every call) | `_process_send_summary`: LLM summary, stored and sent |
-| `assign_rm` | — | `_process_assign_rm` (nothing enqueues it) |
-| `update_score` | — | `_process_update_score` (nothing enqueues it) |
-| `process_recording` | — | none |
+
+Only these two job types exist. `assign_rm`, `update_score` and `process_recording`
+were removed because nothing enqueued them (the last had no handler, so its jobs
+would have been marked complete without doing anything).
 
 Enqueue from code:
 

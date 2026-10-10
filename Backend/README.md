@@ -141,11 +141,9 @@ returns a fixed canned reply.
 
 ## Queue
 
-`JobType`: `send_whatsapp` (`warm_follow_up`, `conversion`, `custom`),
-`send_summary`, `assign_rm`, `update_score`, `process_recording`. Jobs retry with
-exponential backoff (1 s, 2 s, 4 s) and then land in the dead-letter queue,
-which `/api/queue/dlq` lists and can retry. `assign_rm`, `update_score` and
-`process_recording` have handlers but nothing enqueues them yet.
+`JobType`: `send_whatsapp` (`warm_follow_up`, `conversion`, `custom`) and
+`send_summary`. Jobs retry with exponential backoff (1 s, 2 s, 4 s) and then
+land in the dead-letter queue, which `/api/queue/dlq` lists and can retry.
 
 ## Database
 

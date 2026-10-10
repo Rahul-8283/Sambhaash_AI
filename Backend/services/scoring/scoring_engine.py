@@ -11,13 +11,13 @@ Classifies leads into HOT/WARM/COLD based on composite score:
 - WARM (0.50-0.74): Nurture candidates for WhatsApp messaging
 - COLD (<0.50): Low-priority leads for future follow-up
 
-Also triggers RM assignment if HOT lead detected.
+The engine is pure: it returns scores and a classification, and the caller
+(`_score_and_assign_lead`) stores them and routes the lead.
 """
 
 import json
 import logging
 from typing import Dict, List, Any, Optional
-from datetime import datetime
 from enum import Enum
 
 from services.scoring.intent_score import IntentScoreCalculator
@@ -170,97 +170,3 @@ class ScoringEngine:
                 "sentiment": sentiment_result,
             },
         }
-
-    async def calculate_score(
-        self,
-        lead_id: str,
-        call_session_id: str,
-        conversation_history=None,
-        duration_seconds: int = 0,
-    ) -> Dict[str, Any]:
-        """Score a conversation and store the result as a lead_scores row."""
-        result = self.score_conversation(conversation_history, duration_seconds)
-
-        logger.info(
-            f"Lead {lead_id} Scores: Intent={result['intent_score']:.3f}, "
-            f"Engagement={result['engagement_score']:.3f}, Sentiment={result['sentiment_score']:.3f}, "
-            f"Composite={result['composite_score']:.3f} -> {result['classification']}"
-        )
-
-        await self.repository.create_lead_score(
-            lead_id=lead_id,
-            call_session_id=call_session_id,
-            interest_score=result["intent_score"],
-            engagement_score=result["engagement_score"],
-            sentiment_score=result["sentiment_score"],
-            classification=result["classification"],
-        )
-
-        result["lead_id"] = lead_id
-        result["timestamp"] = datetime.utcnow().isoformat()
-        return result
-
-    async def recalculate_scores_for_session(
-        self,
-        session_id: str,
-        lead_id: str
-    ) -> Optional[Dict[str, Any]]:
-        """
-        Recalculate scores for a call session.
-        
-        Args:
-            session_id: UUID of the call session
-            lead_id: UUID of the lead
-            
-        Returns:
-            Scoring result or None if session not found
-        """
-        try:
-            # Get call session from database
-            session = await self.repository.get_call_session(session_id)
-            if not session:
-                logger.warning(f"Session {session_id} not found")
-                return None
-            
-            # Extract conversation data from session
-            conversation_history = session.get("conversation_history", [])
-            duration_seconds = session.get("duration_seconds", 0)
-            
-            # Calculate scores
-            result = await self.calculate_score(
-                lead_id=lead_id,
-                call_session_id=session_id,
-                conversation_history=conversation_history,
-                duration_seconds=duration_seconds,
-            )
-            
-            return result
-            
-        except Exception as e:
-            logger.error(f"Error recalculating scores for session {session_id}: {e}")
-            raise
-
-    @staticmethod
-    def get_scoring_summary(scoring_result: Dict[str, Any]) -> str:
-        """
-        Generate human-readable scoring summary.
-        
-        Args:
-            scoring_result: Output from calculate_score()
-            
-        Returns:
-            str: Formatted summary
-        """
-        return (
-            f"Lead Scoring Summary\n"
-            f"==================\n"
-            f"Classification: {scoring_result['classification']}\n"
-            f"Composite Score: {scoring_result['composite_score']:.2%}\n"
-            f"\nComponent Scores:\n"
-            f"  • Intent: {scoring_result['intent_score']:.2%}\n"
-            f"  • Engagement: {scoring_result['engagement_score']:.2%}\n"
-            f"  • Sentiment: {scoring_result['sentiment_score']:.2%}\n"
-            f"\nActions:\n"
-            f"  • Assign to RM: {'YES' if scoring_result['should_assign_rm'] else 'NO'}\n"
-            f"  • Send WhatsApp: {'YES' if scoring_result['should_send_whatsapp'] else 'NO'}"
-        )
