@@ -16,8 +16,9 @@ class AudioFormatter:
             logger.error("Received empty audio bytes for formatting.")
             raise ValueError("Audio bytes cannot be empty")
 
-        # Because Sarvam AI gives us 8000Hz naturally if requested, 
-        # we can just validate the wave headers without importing Pydub!
+        # Sarvam is asked for 8000 Hz mono 16-bit, which Twilio plays as is. This
+        # only checks the WAV header and logs a warning on a mismatch; it does not
+        # resample (there is no transcoder in the stack).
         try:
             with wave.open(io.BytesIO(raw_audio_bytes), 'rb') as wf:
                 channels = wf.getnchannels()

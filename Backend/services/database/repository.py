@@ -1084,26 +1084,32 @@ class Repository:
     async def get_recording_statistics(self) -> Dict[str, Any]:
         """Get recording statistics"""
         try:
-            query = """
-            SELECT 
-                COUNT(*) as total_recordings,
-                AVG(duration_seconds) as avg_duration,
-                SUM(file_size_bytes) as total_storage_bytes,
-                sentiment,
-                COUNT(*) as count
-            FROM call_recordings
-            GROUP BY sentiment
-            """
-            
-            results = await self.db.execute_query(query, ())
-            
-            total_query = "SELECT COUNT(*) as total FROM call_recordings"
-            total = await self.db.execute_fetchval(total_query, ())
-            
+            overall = await self.db.execute_fetchone(
+                """
+                SELECT
+                    COUNT(*) AS total_recordings,
+                    COALESCE(AVG(duration_seconds), 0) AS avg_duration,
+                    COALESCE(SUM(file_size_bytes), 0) AS total_storage_bytes
+                FROM call_recordings
+                """,
+                (),
+            ) or {}
+
+            by_sentiment = await self.db.execute_query(
+                """
+                SELECT sentiment, COUNT(*) AS count
+                FROM call_recordings
+                GROUP BY sentiment
+                """,
+                (),
+            )
+
             return {
-                "total_recordings": total or 0,
-                "recordings_by_sentiment": results,
-                "stats_available": True
+                "total_recordings": int(overall.get("total_recordings") or 0),
+                "avg_duration_seconds": float(overall.get("avg_duration") or 0.0),
+                "total_storage_bytes": int(overall.get("total_storage_bytes") or 0),
+                "recordings_by_sentiment": by_sentiment,
+                "stats_available": True,
             }
         except Exception as e:
             logger.error(f"[RECORDING] Stats error: {e}")

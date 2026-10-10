@@ -335,8 +335,8 @@ async def get_recording_stats(
         
         # Calculate averages
         total_recordings = stats.get("total_recordings", 0)
-        avg_duration = 0.0
-        total_storage = 0
+        avg_duration = stats.get("avg_duration_seconds", 0.0)
+        total_storage = stats.get("total_storage_bytes", 0)
         
         # Format sentiment breakdown
         by_sentiment = {}

@@ -22,7 +22,7 @@ async def get_queue_stats():
         return stats
     except Exception as e:
         logger.error(f"[QUEUE] Error getting stats: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=503, detail="Queue unavailable")
 
 @router.get("/dlq", response_model=List[Dict[str, Any]])
 async def get_dlq_jobs(limit: int = 50):
@@ -33,7 +33,7 @@ async def get_dlq_jobs(limit: int = 50):
         return jobs
     except Exception as e:
         logger.error(f"[QUEUE] Error getting DLQ jobs: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=503, detail="Queue unavailable")
 
 @router.post("/dlq/{job_id}/retry", response_model=Dict[str, Any])
 async def retry_dlq_job(job_id: str):
@@ -49,4 +49,4 @@ async def retry_dlq_job(job_id: str):
         raise
     except Exception as e:
         logger.error(f"[QUEUE] Error retrying DLQ job {job_id}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=503, detail="Queue unavailable")
