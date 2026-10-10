@@ -13,7 +13,6 @@ from config import settings
 from services.database.supabase_client import get_db_client
 from services.database.repository import Repository
 from services.llm.embedder import EmbedderService
-from services.llm.rag_engine import RAGEngine
 
 logger = logging.getLogger(__name__)
 
@@ -29,22 +28,20 @@ class KBContextInjectionService:
     - Track which articles are used in each call
     """
     
-    def __init__(self, db_client=None, rag_engine: Optional[RAGEngine] = None):
+    def __init__(self, db_client=None):
         """
         Initialize KB context service.
         
         Args:
             db_client: Database client (lazy loaded if None)
-            rag_engine: RAG engine for retrieval (lazy loaded if None)
         """
         self.db_client = db_client
-        self.rag_engine = rag_engine
         self.embedder: Optional[EmbedderService] = None
         self.repository: Optional[Repository] = None
         self._initialized = False
     
     async def _ensure_initialized(self):
-        """Lazy initialization of database and RAG engine."""
+        """Lazy initialization of database, repository and embedder."""
         if self._initialized:
             return
         
@@ -54,9 +51,6 @@ class KBContextInjectionService:
         if not self.repository:
             self.repository = Repository(self.db_client)
         
-        if not self.rag_engine:
-            self.rag_engine = RAGEngine()
-
         if not self.embedder:
             self.embedder = EmbedderService()
         
