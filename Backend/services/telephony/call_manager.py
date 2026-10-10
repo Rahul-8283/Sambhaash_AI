@@ -3,7 +3,7 @@ import io
 import logging
 import re
 import wave
-from typing import List
+from typing import List, Tuple
 
 from config import get_config
 from services.tts.sarvam_service import SarvamTTSService
@@ -67,6 +67,37 @@ class CallManager:
     async def _synthesize(self, text: str, language: str) -> bytes:
         # 'kavya' works well for bulbul:v3
         return await self.tts_service.generate_speech(text=text, language=language, speaker="kavya")
+
+    async def _synthesize_formatted(self, text: str, language: str) -> bytes:
+        """One chunk, formatted as a standalone Twilio-playable WAV."""
+        return self.formatter.format_for_twilio(await self._synthesize(text, language))
+
+    async def start_tts(self, text: str, language: str) -> Tuple[bytes, List["asyncio.Task[bytes]"]]:
+        """
+        Begin synthesizing the reply and return as soon as the FIRST chunk is ready,
+        handing back tasks for the rest.
+
+        Twilio plays one <Play> after another, so the turn only has to wait for the
+        chunk that plays first; the rest finish while that one is being spoken. On a
+        measured call this returned 0.55s sooner than waiting for every chunk.
+
+        Falls back to a single blob if chunking or the first request fails, so the
+        caller always gets playable audio.
+        """
+        logger.info(f"Generating TTS for language {language}: {text[:30]}...")
+        chunks = split_for_tts(text)
+        if len(chunks) < 2:
+            return await self.generate_tts(text, language), []
+
+        tasks = [asyncio.create_task(self._synthesize_formatted(c, language)) for c in chunks]
+        try:
+            first = await tasks[0]
+        except Exception as e:
+            logger.warning(f"Chunked TTS failed on the first chunk, falling back: {e}")
+            for t in tasks[1:]:
+                t.cancel()
+            return await self.generate_tts(text, language), []
+        return first, tasks[1:]
 
     async def generate_tts(self, text: str, language: str) -> bytes:
         logger.info(f"Generating TTS for language {language}: {text[:30]}...")

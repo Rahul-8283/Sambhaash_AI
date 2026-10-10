@@ -65,6 +65,10 @@ def call(monkeypatch):
             spoken.append((text, language))
             return b"RIFFfake"
 
+        async def start_tts(self, text, language):
+            # mirrors the real contract: first chunk's bytes plus tasks for the rest
+            return await self.generate_tts(text, language), []
+
     monkeypatch.setattr(nodes, "llm", llm)
     monkeypatch.setattr(w, "get_db_client", fake_db)
     monkeypatch.setattr(w, "Repository", lambda db: repo)
