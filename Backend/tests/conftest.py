@@ -19,6 +19,7 @@ class FakeRepository:
         self.history = json.dumps(history or [])
         self.writes = []
         self.created_lead = False
+        self.objections = []
 
     async def get_call_session(self, session_id):
         return {
@@ -52,6 +53,20 @@ class FakeRepository:
 
     async def get_lead(self, lead_id):
         return {"phone": "+910000000000", "language": "en"}
+
+    async def create_objection(self, **fields):
+        self.writes.append(("objection", fields))
+        self.objections.append({"id": uuid.uuid4(), "resolved": False, **fields})
+        return self.objections[-1]
+
+    async def list_objections_by_session(self, session_id):
+        return list(self.objections)
+
+    async def mark_objection_resolved(self, objection_id):
+        for objection in self.objections:
+            if objection["id"] == objection_id:
+                objection["resolved"] = True
+        self.writes.append(("objection_resolved", objection_id))
 
     def written(self, kind):
         return [fields for k, fields in self.writes if k == kind]

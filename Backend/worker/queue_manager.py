@@ -4,7 +4,6 @@ Redis Queue Manager - Manages background job queuing
 Job Types:
 - send_whatsapp: Send WhatsApp message to WARM lead
 - send_summary: Generate and send call summary
-- update_lead_score: Recalculate lead score
 
 Uses Redis with job status tracking.
 """

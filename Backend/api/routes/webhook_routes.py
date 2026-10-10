@@ -23,6 +23,7 @@ from services.scoring.scoring_engine import ScoringEngine
 from services.database.models import LeadStatus
 from orchestration.outcome import classify_outcome, user_texts_from_history
 from orchestration.history import history_to_messages as conversation_messages
+from orchestration.objections import classify_objection
 from utils.language import call_language, last_turn_language, to_language_code
 from services.llm.kb_context_injection import KBContextInjectionService
 from services.call_recording_service import CallRecordingService
@@ -198,6 +199,15 @@ async def _score_and_assign_lead(
 
                 if duration_seconds:
                         await repository.update_call_session(session_id, duration_seconds=duration_seconds)
+
+                if classification == "HOT":
+                        # The caller came round: their objections were handled
+                        try:
+                                for objection in await repository.list_objections_by_session(session_id):
+                                        if not objection.get("resolved"):
+                                                await repository.mark_objection_resolved(objection["id"])
+                        except Exception as e:
+                                logger.error(f"Could not resolve objections: {e}")
                 
                 # Update lead status. COLD leads must NOT go back to NEW: the call
                 # initiator dials every NEW lead each poll cycle, so that would
@@ -437,6 +447,19 @@ async def recording_webhook(request: Request) -> Response:
                 # Extract the AI's final response and outcome
                 ai_message = final_state["messages"][-1].content if final_state.get("messages") else "I'm sorry, I encountered an error."
                 outcome = final_state.get("outcome", "UNKNOWN")
+
+                # The objection path ran: record what the caller objected to
+                objections_raised = final_state.get("detected_objections") or []
+                if objections_raised and session_id:
+                        objection_text = str(objections_raised[-1])
+                        try:
+                                await repository.create_objection(
+                                        call_session_id=UUID(session_id),
+                                        objection_type=classify_objection(objection_text),
+                                        objection_text=objection_text[:500],
+                                )
+                        except Exception as e:
+                                logger.error(f"Could not log objection: {e}")
                 
                 reply_text = ai_message
                 target_lang = detected_lang

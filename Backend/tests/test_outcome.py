@@ -34,3 +34,14 @@ def test_negated_interest_is_a_refusal():
     assert classify_utterance("I am not at all interested") == "COLD"
     assert classify_utterance("I'm interested") == "HOT"
     assert classify_utterance("yes, no problem") == "HOT"
+
+
+def test_objection_types():
+    from orchestration.objections import classify_objection
+
+    assert classify_objection("that is too expensive") == "price"
+    assert classify_objection("is this a scam") == "trust"
+    assert classify_objection("I am busy, call me later") == "timing"
+    assert classify_objection("not interested") == "not_interested"
+    assert classify_objection("hmm") == "other"
+    assert classify_objection("") == "other"

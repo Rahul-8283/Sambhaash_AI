@@ -175,3 +175,18 @@ def test_stored_turn_shape_scores_without_crashing():
     scores = repo.written("score")
     assert len(scores) == 1
     assert scores[0]["classification"] in {"HOT", "WARM", "COLD"}
+
+
+def test_objection_is_logged_then_resolved_when_caller_comes_round(call):
+    client, repo, stt, jobs, spoken = call(["That sounds too expensive for me", "ok yes I am interested"])
+    query = f"?session_id={uuid.uuid4()}&lead_id={uuid.uuid4()}"
+    _post_turn(client, query)
+    logged = repo.written("objection")
+    assert len(logged) == 1
+    assert logged[0]["objection_type"] == "price"
+    assert "expensive" in logged[0]["objection_text"]
+    assert all(not o["resolved"] for o in repo.objections)
+
+    # the same session continues; the caller now agrees
+    _post_turn(client, query)
+    assert repo.written("objection_resolved")
