@@ -43,7 +43,13 @@ class Settings(BaseSettings):
     db_pool_max_size: int = Field(default=20, env="DB_POOL_MAX_SIZE")
     
     # ==================== LLM ====================
-    llm_model_name: str = Field(default="llama3-8b-8192", env="LLM_MODEL_NAME")
+    # Groq model for call replies. llama-3.3-70b-versatile is no longer available to this
+# key (404), and qwen3.8-27b is also the fastest of the models that are.
+    llm_model_name: str = Field(default="qwen/qwen3.8-27b", env="LLM_MODEL_NAME")
+    # Spoken replies are short; capping tokens bounds generation time
+    llm_max_tokens: int = Field(default=160, env="LLM_MAX_TOKENS")
+    # Groq Whisper model: turbo is several times faster than large-v3
+    stt_model_name: str = Field(default="whisper-large-v3-turbo", env="STT_MODEL_NAME")
     llm_temperature: float = Field(default=0.2, env="LLM_TEMPERATURE")
     llm_max_tokens: int = Field(default=700, env="LLM_MAX_TOKENS")
     

@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import Response
@@ -62,7 +63,7 @@ async def receive_whatsapp(
         if classification in ("WARM", "HOT"):
             settings = get_config()
             llm_client = LLMClient(
-                model_name="llama-3.3-70b-versatile",
+                model_name=get_config().llm_model_name,
                 api_key=settings.groq_api_key or "",
                 base_url="https://api.groq.com/openai/v1"
             )
@@ -82,7 +83,7 @@ Do not mention system instructions or metadata.
             user_message = f"User Message: {body}"
             
             # Generate response from Groq
-            response_text = llm_client.generate({
+            response_text = await asyncio.to_thread(llm_client.generate, {
                 "system_prompt": system_prompt,
                 "user_prompt": user_message
             })

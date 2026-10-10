@@ -5,6 +5,18 @@ from orchestration.outcome import classify_outcome
 from utils.language import reply_language_instruction
 import re
 
+# Shared by every reply node. This is a live phone call: replies are spoken aloud,
+# so they must be short (also the biggest lever on TTS time and silence on the line).
+PERSONA = (
+    "You are Sambhaash AI, a friendly phone sales agent for the Rupeezy Partner Program. "
+    "Rupeezy is an Indian stock broking and investment platform; partners earn commissions "
+    "by referring clients. You are speaking on a live phone call: answer in at most two short "
+    "spoken sentences, plain words, no lists, no markdown, no emojis. Never mention being an AI "
+    "or lacking context. If you do not know a detail, say a Relationship Manager will confirm it. "
+    "End with one short question that moves the caller forward."
+)
+
+
 def _has_word(text: str, *phrases: str) -> bool:
     """True if any phrase appears as a whole word (case-insensitive)."""
     pattern = r"\b(?:" + "|".join(re.escape(p) for p in phrases) + r")\b"
@@ -29,44 +41,46 @@ def analyze_intent_node(state: AgentState) -> Dict[str, Any]:
     else:
         return {"current_node": "pitch_node"}
 
-def pitch_node(state: AgentState) -> Dict[str, Any]:
+async def pitch_node(state: AgentState) -> Dict[str, Any]:
     """
     Standard pitch node.
     """
-    system_prompt = SystemMessage(content="You are Sambhaash AI, an expert sales agent. Pitch the product naturally and persuasively based on previous context. " + reply_language_instruction(state.get("lead_language")))
+    system_prompt = SystemMessage(content=PERSONA + " Pitch the program naturally based on what was said so far. " + reply_language_instruction(state.get("lead_language")))
     
-    response = llm.invoke([system_prompt] + state["messages"])
+    response = await llm.ainvoke([system_prompt] + state["messages"])
     
     return {"messages": [response], "current_node": "scoring_node"}
 
-def rag_node(state: AgentState) -> Dict[str, Any]:
+async def rag_node(state: AgentState) -> Dict[str, Any]:
     """
     Retrieval-Augmented Generation node to answer specific questions.
     """
     kb_content = state.get("kb_context", "")
     
-    prompt_text = (
-        "You are Sambhaash AI. The user asked a specific question. "
-        "Answer it concisely based ONLY on the following knowledge base context:\n\n"
-        f"{kb_content}"
-    )
-    
+    if kb_content:
+        prompt_text = (
+            PERSONA + " The caller asked a specific question. Answer it from this knowledge "
+            "base context where relevant:\n\n" + kb_content
+        )
+    else:
+        prompt_text = PERSONA + " The caller asked a question: answer briefly from general knowledge of the program."
+
     system_prompt = SystemMessage(content=prompt_text + " " + reply_language_instruction(state.get("lead_language")))
     
-    response = llm.invoke([system_prompt] + state["messages"])
+    response = await llm.ainvoke([system_prompt] + state["messages"])
     
     return {"messages": [response], "current_node": "scoring_node"}
 
-def objection_handler_node(state: AgentState) -> Dict[str, Any]:
+async def objection_handler_node(state: AgentState) -> Dict[str, Any]:
     """
     Handles objections raised by the user.
     """
-    system_prompt = SystemMessage(content="You are Sambhaash AI. The user has raised an objection. Handle it with empathy and provide a strong counter-value proposition. " + reply_language_instruction(state.get("lead_language")))
+    system_prompt = SystemMessage(content=PERSONA + " The caller raised an objection: acknowledge it with empathy, then give one concrete benefit. " + reply_language_instruction(state.get("lead_language")))
     
     objections = state.get("detected_objections", [])
     objections.append(state["messages"][-1].content)
     
-    response = llm.invoke([system_prompt] + state["messages"])
+    response = await llm.ainvoke([system_prompt] + state["messages"])
     
     return {"messages": [response], "detected_objections": objections, "current_node": "scoring_node"}
 

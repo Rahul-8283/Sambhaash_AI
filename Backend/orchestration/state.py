@@ -6,11 +6,14 @@ from config import get_config
 
 config = get_config()
 
-# Shared Groq Model Instance (Ensures <500ms ultra-low latency inference)
-# We use llama-3.3-70b-versatile for high reasoning quality and speed
+# Shared Groq model instance. Model and token cap come from config so a model
+# retirement is an env change, not a code change.
 llm = ChatGroq(
     temperature=0.6,
-    model_name="llama-3.3-70b-versatile", 
+    model_name=config.llm_model_name,
+    max_tokens=config.llm_max_tokens,
+    timeout=15,
+    max_retries=1,
     api_key=config.groq_api_key
 )
 

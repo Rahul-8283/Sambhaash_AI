@@ -13,6 +13,9 @@ from config import get_config
 logger = logging.getLogger(__name__)
 
 
+_twilio_media_session = requests.Session()
+
+
 class WhisperService:
 	"""Speech-to-text service using Groq Whisper."""
 
@@ -33,7 +36,7 @@ class WhisperService:
 		audio_file.name = filename
 
 		kwargs: dict[str, object] = {
-			"model": "whisper-large-v3",
+			"model": self.settings.stt_model_name,
 			"file": audio_file,
 		}
 
@@ -58,6 +61,7 @@ class WhisperService:
 		"""Download a Twilio recording and transcribe it."""
 
 		url = recording_url if recording_url.endswith((".mp3", ".wav")) else f"{recording_url}.mp3"
-		response = requests.get(url, auth=(twilio_account_sid, twilio_auth_token), timeout=30)
+		# Shared session keeps the connection to Twilio's media host alive between turns
+		response = _twilio_media_session.get(url, auth=(twilio_account_sid, twilio_auth_token), timeout=30)
 		response.raise_for_status()
 		return self.transcribe_audio_bytes(response.content, filename="twilio_recording.mp3", language=language)
