@@ -263,7 +263,7 @@ class ApiService {
     return response.data;
   }
 
-  public async updateLead(id: string, lead: Partial<CreateLeadFormData> & { status?: string }): Promise<Lead> {
+  public async updateLead(id: string, lead: Partial<CreateLeadFormData> & { status?: string; notes?: string }): Promise<Lead> {
     const response: AxiosResponse<Lead> = await this.api.put(`/api/leads/${id}`, lead);
     return response.data;
   }

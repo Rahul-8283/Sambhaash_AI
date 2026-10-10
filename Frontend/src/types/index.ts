@@ -47,6 +47,7 @@ export interface CallSession {
   languageDetected: string;
   durationSeconds: number;
   createdAt: string;
+  summary?: { one_line_summary?: string; recommended_next_action?: string } | null;
 }
 
 export interface ObjectionLog {
@@ -76,6 +77,7 @@ export interface LeadWithDetails extends Lead {
   objections: ObjectionLog[];
   totalCalls: number;
   lastCalledAt?: string;
+  notes?: string | null;
 }
 
 export interface LeadFilters {
