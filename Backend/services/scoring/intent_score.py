@@ -10,6 +10,7 @@ Formula: composite = (interest * 0.4) + ((1 - objections_penalty) * 0.3) + (time
 """
 
 import logging
+import re
 from typing import Dict, List, Any
 from enum import Enum
 
@@ -71,6 +72,14 @@ class IntentScoreCalculator:
         ]
     }
 
+    INTEREST_CHECK_ORDER = [
+        InterestLevel.VERY_LOW,
+        InterestLevel.LOW,
+        InterestLevel.VERY_HIGH,
+        InterestLevel.HIGH,
+        InterestLevel.MODERATE,
+    ]
+
     OBJECTION_KEYWORDS = {
         ObjectionSeverity.CRITICAL: [
             "too expensive", "can't afford", "too costly", "price is wrong",
@@ -121,12 +130,13 @@ class IntentScoreCalculator:
             msg_lower = message.lower().strip()
             msg_score = 0.5
             
-            for level, keywords in IntentScoreCalculator.INTEREST_KEYWORDS.items():
-                for keyword in keywords:
-                    if keyword in msg_lower:
-                        msg_score = level.value
-                        break
-                if msg_score != 0.5:
+            # Negative levels first: "not interested" contains "interested", so the
+            # positive phrase must not get the first match. Whole phrases only, so
+            # "pass" does not match "passport".
+            for level in IntentScoreCalculator.INTEREST_CHECK_ORDER:
+                keywords = IntentScoreCalculator.INTEREST_KEYWORDS[level]
+                if any(re.search(r"\b" + re.escape(k) + r"\b", msg_lower) for k in keywords):
+                    msg_score = level.value
                     break
             
             interest_scores.append(msg_score)
