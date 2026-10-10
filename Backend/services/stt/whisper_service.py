@@ -5,6 +5,8 @@ from io import BytesIO
 from typing import Optional
 
 import requests
+
+from utils.language import to_language_code
 from openai import OpenAI
 
 from config import get_config
@@ -12,6 +14,9 @@ from config import get_config
 
 logger = logging.getLogger(__name__)
 
+
+# ISO codes Whisper accepts that the platform speaks
+WHISPER_LANGUAGES = {"en", "hi", "mr", "bn", "pa", "gu", "ta", "te", "kn", "ml"}
 
 _twilio_media_session = requests.Session()
 
@@ -40,12 +45,11 @@ class WhisperService:
 			"file": audio_file,
 		}
 
-		if language:
-			normalized_language = language.lower().strip()
-			if normalized_language in {"english", "en"}:
-				kwargs["language"] = "en"
-			elif normalized_language in {"hindi", "hi"}:
-				kwargs["language"] = "hi"
+		# A hint skips auto-detection (faster, and more accurate on short clips).
+		# Odia is not a Whisper language, so it falls back to auto-detect.
+		code = to_language_code(language, default="") if language else ""
+		if code in WHISPER_LANGUAGES:
+			kwargs["language"] = code
 
 		result = self.client.audio.transcriptions.create(**kwargs)
 		text = getattr(result, "text", None) or ""

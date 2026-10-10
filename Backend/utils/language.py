@@ -58,3 +58,38 @@ def reply_language_instruction(language: str | None) -> str:
         return "Reply in Hinglish: simple Hindi written in English letters, mixed with English words, the way the caller speaks."
     name = LANGUAGE_NAMES.get(code, "English")
     return f"Always reply in {name}, the language the caller is speaking."
+
+
+# Fewer words than this carry no reliable language signal ("yes", "haan", "ok")
+MIN_WORDS_FOR_LANGUAGE = 3
+
+
+def call_language(detected: str | None, transcript: str, previous: str | None) -> tuple[str, bool]:
+    """
+    Language to use for this turn, and whether the detection is confident enough
+    to store on the lead.
+
+    Very short replies are ambiguous (a Tamil caller saying "yes" detects as
+    English), so they keep the language already established on the call.
+    """
+    confident = len((transcript or "").split()) >= MIN_WORDS_FOR_LANGUAGE
+    if not confident and previous:
+        return previous, False
+    return (detected or previous or "en"), confident
+
+
+def last_turn_language(history) -> str | None:
+    """Language of the most recent stored turn, or None for a call with no turns."""
+    import json
+
+    if isinstance(history, str):
+        try:
+            history = json.loads(history)
+        except ValueError:
+            return None
+    if not isinstance(history, list):
+        return None
+    for turn in reversed(history):
+        if isinstance(turn, dict) and turn.get("language"):
+            return str(turn["language"])
+    return None

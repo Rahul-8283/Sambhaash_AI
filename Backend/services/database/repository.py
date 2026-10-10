@@ -359,6 +359,7 @@ class Repository:
         kb_usage_log: Optional[List[Dict]] = None,
         duration_seconds: Optional[int] = None,
         classification: Optional[str] = None,
+        language_detected: Optional[str] = None,
     ) -> Optional[Dict[str, Any]]:
         """
         Update call session.
@@ -372,6 +373,8 @@ class Repository:
             updates["duration_seconds"] = duration_seconds
         if classification is not None:
             updates["classification"] = classification
+        if language_detected is not None:
+            updates["language_detected"] = language_detected
         
         if not updates:
             return await self.get_call_session(session_id)

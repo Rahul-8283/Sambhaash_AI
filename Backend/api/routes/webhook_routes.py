@@ -23,6 +23,7 @@ from services.scoring.scoring_engine import ScoringEngine
 from services.database.models import LeadStatus
 from orchestration.outcome import classify_outcome, user_texts_from_history
 from orchestration.history import history_to_messages as conversation_messages
+from utils.language import call_language, last_turn_language, to_language_code
 from services.llm.kb_context_injection import KBContextInjectionService
 from services.call_recording_service import CallRecordingService
 from worker.queue_manager import QueueManager, JobType
@@ -125,6 +126,17 @@ async def _save_conversation_turn(
         
         except Exception as e:
                 logger.error(f"Error saving conversation turn: {e}")
+
+
+async def _persist_language(repository, lead_id, session_id, code: str) -> None:
+        """Remember the language the caller actually speaks (WhatsApp follow-up uses it)."""
+        try:
+                if lead_id:
+                        await repository.update_lead(lead_id=UUID(lead_id), language=code)
+                if session_id:
+                        await repository.update_call_session(UUID(session_id), language_detected=code)
+        except Exception as e:
+                logger.error(f"Could not store detected language: {e}")
 
 
 async def _score_and_assign_lead(
@@ -352,6 +364,12 @@ async def recording_webhook(request: Request) -> Response:
                 
                 logger.info(f"Processing recording for call {call_sid}, turn {turn_count}")
                 
+                # The stored turns give the language already established on this call,
+                # which hints Whisper and stabilises very short replies
+                call_session = await repository.get_call_session(UUID(session_id)) if session_id else None
+                stored_history = (call_session or {}).get("conversation_history") or []
+                previous_lang = last_turn_language(stored_history)
+
                 # 1. STT
                 stt, language_detector, _ = _services()
                 
@@ -361,10 +379,13 @@ async def recording_webhook(request: Request) -> Response:
                         recording_url=recording_url,
                         twilio_account_sid=settings.twilio_account_sid or "",
                         twilio_auth_token=settings.twilio_auth_token or "",
+                        language=previous_lang,
                 )
-                detected_lang = language_detector.detect_language(transcript)
+                detected_lang, lang_confident = call_language(
+                        language_detector.detect_language(transcript), transcript, previous_lang
+                )
                 
-                logger.info(f"User said: {transcript} (Lang: {detected_lang})")
+                logger.info(f"User said: {transcript} (Lang: {detected_lang}, hint: {previous_lang})")
                 
                 print(f"\n{'='*60}")
                 print(f"🗣️  USER SAID: {transcript}")
@@ -390,13 +411,8 @@ async def recording_webhook(request: Request) -> Response:
                                 logger.error(f"[KB] Failed to retrieve context: {e}")
                                 return None
 
-                async def _load_history():
-                        if not (repository and session_id):
-                                return []
-                        call_session = await repository.get_call_session(UUID(session_id))
-                        return conversation_messages(call_session.get("conversation_history") if call_session else [])
-
-                kb_context, history = await asyncio.gather(_retrieve_kb(), _load_history())
+                kb_context = await _retrieve_kb()
+                history = conversation_messages(stored_history)
 
                 # 2. LangGraph Orchestration
                 from orchestration.graph import app
@@ -434,7 +450,11 @@ async def recording_webhook(request: Request) -> Response:
                 print(f"{'='*60}\n")
 
                 # 3+4. Save the turn (the next turn reads it back) while TTS renders
-                _, audio_bytes = await asyncio.gather(
+                new_code = to_language_code(detected_lang)
+                persist_language = (
+                        lang_confident and new_code != to_language_code(previous_lang, default="")
+                )
+                _, audio_bytes, _ = await asyncio.gather(
                         _save_conversation_turn(
                                 session_id=session_id,
                                 call_sid=call_sid,
@@ -444,6 +464,7 @@ async def recording_webhook(request: Request) -> Response:
                                 repository=repository
                         ),
                         manager.generate_tts(text=reply_text, language=target_lang),
+                        _persist_language(repository, lead_id, session_id, new_code) if persist_language else asyncio.sleep(0),
                 )
 
                 # 5. Cache audio bytes for Twilio <Play> fetch
