@@ -7,7 +7,8 @@ import os
 import re
 from dataclasses import asdict
 from typing import Any, Dict, List, Optional, Sequence
-from urllib import error, request
+
+import httpx
 
 from .prompt_builder import PromptBundle
 
@@ -139,19 +140,12 @@ class LLMClient:
         if self.response_format_json:
             payload["response_format"] = {"type": "json_object"}
 
-        req = request.Request(
-            url=url,
-            data=json.dumps(payload).encode("utf-8"),
-            headers=self._headers(),
-            method="POST",
-        )
-
         try:
-            with request.urlopen(req, timeout=self.timeout) as resp:
-                body = resp.read().decode("utf-8")
-        except error.HTTPError as e:
-            detail = e.read().decode("utf-8", errors="ignore") if hasattr(e, "read") else str(e)
-            raise LLMClientError(f"LLM request failed: {e.code} {detail}") from e
+            resp = self._http().post(url, json=payload, headers=self._headers(), timeout=self.timeout)
+            resp.raise_for_status()
+            body = resp.text
+        except httpx.HTTPStatusError as e:
+            raise LLMClientError(f"LLM request failed: {e.response.status_code} {e.response.text}") from e
         except Exception as e:
             raise LLMClientError(f"LLM request failed: {e}") from e
 
@@ -167,11 +161,17 @@ class LLMClient:
         except Exception as e:
             raise LLMClientError("LLM response did not contain message content.") from e
 
+    def _http(self) -> httpx.Client:
+        # One client per instance: connections are reused across calls
+        if getattr(self, "_client", None) is None:
+            self._client = httpx.Client()
+        return self._client
+
     def _headers(self) -> Dict[str, str]:
         headers = {
             "Authorization": f"Bearer {self.api_key}",
             "Content-Type": "application/json",
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
+            "User-Agent": "SambhaashAI/1.0",
         }
         headers.update(self.extra_headers)
         return headers
