@@ -14,13 +14,11 @@ langgraph>=0.1.0
 
 # LLM Providers
 openai>=1.14.0
-google-generativeai>=0.4.1
 groq>=0.4.2
 
 # Database & ORM
 supabase>=2.4.1
 sqlalchemy>=2.0.25
-psycopg2-binary>=2.9.9
 asyncpg>=0.29.0
 
 # Vector Operations & Embeddings
@@ -63,7 +61,6 @@ twilio>=8.10.0
 
 # Audio Processing
 pydub>=0.25.1
-librosa>=0.10.0
 
 # Async HTTP
 httpx>=0.27.2
