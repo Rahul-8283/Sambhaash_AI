@@ -137,6 +137,11 @@ class ScoringEngine:
 
         Returns the component scores (0-1), the composite and the classification.
         """
+        if isinstance(conversation_history, str):
+            try:
+                conversation_history = json.loads(conversation_history)
+            except ValueError:
+                conversation_history = []
         user_messages = self.extract_user_messages(conversation_history)
         turns = len(conversation_history) if isinstance(conversation_history, list) else None
 

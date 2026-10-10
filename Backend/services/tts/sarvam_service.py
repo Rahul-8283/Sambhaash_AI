@@ -41,6 +41,7 @@ class SarvamTTSService:
             logger.error("SARVAM_API_KEY is missing. TTS will fail.")
             raise ValueError("SARVAM_API_KEY environment variable is not set")
             
+        self._client: Optional[httpx.AsyncClient] = None
         self.headers = {
             "api-subscription-key": self.api_key,
             "Content-Type": "application/json"
@@ -70,7 +71,11 @@ class SarvamTTSService:
             "model": "bulbul:v3"
         }
 
-        async with httpx.AsyncClient(timeout=20.0) as client:
+        # One keep-alive client per service: a fresh client pays a TLS handshake every turn
+        if self._client is None or self._client.is_closed:
+            self._client = httpx.AsyncClient(timeout=20.0)
+        client = self._client
+        if True:
             try:
                 logger.debug(f"Requesting Sarvam TTS for text: {text[:20]}... in {target_language}")
                 response = await client.post(

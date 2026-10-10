@@ -6,12 +6,12 @@ import json
 from typing import Any, Dict, Optional
 from uuid import UUID
 from datetime import datetime, timezone
+from xml.sax.saxutils import escape as xml_escape
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import Response
 
 from config import get_config
-from api.auth import get_current_user
 from api.twilio_auth import verify_twilio_signature
 from services.stt.language_detector import LanguageDetector
 from services.stt.whisper_service import WhisperService
@@ -38,6 +38,23 @@ audio_cache: dict[str, bytes] = {}
 
 # Cache for call sessions: {call_sid -> {session_id, lead_id, conversation_history, turn_count}}
 call_sessions: dict[str, dict] = {}
+
+_stt_service: Optional[WhisperService] = None
+_language_detector: Optional[LanguageDetector] = None
+_call_manager: Optional[CallManager] = None
+
+
+def _services():
+        """Per-process singletons: building these clients on every turn costs time."""
+        global _stt_service, _language_detector, _call_manager
+        if _stt_service is None:
+                _stt_service = WhisperService()
+        if _language_detector is None:
+                _language_detector = LanguageDetector()
+        if _call_manager is None:
+                _call_manager = CallManager()
+        return _stt_service, _language_detector, _call_manager
+
 
 def _xml_response(xml: str) -> Response:
         if not xml.strip().startswith("<?xml"):
@@ -85,7 +102,9 @@ async def _save_conversation_turn(
                         return
                 
                 # Parse existing history
-                conversation_history = json.loads(session.get("conversation_history") or "[]")
+                conversation_history = session.get("conversation_history") or []
+                if isinstance(conversation_history, str):
+                        conversation_history = json.loads(conversation_history)
                 
                 # Add new turn
                 turn = {
@@ -264,7 +283,7 @@ async def recording_webhook(request: Request) -> Response:
         duration = _form_value(form_data, "RecordingDuration", "0")
 
         client = TwilioClient()
-        manager = CallManager()
+        _, _, manager = _services()
 
         if not recording_url:
                 logger.warning("Recording webhook called without RecordingUrl (CallSid=%s)", call_sid)
@@ -334,8 +353,7 @@ async def recording_webhook(request: Request) -> Response:
                 logger.info(f"Processing recording for call {call_sid}, turn {turn_count}")
                 
                 # 1. STT
-                stt = WhisperService()
-                language_detector = LanguageDetector()
+                stt, language_detector, _ = _services()
                 
                 # Blocking download + transcription: run off the event loop
                 transcript = await asyncio.to_thread(
@@ -352,12 +370,13 @@ async def recording_webhook(request: Request) -> Response:
                 print(f"🗣️  USER SAID: {transcript}")
                 print(f"{'='*60}\n")
 
-                # 1.5 Retrieve KB Context
-                kb_context = None
-                try:
-                        if session_id and lead_id:
+                # 1.5 KB retrieval and the stored history are independent: fetch together
+                async def _retrieve_kb():
+                        if not (session_id and lead_id):
+                                return None
+                        try:
                                 kb_service = KBContextInjectionService(db_client=db_client)
-                                kb_context = await kb_service.retrieve_context_for_call(
+                                ctx = await kb_service.retrieve_context_for_call(
                                         call_session_id=UUID(session_id),
                                         lead_id=UUID(lead_id),
                                         user_text=transcript,
@@ -365,25 +384,28 @@ async def recording_webhook(request: Request) -> Response:
                                         top_k=3,
                                         min_score=0.3
                                 )
-                                logger.info(f"[KB] Retrieved {len(kb_context.get('context_blocks', []))} KB chunks")
-                except Exception as e:
-                        logger.error(f"[KB] Failed to retrieve context: {e}")
-                        kb_context = None
+                                logger.info(f"[KB] Retrieved {len(ctx.get('context_blocks', []))} KB chunks")
+                                return ctx
+                        except Exception as e:
+                                logger.error(f"[KB] Failed to retrieve context: {e}")
+                                return None
+
+                async def _load_history():
+                        if not (repository and session_id):
+                                return []
+                        call_session = await repository.get_call_session(UUID(session_id))
+                        return conversation_messages(call_session.get("conversation_history") if call_session else [])
+
+                kb_context, history = await asyncio.gather(_retrieve_kb(), _load_history())
 
                 # 2. LangGraph Orchestration
                 from orchestration.graph import app
                 from langchain_core.messages import HumanMessage
-                
+
                 logger.info(f"Invoking LangGraph for session {session_id}")
-                
+
                 # Extract the pre-formatted string from the KB retrieval dict
                 kb_text = kb_context.get("formatted_context", "") if kb_context else ""
-                
-                # Rebuild the call so far from the stored turns, so the model has memory
-                history = []
-                if repository and session_id:
-                        call_session = await repository.get_call_session(UUID(session_id))
-                        history = conversation_messages(call_session.get("conversation_history") if call_session else [])
 
                 input_state = {
                     "messages": history + [HumanMessage(content=transcript)],
@@ -392,7 +414,7 @@ async def recording_webhook(request: Request) -> Response:
                     "lead_language": detected_lang,
                     "kb_context": kb_text
                 }
-                
+
                 # Run the state machine (memory comes from the stored turns above)
                 final_state = await app.ainvoke(input_state)
                 
@@ -411,19 +433,19 @@ async def recording_webhook(request: Request) -> Response:
                 print(f"   (Outcome: {outcome})")
                 print(f"{'='*60}\n")
 
-                # 3. Save the turn before the next call can read the history
-                await _save_conversation_turn(
-                        session_id=session_id,
-                        call_sid=call_sid,
-                        user_text=transcript,
-                        ai_response=reply_text,
-                        detected_lang=detected_lang,
-                        repository=repository
+                # 3+4. Save the turn (the next turn reads it back) while TTS renders
+                _, audio_bytes = await asyncio.gather(
+                        _save_conversation_turn(
+                                session_id=session_id,
+                                call_sid=call_sid,
+                                user_text=transcript,
+                                ai_response=reply_text,
+                                detected_lang=detected_lang,
+                                repository=repository
+                        ),
+                        manager.generate_tts(text=reply_text, language=target_lang),
                 )
 
-                # 4. TTS Generation
-                audio_bytes = await manager.generate_tts(text=reply_text, language=target_lang)
-                
                 # 5. Cache audio bytes for Twilio <Play> fetch
                 audio_cache[call_sid] = audio_bytes
 
@@ -455,14 +477,20 @@ async def recording_webhook(request: Request) -> Response:
                 
                 # 7. Build returning TwiML with next recording
                 audio_url = client.build_base_url(f"/api/webhook/twilio/audio/{call_sid}")
-                record_url = client.build_base_url("/api/webhook/twilio/recording")
+                # Carry the session in the URL: the in-process call_sessions cache is
+                # lost on a restart/reload or when another API process takes the turn,
+                # and a missing session makes the webhook create a bogus lead.
+                record_path = "/api/webhook/twilio/recording"
+                if session_id and lead_id:
+                        record_path += f"?session_id={session_id}&lead_id={lead_id}"
+                record_url = client.build_base_url(record_path)
                 
                 # Update turn count
                 call_sessions[call_sid]["turn_count"] = turn_count
                 
                 twiml = f'''<Response>
                     <Play>{audio_url}</Play>
-                    <Record action="{record_url}" method="POST" playBeep="true" maxLength="60" trim="trim-silence" />
+                    <Record action="{xml_escape(record_url)}" method="POST" playBeep="true" maxLength="60" trim="trim-silence" />
                 </Response>'''
                 
                 return _xml_response(twiml)
@@ -474,7 +502,10 @@ async def recording_webhook(request: Request) -> Response:
                         media_type="application/xml",
                 )
 
-@router.get("/audio/{call_sid}", dependencies=[Depends(get_current_user)])
+# No auth dependency: Twilio fetches this URL itself from <Play> and cannot send a
+# bearer token, nor does it sign media fetches (only webhook callbacks are signed).
+# Gating it broke every call -- Twilio got a 401, could not play the reply, and hung up.
+@router.get("/audio/{call_sid}")
 async def fetch_audio(call_sid: str) -> Response:
         """Endpoint for Twilio <Play> to fetch the generated audio bytes."""
         audio_data = audio_cache.get(call_sid)

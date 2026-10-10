@@ -18,6 +18,10 @@ from services.llm.embedder import EmbedderService, EmbeddingError
 logger = logging.getLogger(__name__)
 
 
+# strong refs so fire-and-forget tasks are not garbage collected mid-flight
+_background_tasks: set = set()
+
+
 def parse_usage_log(raw) -> List[Dict]:
     """The kb_usage_log column as a list, whether the driver gave JSON text or a list."""
     if isinstance(raw, str):
@@ -159,12 +163,15 @@ class KBContextInjectionService:
             formatted_context = self._format_context_for_prompt(context_blocks)
             
             # 4. Store KB context usage in call session
-            await self._log_kb_usage(
+            # Analytics only: keep its two DB round-trips off the reply path
+            task = asyncio.create_task(self._log_kb_usage(
                 call_session_id=call_session_id,
                 doc_ids_used=doc_ids_used,
                 relevance_scores=relevance_scores,
                 user_query=user_text
-            )
+            ))
+            _background_tasks.add(task)
+            task.add_done_callback(_background_tasks.discard)
             
             logger.info(f"[KB_CTX] Formatted context ({len(context_blocks)} chunks, ~{int(total_tokens)} tokens)")
             
