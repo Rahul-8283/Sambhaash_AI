@@ -14,6 +14,7 @@ Classifies leads into HOT/WARM/COLD based on composite score:
 Also triggers RM assignment if HOT lead detected.
 """
 
+import json
 import logging
 from typing import Dict, List, Any, Optional
 from datetime import datetime
@@ -57,26 +58,33 @@ class ScoringEngine:
         logger.info("Scoring Engine initialized")
 
     @staticmethod
-    def extract_user_messages(conversation_history: List[Dict[str, str]]) -> List[str]:
+    def extract_user_messages(conversation_history) -> List[str]:
         """
-        Extract user messages from conversation history.
-        
-        Args:
-            conversation_history: List of turn dicts with 'role' and 'content'
-            
-        Returns:
-            List of user message strings
+        Extract the caller's utterances, oldest first.
+
+        Accepts the stored turn shape ``{"user": ..., "ai": ...}``, chat-style
+        ``{"role": "user", "content": ...}`` dicts, or the JSON text of either.
         """
-        if not conversation_history:
+        if isinstance(conversation_history, str):
+            try:
+                conversation_history = json.loads(conversation_history)
+            except ValueError:
+                return []
+        if not isinstance(conversation_history, list):
             return []
-        
+
         user_messages = []
         for turn in conversation_history:
-            if isinstance(turn, dict) and turn.get("role") == "user":
-                content = turn.get("content", "").strip()
-                if content:
-                    user_messages.append(content)
-        
+            if not isinstance(turn, dict):
+                continue
+            if turn.get("role") == "user":
+                content = turn.get("content")
+            else:
+                content = turn.get("user")
+            content = str(content or "").strip()
+            if content:
+                user_messages.append(content)
+
         return user_messages
 
     @staticmethod
@@ -119,112 +127,73 @@ class ScoringEngine:
         else:
             return LeadClassification.COLD
 
-    async def calculate_score(
+    def score_conversation(
         self,
-        lead_id: str,
-        user_messages: List[str] = None,
-        conversation_history: List[Dict[str, str]] = None,
+        conversation_history=None,
         duration_seconds: int = 0,
-        conversation_turns: int = None
     ) -> Dict[str, Any]:
         """
-        Calculate complete scoring for a lead.
-        
-        Args:
-            lead_id: UUID of the lead
-            user_messages: List of user message strings (if None, extract from history)
-            conversation_history: Full conversation history
-            duration_seconds: Call duration in seconds
-            conversation_turns: Total conversation turns
-            
-        Returns:
-            Dictionary containing all scores and classification
+        Score a conversation without touching the database.
+
+        Returns the component scores (0-1), the composite and the classification.
         """
-        # Extract user messages if not provided
-        if user_messages is None:
-            user_messages = self.extract_user_messages(conversation_history or [])
-        
-        logger.info(f"Calculating scores for lead {lead_id} with {len(user_messages)} messages")
-        
-        # Calculate individual scores
-        intent_result = IntentScoreCalculator.calculate(
-            user_messages,
-            conversation_history
-        )
+        user_messages = self.extract_user_messages(conversation_history)
+        turns = len(conversation_history) if isinstance(conversation_history, list) else None
+
+        intent_result = IntentScoreCalculator.calculate(user_messages, conversation_history)
+        engagement_result = EngagementScoreCalculator.calculate(user_messages, duration_seconds, turns)
+        sentiment_result = SentimentScoreCalculator.calculate(user_messages, conversation_history)
+
         intent_score = intent_result["intent_score"]
-        
-        engagement_result = EngagementScoreCalculator.calculate(
-            user_messages,
-            duration_seconds,
-            conversation_turns
-        )
         engagement_score = engagement_result["engagement_score"]
-        
-        sentiment_result = SentimentScoreCalculator.calculate(
-            user_messages,
-            conversation_history
-        )
         sentiment_score = sentiment_result["sentiment_score"]
-        
-        # Calculate composite score
-        composite_score = self.calculate_composite_score(
-            intent_score,
-            engagement_score,
-            sentiment_score
-        )
-        
-        # Classify lead
+
+        composite_score = self.calculate_composite_score(intent_score, engagement_score, sentiment_score)
         classification = self.classify_lead(composite_score)
-        
-        logger.info(
-            f"Lead {lead_id} Scores: Intent={intent_score:.3f}, "
-            f"Engagement={engagement_score:.3f}, Sentiment={sentiment_score:.3f}, "
-            f"Composite={composite_score:.3f} → {classification.value}"
-        )
-        
-        # Store score in database
-        try:
-            await self.repository.create_lead_score(
-                lead_id=lead_id,
-                interest_score=intent_score,
-                engagement_score=engagement_score,
-                sentiment_score=sentiment_score,
-                composite_score=composite_score,
-                classification=classification.value
-            )
-            logger.debug(f"Score stored for lead {lead_id}")
-        except Exception as e:
-            logger.error(f"Failed to store score for lead {lead_id}: {e}")
-            raise
-        
-        # If HOT lead, trigger RM assignment
-        should_assign_rm = False
-        if classification == LeadClassification.HOT:
-            should_assign_rm = True
-            logger.info(f"Lead {lead_id} is HOT - will be assigned to RM")
-        
-        # If WARM lead, flag for WhatsApp messaging (handled by messaging service)
-        should_send_whatsapp = False
-        if classification == LeadClassification.WARM:
-            should_send_whatsapp = True
-            logger.info(f"Lead {lead_id} is WARM - will receive WhatsApp message")
-        
+
         return {
-            "lead_id": lead_id,
             "composite_score": composite_score,
             "classification": classification.value,
             "intent_score": intent_score,
             "engagement_score": engagement_score,
             "sentiment_score": sentiment_score,
-            "should_assign_rm": should_assign_rm,
-            "should_send_whatsapp": should_send_whatsapp,
-            "timestamp": datetime.utcnow().isoformat(),
+            "should_assign_rm": classification == LeadClassification.HOT,
+            "should_send_whatsapp": classification == LeadClassification.WARM,
             "breakdown": {
                 "intent": intent_result,
                 "engagement": engagement_result,
-                "sentiment": sentiment_result
-            }
+                "sentiment": sentiment_result,
+            },
         }
+
+    async def calculate_score(
+        self,
+        lead_id: str,
+        call_session_id: str,
+        conversation_history=None,
+        duration_seconds: int = 0,
+    ) -> Dict[str, Any]:
+        """Score a conversation and store the result as a lead_scores row."""
+        result = self.score_conversation(conversation_history, duration_seconds)
+
+        logger.info(
+            f"Lead {lead_id} Scores: Intent={result['intent_score']:.3f}, "
+            f"Engagement={result['engagement_score']:.3f}, Sentiment={result['sentiment_score']:.3f}, "
+            f"Composite={result['composite_score']:.3f} -> {result['classification']}"
+        )
+
+        await self.repository.create_lead_score(
+            lead_id=lead_id,
+            call_session_id=call_session_id,
+            interest_score=result["intent_score"],
+            engagement_score=result["engagement_score"],
+            sentiment_score=result["sentiment_score"],
+            classification=result["classification"],
+        )
+
+        result["lead_id"] = lead_id
+        result["timestamp"] = datetime.utcnow().isoformat()
+        return result
 
     async def recalculate_scores_for_session(
         self,
@@ -255,9 +224,9 @@ class ScoringEngine:
             # Calculate scores
             result = await self.calculate_score(
                 lead_id=lead_id,
+                call_session_id=session_id,
                 conversation_history=conversation_history,
                 duration_seconds=duration_seconds,
-                conversation_turns=len(conversation_history)
             )
             
             return result

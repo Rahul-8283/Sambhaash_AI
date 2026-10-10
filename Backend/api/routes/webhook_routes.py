@@ -5,7 +5,7 @@ import logging
 import json
 from typing import Any, Dict, Optional
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import Response
@@ -114,41 +114,43 @@ async def _score_and_assign_lead(
         repository: Repository,
         scoring_engine: ScoringEngine,
         queue_manager: QueueManager,
-        user_engagement: int = 70,
-        user_interest: int = 70,
-        user_sentiment: int = 70,
         classification_override: Optional[str] = None
 ):
         """
-        Score lead based on conversation and auto-assign/follow-up.
-        
+        Score the lead from the stored conversation and auto-assign/follow-up.
+
+        The ScoringEngine scores the whole call (intent, engagement, sentiment).
+        A clear HOT or COLD signal from the caller (``classification_override``)
+        decides the classification; anything else (WARM / UNKNOWN / None) falls
+        back to the engine's own classification.
+
         Args:
                 lead_id: Lead ID
                 session_id: Call session ID
-                user_engagement: Engagement score (0-100)
-                user_interest: Interest score (0-100)
-                user_sentiment: Sentiment score (0-100)
+                classification_override: Outcome from the keyword heuristics
         """
         try:
-                # Normalize scores to 0-1
-                engagement = user_engagement / 100.0
-                interest = user_interest / 100.0
-                sentiment = user_sentiment / 100.0
-                
-                # Calculate composite score
-                composite = (interest + engagement + sentiment) / 3.0
-                
-                # Classify
-                if classification_override and classification_override in ["HOT", "WARM", "COLD"]:
+                session = await repository.get_call_session(session_id) or {}
+                history = session.get("conversation_history") or []
+
+                duration_seconds = 0
+                started_at = session.get("created_at")
+                if started_at:
+                        if started_at.tzinfo is None:
+                                started_at = started_at.replace(tzinfo=timezone.utc)
+                        duration_seconds = max(0, int((datetime.now(timezone.utc) - started_at).total_seconds()))
+
+                scored = scoring_engine.score_conversation(history, duration_seconds)
+                engagement = scored["engagement_score"]
+                interest = scored["intent_score"]
+                sentiment = scored["sentiment_score"]
+                composite = scored["composite_score"]
+
+                if classification_override in ("HOT", "COLD"):
                         classification = classification_override
                 else:
-                        if composite >= 0.75:
-                                classification = "HOT"
-                        elif composite >= 0.50:
-                                classification = "WARM"
-                        else:
-                                classification = "COLD"
-                
+                        classification = scored["classification"]
+
                 logger.info(f"Lead scoring: composite={composite:.2f} ({classification})")
                 
                 # Create score record
@@ -162,6 +164,9 @@ async def _score_and_assign_lead(
                 )
                 
                 logger.info(f"✅ Created lead score: {score_record['id']}")
+
+                if duration_seconds:
+                        await repository.update_call_session(session_id, duration_seconds=duration_seconds)
                 
                 # Update lead status. COLD leads must NOT go back to NEW: the call
                 # initiator dials every NEW lead each poll cycle, so that would
