@@ -44,14 +44,13 @@ class Settings(BaseSettings):
     
     # ==================== LLM ====================
     # Groq model for call replies. llama-3.3-70b-versatile is no longer available to this
-# key (404), and qwen3.8-27b is also the fastest of the models that are.
+    # key (404), and qwen3.8-27b is also the fastest of the models that are.
     llm_model_name: str = Field(default="qwen/qwen3.8-27b", env="LLM_MODEL_NAME")
     # Spoken replies are short; capping tokens bounds generation time
     llm_max_tokens: int = Field(default=160, env="LLM_MAX_TOKENS")
     # Groq Whisper model: turbo is several times faster than large-v3
     stt_model_name: str = Field(default="whisper-large-v3-turbo", env="STT_MODEL_NAME")
     llm_temperature: float = Field(default=0.2, env="LLM_TEMPERATURE")
-    llm_max_tokens: int = Field(default=700, env="LLM_MAX_TOKENS")
     
     openai_api_key: str = Field(default="sk-test-default", env="OPENAI_API_KEY")
     groq_api_key: str = Field(default="sk-test-default", env="GROQ_API_KEY")
