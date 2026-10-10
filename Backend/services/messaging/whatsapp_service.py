@@ -23,6 +23,41 @@ from utils.language import to_language_code
 logger = logging.getLogger(__name__)
 
 
+# Warm follow-up copy per language: (greeting, intro, offer header, offers, link label, question label).
+# hi/en are the original reviewed texts. The other languages are machine
+# translations of the same copy and need review by a native speaker before
+# going to real leads.
+_WARM_FOLLOW_UP_COPY = {
+    "mr": ("नमस्कार {name}! 👋", "हे Rupeezy कडून आहे. आपले संभाषण खूप छान झाले!", "तुमच्यासाठी खास ऑफर:",
+           ("त्वरित ₹5,000 पर्यंत कर्ज", "0% प्रक्रिया शुल्क", "5 मिनिटांत मंजुरी"), "लिंक", "काही प्रश्न? आम्हाला कॉल करा"),
+    "bn": ("নমস্কার {name}! 👋", "এটি Rupeezy থেকে। আপনার সঙ্গে আমাদের কথোপকথন খুব ভালো হয়েছে!", "আপনার জন্য বিশেষ অফার:",
+           ("তাৎক্ষণিক ₹5,000 পর্যন্ত ঋণ", "0% প্রসেসিং ফি", "5 মিনিটে অনুমোদন"), "লিঙ্ক", "কোনো প্রশ্ন? আমাদের কল করুন"),
+    "gu": ("નમસ્તે {name}! 👋", "આ Rupeezy તરફથી છે. તમારી સાથે અમારી વાતચીત ખૂબ સરસ રહી!", "તમારા માટે ખાસ ઑફર:",
+           ("તરત ₹5,000 સુધીની લોન", "0% પ્રોસેસિંગ ફી", "5 મિનિટમાં મંજૂરી"), "લિંક", "કોઈ પ્રશ્ન? અમને કૉલ કરો"),
+    "pa": ("ਸਤ ਸ੍ਰੀ ਅਕਾਲ {name}! 👋", "ਇਹ Rupeezy ਵੱਲੋਂ ਹੈ। ਤੁਹਾਡੇ ਨਾਲ ਸਾਡੀ ਗੱਲਬਾਤ ਬਹੁਤ ਵਧੀਆ ਰਹੀ!", "ਤੁਹਾਡੇ ਲਈ ਖ਼ਾਸ ਪੇਸ਼ਕਸ਼:",
+           ("ਤੁਰੰਤ ₹5,000 ਤੱਕ ਦਾ ਲੋਨ", "0% ਪ੍ਰੋਸੈਸਿੰਗ ਫ਼ੀਸ", "5 ਮਿੰਟ ਵਿੱਚ ਮਨਜ਼ੂਰੀ"), "ਲਿੰਕ", "ਕੋਈ ਸਵਾਲ? ਸਾਨੂੰ ਕਾਲ ਕਰੋ"),
+    "or": ("ନମସ୍କାର {name}! 👋", "ଏହା Rupeezy ପକ୍ଷରୁ। ଆପଣଙ୍କ ସହ ଆମର କଥାବାର୍ତ୍ତା ବହୁତ ଭଲ ହେଲା!", "ଆପଣଙ୍କ ପାଇଁ ବିଶେଷ ଅଫର:",
+           ("ତୁରନ୍ତ ₹5,000 ପର୍ଯ୍ୟନ୍ତ ଋଣ", "0% ପ୍ରୋସେସିଂ ଫି", "5 ମିନିଟରେ ଅନୁମୋଦନ"), "ଲିଙ୍କ", "କୌଣସି ପ୍ରଶ୍ନ? ଆମକୁ କଲ୍ କରନ୍ତୁ"),
+    "ta": ("வணக்கம் {name}! 👋", "இது Rupeezy சார்பில். உங்களுடன் எங்கள் உரையாடல் மிகவும் நன்றாக இருந்தது!", "உங்களுக்கான சிறப்பு சலுகை:",
+           ("உடனடி ₹5,000 வரை கடன்", "0% செயலாக்கக் கட்டணம்", "5 நிமிடங்களில் அனுமதி"), "இணைப்பு", "கேள்விகள் உள்ளதா? எங்களை அழையுங்கள்"),
+    "te": ("నమస్తే {name}! 👋", "ఇది Rupeezy నుండి. మీతో మా సంభాషణ చాలా బాగా జరిగింది!", "మీ కోసం ప్రత్యేక ఆఫర్:",
+           ("తక్షణమే ₹5,000 వరకు రుణం", "0% ప్రాసెసింగ్ ఫీజు", "5 నిమిషాల్లో ఆమోదం"), "లింక్", "ఏవైనా ప్రశ్నలు? మాకు కాల్ చేయండి"),
+    "kn": ("ನಮಸ್ಕಾರ {name}! 👋", "ಇದು Rupeezy ಕಡೆಯಿಂದ. ನಿಮ್ಮೊಂದಿಗೆ ನಮ್ಮ ಮಾತುಕತೆ ತುಂಬಾ ಚೆನ್ನಾಗಿತ್ತು!", "ನಿಮಗಾಗಿ ವಿಶೇಷ ಆಫರ್:",
+           ("ತಕ್ಷಣ ₹5,000 ವರೆಗೆ ಸಾಲ", "0% ಪ್ರಕ್ರಿಯೆ ಶುಲ್ಕ", "5 ನಿಮಿಷಗಳಲ್ಲಿ ಅನುಮೋದನೆ"), "ಲಿಂಕ್", "ಪ್ರಶ್ನೆಗಳಿವೆಯೇ? ನಮಗೆ ಕರೆ ಮಾಡಿ"),
+    "ml": ("നമസ്കാരം {name}! 👋", "ഇത് Rupeezy യിൽ നിന്നാണ്. നിങ്ങളുമായുള്ള ഞങ്ങളുടെ സംഭാഷണം വളരെ നന്നായിരുന്നു!", "നിങ്ങൾക്കായുള്ള പ്രത്യേക ഓഫർ:",
+           ("ഉടൻ ₹5,000 വരെ വായ്പ", "0% പ്രോസസ്സിംഗ് ഫീസ്", "5 മിനിറ്റിൽ അംഗീകാരം"), "ലിങ്ക്", "സംശയങ്ങളുണ്ടോ? ഞങ്ങളെ വിളിക്കുക"),
+}
+
+
+def _warm_follow_up_message(copy) -> str:
+    greeting, intro, header, offers, link_label, question = copy
+    lines = "\n".join(f"✅ {offer}" for offer in offers)
+    return (
+        f"{greeting}\n\n{intro}\n\n{header}\n{lines}\n\n"
+        f"{link_label}: https://rupeezy.app/offer/{{lead_id}}\n\n{question}: {{phone_number}}"
+    )
+
+
 class WhatsAppService:
     """
     Manages WhatsApp message sending via Twilio.
@@ -223,7 +258,7 @@ https://rupeezy.app/dashboard/{lead_id}
             template_key = f"conversion_{to_language_code(language)}"
             template = self.TEMPLATES.get(template_key)
             if not template:
-                template = self.TEMPLATES.get("conversion_hi")
+                template = self.TEMPLATES.get("conversion_en")
             
             # Format message
             message = template["message"].format(
@@ -363,3 +398,10 @@ https://rupeezy.app/dashboard/{lead_id}
         import re
         placeholders = re.findall(r'\{(\w+)\}', message)
         return list(set(placeholders))
+
+
+for _code, _copy in _WARM_FOLLOW_UP_COPY.items():
+    WhatsAppService.TEMPLATES[f"warm_follow_up_{_code}"] = {
+        "language": _code,
+        "message": _warm_follow_up_message(_copy),
+    }
