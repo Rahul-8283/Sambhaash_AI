@@ -57,8 +57,13 @@ outcome overrides the engine; otherwise the engine's classification is used
 | WARM | `INTERESTED` | `send_whatsapp` job (`warm_follow_up`) in the lead's language |
 | COLD | `FOLLOW_UP` | none; not re-dialled |
 
-A `send_summary` job is queued for every scored call. A caller who hangs up
-early is scored by the Twilio `status` webhook from what they said.
+A `send_summary` job is queued for every scored call.
+
+Twilio's `status` webhook handles the calls that do not reach scoring:
+`failed`, `busy`, `no-answer`, `canceled` and voicemail park the lead as
+`FOLLOW_UP`; a call that was answered but hung up before the caller said
+anything is also parked (there is nothing to score); a caller who spoke and then
+hung up is scored from what they said.
 
 ## 4. Data written
 
@@ -70,8 +75,10 @@ early is scored by the Twilio `status` webhook from what they said.
 | `lead_scores` | scoring |
 | `leads.status`, `leads.language` | scoring, language detection |
 | `rm_assignments` | HOT |
+| `objections_log` | objection turns (see below) |
 
-`objections_log` is never written.
+`objections_log` — one row per objection turn (type price / trust / timing /
+  not_interested / other), marked resolved if the call ends HOT.
 
 ## Latency budget
 

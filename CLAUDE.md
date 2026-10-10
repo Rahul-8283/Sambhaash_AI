@@ -90,7 +90,7 @@ Postgres (Supabase) reached two different ways, both live:
 - **`services/database/supabase_client.py`** — `asyncpg` connection pool, `statement_cache_size=0` for Supabase's PgBouncer transaction mode. `services/database/repository.py` is the data-access layer: ~39 async methods, **raw SQL only, returns plain dicts, no ORM mapping**.
 - **`services/database/models.py`** — SQLAlchemy models used *only* for `scripts/init_db.py` DDL and for the `LeadStatus` / `LeadClassification` enums imported elsewhere. Adding a column means editing both the model and the raw SQL that reads it.
 
-Tables: `leads`, `call_sessions`, `lead_scores`, `objections_log`, `documents`, `knowledge_base`, `rm_assignments`, `call_recordings`. Classification strings are uppercase `HOT`/`WARM`/`COLD` across backend and frontend — keep that casing.
+Tables: `leads`, `call_sessions`, `lead_scores`, `objections_log`, `documents`, `knowledge_base`, `rm_assignments`, `call_recordings`. Classification strings are uppercase `HOT`/`WARM`/`COLD` across backend and frontend — keep that casing. Lead statuses are `NEW`/`CONTACTED`/`INTERESTED`/`CONVERTED`/`REJECTED`/`FOLLOW_UP` (there is no FAILED); the frontend `LeadStatus` type mirrors them.
 
 `knowledge_base.embedding` is a text column, not a pgvector `Vector(n)` type, even though `init_db.py` enables the extension.
 
