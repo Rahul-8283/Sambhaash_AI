@@ -77,6 +77,9 @@ class Settings(BaseSettings):
     # ==================== SECURITY ====================
     # Verify X-Twilio-Signature on Twilio webhooks. Only disable for local debugging.
     twilio_validate_signatures: bool = Field(default=True, env="TWILIO_VALIDATE_SIGNATURES")
+    # Public lead form: requests allowed per client IP per window
+    public_rate_limit_max: int = Field(default=5, env="PUBLIC_RATE_LIMIT_MAX")
+    public_rate_limit_window_seconds: int = Field(default=600, env="PUBLIC_RATE_LIMIT_WINDOW_SECONDS")
     # Comma-separated list of frontend origins allowed to call the API
     cors_origins: str = Field(default="http://localhost:5173", env="CORS_ORIGINS")
     # Comma-separated Host headers the API accepts (ngrok/Render hostnames included)

@@ -7,7 +7,9 @@ from fastapi import APIRouter, HTTPException, Depends
 from typing import Dict, Any
 import logging
 
-from api.routes.lead_routes import LeadCreate, LeadResponse, get_repository
+from api.routes.lead_routes import LeadCreate, LeadResponse, get_repository, _format_lead_response
+from api.rate_limit import rate_limit
+from config import get_config
 from services.database.repository import Repository
 
 logger = logging.getLogger(__name__)
@@ -21,7 +23,16 @@ router = APIRouter(
 
 # ==================== ENDPOINTS ====================
 
-@router.post("/leads", response_model=LeadResponse, status_code=201)
+@router.post(
+    "/leads",
+    response_model=LeadResponse,
+    status_code=201,
+    dependencies=[Depends(rate_limit(
+        "public_leads",
+        get_config().public_rate_limit_max,
+        get_config().public_rate_limit_window_seconds,
+    ))],
+)
 async def create_public_lead(
     lead_data: LeadCreate,
     repo: Repository = Depends(get_repository)
@@ -47,10 +58,10 @@ async def create_public_lead(
         )
         
         logger.info(f"[PUBLIC] Successfully created lead: {lead['id']}")
-        return lead
+        return _format_lead_response(lead)
         
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"[PUBLIC] Error creating lead: {e}")
+        logger.exception(f"[PUBLIC] Error creating lead: {e}")
         raise HTTPException(status_code=500, detail="Failed to submit form")
