@@ -1,520 +1,188 @@
-# 🧠 Sambhaash AI - Backend Architecture
+# Sambhaash AI — Backend
 
-## 📁 Project Structure
+FastAPI service and background worker for outbound voice-AI lead qualification.
+Twilio places the call, Groq Whisper transcribes, a LangGraph graph writes the
+reply, Sarvam speaks it, and the outcome (HOT / WARM / COLD) drives RM
+assignment or a WhatsApp follow-up.
 
-```
-Backend/
-│
-├── main.py                    # FastAPI app entry point
-├── config.py                  # Configuration & environment
-│
-├── api/
-│   ├── routes/
-│   │   ├── call_routes.py        # 👤 Person 1 - Incoming calls
-│   │   ├── webhook_routes.py     # 👤 Person 1 - Twilio webhooks
-│   │   ├── lead_routes.py        # 👤 Person 4 - Lead management
-│   │   ├── rm_routes.py          # 👤 Person 4 - RM assignment
-│   │   └── health.py             # Health check endpoint
-│
-├── services/
-│   │
-│   ├── stt/                      # 👤 Person 1 - Speech to Text
-│   │   ├── whisper_service.py    # Whisper STT integration
-│   │   └── language_detector.py  # Language detection
-│   │
-│   ├── telephony/                # 👤 Person 1 - Call Management
-│   │   ├── twilio_client.py      # Twilio initialization
-│   │   └── call_manager.py       # Call lifecycle
-│   │
-│   ├── llm/                      # 👤 Person 2 - LLM Brain (CORE)
-│   │   ├── orchestrator.py       # Main conversation orchestrator
-│   │   ├── prompt_builder.py     # System prompt construction
-│   │   ├── state_machine.py      # Conversation flow
-│   │   ├── memory_manager.py     # Multi-turn memory
-│   │   ├── objection_handler.py  # Objection handling
-│   │   ├── intent_detector.py    # Intent classification
-│   │   └── rag_engine.py         # RAG (Appendix A retrieval)
-│   │
-│   ├── tts/                      # 👤 Person 3 - Text to Speech
-│   │   ├── sarvam_service.py     # Sarvam TTS integration
-│   │   └── audio_formatter.py    # Audio processing
-│   │
-│   ├── scoring/                  # 👤 Person 4 - Lead Scoring
-│   │   ├── scoring_engine.py     # Main scoring logic
-│   │   ├── intent_score.py       # Interest signals
-│   │   ├── engagement_score.py   # Engagement metrics
-│   │   └── sentiment_score.py    # Sentiment analysis
-│   │
-│   ├── messaging/                # 👤 Person 4 - WhatsApp
-│   │   └── whatsapp_service.py   # WhatsApp integration
-│   │
-│   └── database/                 # 👤 Person 4 - Database
-│       ├── supabase_client.py    # Supabase connection
-│       ├── models.py             # SQLAlchemy models
-│       └── repository.py         # Data access layer
-│
-├── utils/
-│   ├── logger.py                 # Logging setup
-│   ├── audio_utils.py            # Audio utilities
-│   └── text_utils.py             # Text utilities
-│
-├── worker/                       # 👤 Person 4 - Async Jobs
-│   ├── call_worker.py            # Background job processing
-│   └── queue_manager.py          # Queue management
-│
-├── scripts/
-│   ├── ingest_appendix.py        # KB ingestion script
-│   └── test_call.py              # Testing utility
-│
-└── docs/
-    ├── architecture.md           # Architecture docs
-    └── flow.md                   # Flow documentation
-```
+- Repository overview and architecture diagram: [`../README.md`](../README.md)
+- What works and what doesn't, with `file:line` references: [`../CODE_AUDIT.md`](../CODE_AUDIT.md)
+- Deeper guides: [`DOCS/`](DOCS/)
 
----
+## Stack (as implemented)
 
-## 👥 Team Responsibilities
+| Concern | Implementation |
+|---|---|
+| API | FastAPI, Python 3.11 (the Dockerfile target) |
+| Telephony | Twilio Voice (`<Record>` → webhook → `<Play>` loop) and Twilio WhatsApp |
+| STT | Groq-hosted Whisper through the OpenAI SDK, model `STT_MODEL_NAME` (default `whisper-large-v3-turbo`) |
+| LLM | Groq via `langchain-groq`, model `LLM_MODEL_NAME` (default `qwen/qwen3.8-27b`) |
+| Orchestration | LangGraph: intent routing → rag / objection / pitch → outcome (keyword heuristics) |
+| TTS | Sarvam `bulbul:v3`, each reply split in two and synthesized in parallel |
+| Embeddings | `all-MiniLM-L6-v2` (384-dim) run locally with fastembed/ONNX, no API key |
+| Scoring | `services/scoring` (intent / engagement / sentiment keyword scorers) |
+| Database | Supabase Postgres via `asyncpg`, raw SQL in `services/database/repository.py` |
+| Queue | Redis, hand-rolled priority queues in `worker/queue_manager.py` |
 
-### 👤 **Person 1: Telephony + STT (INPUT LAYER)**
-**Files Owned:**
-- `api/routes/call_routes.py`
-- `api/routes/webhook_routes.py`
-- `services/stt/`
-- `services/telephony/`
-
-**Responsibilities:**
-- Twilio call setup & management
-- Webhook handling for incoming calls
-- Audio streaming
-- Speech-to-Text (Whisper)
-- Language detection
-
-**Output Shape:**
-```json
-{
-  "text": "user said...",
-  "language": "hinglish"
-}
-```
-
----
-
-### 👤 **Person 2: LLM Orchestration (CORE BRAIN)** ⭐
-**Files Owned:**
-- `services/llm/`
-
-**Responsibilities:**
-- Conversation flow (state machine)
-- Prompt building & system prompts
-- Memory management (multi-turn)
-- Objection handling
-- RAG (Knowledge Base retrieval)
-- Intent detection
-
-**Input:**
-```json
-{
-  "text": "user message",
-  "history": [...],
-  "language": "hinglish"
-}
-```
-
-**Output Shape:**
-```json
-{
-  "reply": "AI response",
-  "stage": "objection",
-  "intent": "high",
-  "objections_raised": [...],
-  "objections_resolved": true
-}
-```
-
----
-
-### 👤 **Person 3: TTS (OUTPUT LAYER)**
-**Files Owned:**
-- `services/tts/`
-
-**Responsibilities:**
-- Convert text → speech
-- Audio formatting
-- Twilio voice playback
-
-**Input:**
-```json
-{
-  "reply": "AI response"
-}
-```
-
-**Output:**
-🎤 Voice audio via Twilio
-
----
-
-### 👤 **Person 4: Backend + DB + Scoring** (YOU)
-**Files Owned:**
-- `api/routes/lead_routes.py`
-- `api/routes/rm_routes.py`
-- `services/scoring/`
-- `services/database/`
-- `services/messaging/`
-- `worker/`
-
-**Responsibilities:**
-- Lead data management
-- Conversation logging & storage
-- Scoring engine (Hot/Warm/Cold)
-- RM routing & assignment
-- WhatsApp follow-ups
-- Async job queue
-- Database operations
-
-**Data Flow:**
-```
-Person 2 (LLM Output)
-    ↓
-Person 4 (Score + Classify + Store + Route)
-    ↓
-Decision:
-├─ HOT (≥0.75)   → Assign to RM
-├─ WARM (0.50-75) → Send WhatsApp
-└─ COLD (<0.50)  → Log for nurture
-```
-
----
-
-## 🔄 Data Flow
+## Layout
 
 ```
-[User Call]
-    ↓
-Person 1: STT
-  text + language
-    ↓
-Person 2: LLM Brain
-  reply + stage + intent
-    ↓
-Person 3: TTS
-  Voice output
-    ↓
-Person 4: Scoring + Storage + Routing
-  Score → Classification → Action
-  (DB Storage, RM Assignment, WhatsApp)
+api/            routers, Supabase JWT auth (auth.py), Twilio signature check, rate limit
+orchestration/  LangGraph graph, nodes, outcome heuristics, history rebuild
+services/
+  database/     asyncpg client, repository, SQLAlchemy models (DDL + enums only)
+  llm/          embedder, KB context injection, Groq client, summary generator
+  stt/          Whisper service, language detector
+  tts/          Sarvam service, audio formatter
+  telephony/    Twilio client, CallManager (TTS step)
+  messaging/    WhatsApp templates and sender
+  scoring/      scoring engine and calculators
+worker/         call initiator (dials NEW leads) and Redis job worker
+scripts/        init_db.py, migrate.py, migrations/
+tests/          pytest suite (no network, DB, Redis or Twilio needed)
 ```
 
----
+## Run it locally
 
-## 🛠️ Tech Stack
-
-| Component | Technology |
-|-----------|-----------|
-| **Framework** | FastAPI (Async) |
-| **Database** | Supabase (PostgreSQL) |
-| **ORM** | SQLAlchemy |
-| **STT** | OpenAI Whisper |
-| **LLM** | Groq (mixtral-8x7b) |
-| **Embeddings** | OpenAI (text-embedding-3-small) |
-| **KB Search** | Supabase pgvector |
-| **TTS** | Sarvam AI |
-| **Telephony** | Twilio |
-| **Messaging** | WhatsApp Business API (Twilio) |
-| **Queue** | Redis + RQ/Celery |
-
----
-
-## 🚀 Getting Started
-
-### Prerequisites
-- Python 3.11 (matches the Dockerfile)
-- Supabase account + API keys
-- OpenAI API key
-- Groq API key
-- Twilio account
-- Redis (for job queue)
-
-### Installation
 ```bash
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-
-# Install dependencies
+python3.11 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
+cp .env.example .env                 # then fill in the keys below
+docker run -d --name sambhaash-redis -p 6379:6379 redis:alpine
 
-# Setup environment
-cp .env.example .env
-# Fill in your API keys
+python scripts/init_db.py            # creates tables on a NEW database
+python -m uvicorn main:app --reload  # API on :8000, Swagger at /docs
+python run_worker.py                 # separate process: dialer + job worker
 ```
 
-### Run Backend
+Start the API before the worker: in `MODE=development` the API opens the ngrok
+tunnel and writes its URL to `ngrok_url.json`, which the worker reads.
+
+**Safety**
+
+- Supabase is a shared, live database in this project. Point development at a
+  separate Supabase project before running anything that writes.
+- The worker dials every `NEW` lead within 30 seconds. Do not start it while
+  `NEW` leads exist unless you intend real calls.
+- Twilio trial accounts can only call numbers under *Verified Caller IDs*, and
+  play a trial message that needs a keypress before the call connects.
+- `uvicorn --reload` restarts the server when a file changes, which drops a call
+  that is in progress. Do not edit code during a test call.
+- `MODE=development` with an `NGROK_AUTH_TOKEN` publishes a public tunnel on
+  startup. Use `MODE=production` locally to skip it.
+
+## Environment
+
+Loaded from `Backend/.env` by `config.py`. Unset secrets fall back to the
+sentinel `sk-test-default`, so a missing key degrades at call time rather than
+crashing startup.
+
+| Variable | Purpose |
+|---|---|
+| `DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_BUCKET_NAME` | database, JWT verification, KB file storage |
+| `GROQ_API_KEY` | Whisper and the reply LLM |
+| `LLM_MODEL_NAME`, `LLM_MAX_TOKENS`, `STT_MODEL_NAME` | model choice and reply cap (defaults above, 160 tokens) |
+| `SARVAM_API_KEY` | TTS |
+| `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_PHONE_NUMBER` | voice |
+| `TWILIO_WHATSAPP_FROM` | WhatsApp sender (`whatsapp:+14155238886` for the sandbox) |
+| `TWILIO_WEBHOOK_BASE_URL` | public URL Twilio calls back (ngrok or the deployed host) |
+| `TWILIO_VALIDATE_SIGNATURES` | keep `true` except for local debugging |
+| `REDIS_URL` | queue |
+| `NGROK_AUTH_TOKEN`, `MODE`, `ENVIRONMENT` | tunnel and mode |
+| `CORS_ORIGINS`, `TRUSTED_HOSTS` | comma-separated allow-lists |
+| `PUBLIC_RATE_LIMIT_MAX`, `PUBLIC_RATE_LIMIT_WINDOW_SECONDS` | landing-form limit (5 per 600 s per IP) |
+| `EMBEDDING_CACHE_DIR` | where the ONNX embedding model is cached |
+| `DEFAULT_RM_NAME`, `DEFAULT_COUNTRY_CODE`, `MAX_TURNS_PER_SESSION` | assignment name, phone normalization, call length |
+
+`HF_API_KEY` is no longer used.
+
+## How a call works
+
+1. The worker picks a `NEW` lead, creates a `call_sessions` row and asks Twilio
+   to call, with `session_id` and `lead_id` in the webhook URL.
+2. Twilio hits `POST /api/webhook/twilio/voice` (signature-checked), which
+   answers with a greeting and a `<Record>`.
+3. Each recording lands on `POST /api/webhook/twilio/recording`:
+   Whisper → language detection → KB lookup → LangGraph (with the call so far
+   rebuilt from `call_sessions.conversation_history`) → turn saved while TTS
+   renders → `<Play>` the reply and `<Record>` again. The next-turn URL carries
+   the session ids, so a restart does not lose the call.
+4. On a clear yes/no from the caller, or `MAX_TURNS_PER_SESSION`, the call is
+   scored by `ScoringEngine` and ended. A clear HOT/COLD keyword wins over the
+   engine's classification.
+5. HOT → assigned to `DEFAULT_RM_NAME`; WARM → WhatsApp follow-up job; COLD →
+   status `FOLLOW_UP` (never re-dialled). A summary job is always queued.
+
+Language: the language established on the call hints Whisper from turn 2 on,
+very short replies keep it, and the detected language is stored on the lead.
+
+## API
+
+Dashboard routes require a Supabase JWT (`Authorization: Bearer …`) unless noted.
+
+| Prefix | Notes |
+|---|---|
+| `/api/leads` | CRUD, search, CSV/JSON batch upload; `GET /{id}` includes sessions, score history, objections, notes |
+| `/api/rm` | `/{rm}/queue`, `POST /assign`, `POST /{rm}/{lead}/complete`, `/{rm}/dashboard`, `/leaderboard` |
+| `/api/calls` | `POST /outbound`, `POST /whatsapp`, `GET /status/{sid}` |
+| `/api/queue` | `/stats`, `/dlq`, `POST /dlq/{job}/retry` |
+| `/api/v1/summaries` | generated call summaries |
+| `/admin/kb` | `POST /upload`, `/documents`, `/search`, `/stats` |
+| `/admin/kb/analytics` | `/effectiveness`, `/call/{session}`, `/document-impact/{doc}` |
+| `/admin/recordings` | recordings, transcription, statistics |
+| `/api/public/leads` | no auth, rate limited per IP |
+| `/api/webhook/twilio/*` | `voice`, `recording`, `status`, `audio/{sid}` (no auth, Twilio fetches it), `whatsapp` |
+| `/api/webhook/whatsapp` | inbound WhatsApp replies for WARM leads (LLM answer) |
+| `/health` | liveness |
+
+Point the Twilio WhatsApp sandbox "When a message comes in" at
+`/api/webhook/whatsapp`, **not** `/api/webhook/twilio/whatsapp`: the latter
+returns a fixed canned reply.
+
+## Queue
+
+`JobType`: `send_whatsapp` (`warm_follow_up`, `conversion`, `custom`),
+`send_summary`, `assign_rm`, `update_score`, `process_recording`. Jobs retry with
+exponential backoff (1 s, 2 s, 4 s) and then land in the dead-letter queue,
+which `/api/queue/dlq` lists and can retry. `assign_rm`, `update_score` and
+`process_recording` have handlers but nothing enqueues them yet.
+
+## Database
+
+Tables: `leads`, `call_sessions`, `lead_scores`, `objections_log`, `documents`,
+`knowledge_base`, `rm_assignments`, `call_recordings`. `knowledge_base.embedding`
+is JSON text and similarity is computed in Python, not with pgvector operators.
+
+Schema changes live in `scripts/migrations/` and are idempotent:
+
 ```bash
-uvicorn main:app --reload --host 0.0.0.0 --port 8000
+python scripts/migrate.py            # list pending files
+python scripts/migrate.py --apply    # run them against DATABASE_URL
 ```
 
----
+`001_rm_conversion_notes.sql` and `002_lead_notes.sql` are not yet applied to
+the shared database; saving notes answers 503 until `002` is.
 
-## 📊 API Endpoints (By Person)
+## Tests
 
-### Person 1 - Call Management
-```
-POST   /api/call/start              # Initiate call
-POST   /api/webhooks/twilio         # Twilio webhook
-```
-
-### Person 4 - Lead & Scoring
-```
-POST   /api/leads                   # Create lead
-POST   /api/leads/batch-upload      # Bulk import
-GET    /api/leads                   # List all leads
-GET    /api/leads/{id}              # Get single lead
-
-GET    /api/rm/queue                # RM's HOT leads
-POST   /api/rm/{id}/assign          # Assign lead
-POST   /api/rm/{id}/complete        # Mark converted
-GET    /api/rm/dashboard            # RM dashboard
+```bash
+pip install -r requirements.txt
+pytest
 ```
 
----
-
-## 📝 Environment Variables (.env)
-
-Copy `Backend/.env.example` to `Backend/.env` and fill it in. The code reads these
-(see `Backend/config.py`):
-
-```env
-# Supabase
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-key
-DATABASE_URL=postgresql://...
-
-# LLM / STT / TTS
-GROQ_API_KEY=gsk_...
-HF_API_KEY=hf_...
-SARVAM_API_KEY=...
-
-# Telephony
-TWILIO_ACCOUNT_SID=AC...
-TWILIO_AUTH_TOKEN=...
-TWILIO_PHONE_NUMBER=+1...
-TWILIO_WHATSAPP_FROM=whatsapp:+1...
-TWILIO_WEBHOOK_BASE_URL=https://your-public-url   # ngrok or deployed URL
-
-# Security
-CORS_ORIGINS=http://localhost:5173                 # comma-separated frontend origins
-TRUSTED_HOSTS=localhost,127.0.0.1                  # add your ngrok/Render hostnames
-TWILIO_VALIDATE_SIGNATURES=true                    # keep true outside local debugging
-
-# Phone numbers without a country code are read with this code
-DEFAULT_COUNTRY_CODE=91
-
-# Queue and environment
-REDIS_URL=redis://localhost:6379
-MODE=development
-```
-
----
-
-
-
-
-# Sambhaash AI Backend (Person 1 Runbook)
-
-This guide documents the **Person 1 (Telephony + STT)** workflow for Sambhaash AI.
-
-Current implementation focus:
-- Twilio Voice webhook (record-and-process flow)
-- Whisper speech-to-text
-- Language detection (Hindi / English / Hinglish)
-- Twilio WhatsApp sandbox webhook
-
----
-
-## 1) What is implemented
-
-### Core files
-- `main.py` — FastAPI app entry
-- `config.py` — loads env vars from `Backend/.env`
-- `api/routes/webhook_routes.py` — Twilio webhooks
-- `api/routes/call_routes.py` — outbound call + WhatsApp trigger endpoints
-- `api/routes/health.py` — health/readiness checks
-- `services/telephony/twilio_client.py` — Twilio helper logic
-- `services/stt/whisper_service.py` — Whisper transcription
-- `services/stt/language_detector.py` — language classification
-
-### Active endpoints
-- `GET /` 
-- `GET /health`
-- `GET /ready`
-- `GET|POST /api/webhook/twilio/voice`
-- `POST /api/webhook/twilio/recording`
-- `POST /api/webhook/whatsapp` (LLM reply for WARM leads)
-- `POST /api/webhook/twilio/whatsapp` (canned-reply stub)
-- `POST /api/calls/outbound`
-- `POST /api/calls/whatsapp`
-- `GET /api/calls/status/{call_sid}`
-
----
-
-## 2) Person 1 → Person 2 handoff payload
-
-Person 1 prepares this payload after transcription + language detection:
-
-```json
-{
-  "call_sid": "CAxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-  "from_number": "+9198xxxxxxxx",
-  "recording_url": "https://api.twilio.com/...",
-  "recording_duration": "8",
-  "text": "hello I want to know about this",
-  "language": "hinglish"
-}
-```
-
-Where it currently appears:
-- Logged by `recording_webhook` in `api/routes/webhook_routes.py`
-- Log line contains: `Person 1 payload ready: {...}`
-
-Suggested next integration for Person 2:
-- Add a direct internal function call or queue publish right after payload creation.
-
----
-
-## 3) Local setup
-
-Run from repo root (`.\Sambhaash_AI`).
-
-```powershell
-python -m pip install -r .\Backend\requirements.txt
-```
-
-Make sure `Backend/.env` exists (copy `.env.example`) and contains at least:
-- `OPENAI_API_KEY`
-- `TWILIO_ACCOUNT_SID`
-- `TWILIO_AUTH_TOKEN`
-- `TWILIO_PHONE_NUMBER`
-- `TWILIO_WHATSAPP_FROM`
-
-Start backend:
-
-```powershell
-uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-```
-
----
-
-## 4) Quick local validation (before Twilio)
-
-In a new terminal:
-
-```powershell
-Invoke-WebRequest http://127.0.0.1:8000/health -UseBasicParsing
-Invoke-WebRequest http://127.0.0.1:8000/ready -UseBasicParsing
-```
-
-Expected:
-- HTTP 200 for both
-- `/ready` should show `twilio` and `openai` service flags
-
-Check Twilio voice webhook response XML:
-
-```powershell
-Invoke-WebRequest -Method POST http://127.0.0.1:8000/api/webhook/twilio/voice -UseBasicParsing
-```
-
-Expected response body contains TwiML tags like `<Response>`, `<Say>`, `<Record>`.
-
----
-
-## 5) ngrok setup (to receive Twilio webhooks)
-
-Install ngrok, then expose your local backend:
-
-```powershell
-ngrok http 8000
-```
-
-Copy the HTTPS forwarding URL from ngrok, e.g.:
-- `https://abcd-12-34-56-78.ngrok-free.app`
-
-Optional but recommended: set this in `Backend/.env`:
-- `TWILIO_WEBHOOK_BASE_URL=https://abcd-12-34-56-78.ngrok-free.app`
-
-Restart backend after env updates.
-
----
-
-## 6) Twilio Voice testing (step-by-step)
-
-1. Open Twilio Console → **Phone Numbers** → your active number.
-2. Under **Voice Configuration**:
-   - A call comes in → **Webhook**
-   - URL: `https://<your-ngrok-url>/api/webhook/twilio/voice`
-   - Method: `HTTP POST`
-3. Save configuration.
-4. Call your Twilio number from your phone.
-5. Speak after the beep and wait for processing.
-6. Inspect backend logs for:
-   - inbound webhook log
-   - transcription log (`Person 1 payload ready`)
-   - detected language
-
-If you do not get transcription:
-- confirm ngrok URL is live
-- verify Twilio number webhook method is POST
-- verify the Groq key in `Backend/.env`
-- verify Twilio account SID/token in `Backend/.env`
-
----
-
-## 7) Twilio WhatsApp sandbox testing (step-by-step)
-
-You already joined sandbox (good ✅).
-
-1. In Twilio Console → **Messaging** → **Try it out** → **WhatsApp Sandbox**.
-2. Set **When a message comes in** webhook URL to:
-   - `https://<your-ngrok-url>/api/webhook/whatsapp`
-   - Method: `HTTP POST`
-3. From your WhatsApp, send a test message to sandbox number (`+14155238886`).
-4. You should receive auto XML-driven response:
-   - “Thanks for messaging Sambhaash AI...”
-
----
-
-## 8) API test commands
-
-### Trigger outbound call
-
-```powershell
-$body = @{ phone_number = "+91XXXXXXXXXX" } | ConvertTo-Json
-Invoke-RestMethod -Method POST -Uri http://127.0.0.1:8000/api/calls/outbound -ContentType "application/json" -Body $body
-```
-
-### Trigger WhatsApp send API
-
-```powershell
-$body = @{ phone_number = "+91XXXXXXXXXX" } | ConvertTo-Json
-Invoke-RestMethod -Method POST -Uri http://127.0.0.1:8000/api/calls/whatsapp -ContentType "application/json" -Body $body
-```
-
----
-
-## 9) Known prototype constraints
-
-- Current voice flow is recording-based, not real-time streaming.
-- Person 2 handoff is currently logging payload (not yet queue/API integrated).
-- TTS loopback to caller is minimal and can be expanded by Person 3 integration.
-
----
-
-## 10) Security note (important)
-
-If any credentials were ever committed to git history, rotate them immediately:
-- Twilio auth token
-- OpenAI API key
-- Supabase keys
-- Any other provider secrets
-
-Keep secrets only in `Backend/.env` (ignored by git).
+No network, database, Redis, Twilio or Groq is needed: the suite covers outcome
+and language handling, scoring, TTS splitting, WhatsApp templates, the embedder's
+failure mode, rate limiting, Twilio signatures, KB analytics, and whole calls
+through the recording webhook with fakes for every external service.
+
+## Troubleshooting
+
+| Symptom | Likely cause |
+|---|---|
+| Every turn says "Sorry, I could not process your input" | the Groq model is unavailable to your key (`404 model_not_found`); set `LLM_MODEL_NAME` to one from `GET /openai/v1/models` |
+| KB never used, `kb_available: false` | embedding model failed to load; check the startup log and `EMBEDDING_CACHE_DIR` |
+| Webhooks return 403 | wrong `TWILIO_AUTH_TOKEN`, or the public URL differs from `TWILIO_WEBHOOK_BASE_URL` |
+| Webhooks return 503 | auth token unset, or the server was reloading |
+| Call connects then ends in ~15 s | Twilio trial keypress prompt, or the recording webhook failed (see Twilio Console → Monitor → Alerts) |
+| `/api/queue/stats` 500 | Redis not running |
+| WARM lead gets a canned reply on WhatsApp | sandbox pointed at the wrong webhook (see API section) |
