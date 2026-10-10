@@ -42,7 +42,11 @@ npx tsc -b         # type-check only
 
 ### Tests
 
-There is no test suite — no pytest files, no `pytest.ini`/`pyproject.toml`, no frontend test runner, despite `pytest` being in `requirements.txt`. `Backend/test_initiator.py` and `Backend/scripts/test_call.py` are ad-hoc manual scripts, not pytest tests. Verification is done by starting the API and hitting endpoints, or by `npx tsc -b` / `npm run build` on the frontend.
+```bash
+cd Backend && pytest        # ~90 tests, no network/DB/Redis/Twilio/Groq needed
+```
+
+`Backend/tests/` covers outcome and language handling, scoring, TTS splitting, templates, the embedder's failure mode, rate limiting, Twilio signatures, KB analytics, and whole calls through the recording webhook (`test_call_flow.py`) using fakes from `tests/conftest.py`. Add a test with every behaviour change; `test_call_flow.py` is the place to prove a turn-loop fix. There is no frontend test runner; verify the frontend with `npx tsc -b` / `npm run build`. `Backend/test_initiator.py` and `Backend/scripts/test_call.py` are ad-hoc manual scripts, not part of the suite.
 
 ## Architecture
 
@@ -69,7 +73,7 @@ The graph is compiled **without** a checkpointer on purpose — memory comes fro
 
 ### LangGraph graph
 
-`orchestration/graph.py`: entry `analyze_intent_node` → conditional edge to one of `rag_node` / `objection_handler_node` / `pitch_node` → `scoring_node` → `END`. State is `AgentState` (`orchestration/state.py`), a TypedDict whose `messages` field is `Annotated[list, operator.add]` so node returns append rather than replace. The shared `ChatGroq` instance (`llama-3.3-70b-versatile`) is also in `state.py` — note it hardcodes the model, ignoring `config.llm_model_name`.
+`orchestration/graph.py`: entry `analyze_intent_node` → conditional edge to one of `rag_node` / `objection_handler_node` / `pitch_node` → `scoring_node` → `END`. State is `AgentState` (`orchestration/state.py`), a TypedDict whose `messages` field is `Annotated[list, operator.add]` so node returns append rather than replace. The shared `ChatGroq` instance is in `state.py` and takes its model and token cap from `config.llm_model_name` / `config.llm_max_tokens` (default `qwen/qwen3.8-27b`; Groq retired `llama-3.3-70b-versatile` for this key).
 
 Routing in `analyze_intent_node` and outcome detection in `orchestration/outcome.py` are **keyword heuristics**, not LLM calls. `outcome.py` matches whole words only (so "yesterday" is not "yes") and scores the whole call, newest decisive utterance winning.
 
@@ -123,7 +127,7 @@ With `MODE=development`, the **API process** opens the tunnel on startup (`servi
 
 ## Other docs
 
-`instructions.txt` (root) is the end-to-end local run checklist. `Backend/DOCS/` holds feature guides (`AUTOMATIC_CALL_SETUP.md`, `MESSAGING_WORKER_GUIDE.md`, `PHASE_2A_GUIDE.md`). `Backend/README.md` still carries the original per-person ownership split and some stale stack claims (it names OpenAI/mixtral where the code uses Groq Llama and local fastembed embeddings) — `CODE_AUDIT.md` §11 catalogues that drift.
+`Backend/README.md` is the backend reference (stack, env vars, routes, run/safety notes, troubleshooting). `Backend/DOCS/` has `CALL_FLOW.md`, `MESSAGING_AND_QUEUE.md` and `KNOWLEDGE_BASE.md`. `instructions.txt` is the short local run checklist and `Frontend/README.md` covers the dashboard. These were rewritten to match the code; if you change behaviour they describe, update them in the same commit. `CODE_AUDIT.md` §11 is the historical record of the old drift.
 
 ## Git workflow
 

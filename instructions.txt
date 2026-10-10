@@ -7,7 +7,7 @@ SAMBHAASH AI - SYSTEM RUN & SETUP CHECKLIST (FRONTEND + BACKEND)
 ----------------------------------------------------------------------
 Ensure you have the following installed on your host system:
 - Node.js (v18 or higher)
-- Python (v3.10 or higher)
+- Python 3.11 (matches the Dockerfile)
 - Docker Desktop (for starting Redis)
 - Git (optional, for code sync)
 
@@ -56,7 +56,7 @@ $ cp .env.example .env
 
 Ensure you populate Backend/.env with active keys:
 - Supabase details (SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, DATABASE_URL)
-- LLM Provider API details (GROQ_API_KEY, SARVAM_API_KEY, HF_API_KEY)
+- AI provider keys (GROQ_API_KEY, SARVAM_API_KEY). Embeddings run locally, no key needed.
 - Telephony Credentials (TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER)
 
 Step D: Run a local Redis container instance (Required for task processing queues)
@@ -68,8 +68,14 @@ $ python -m uvicorn main:app --reload
 * The FastAPI server is active at: http://127.0.0.1:8000
 * Swagger API Documentation is active at: http://127.0.0.1:8000/docs
 
-Step F: Start the asynchronous background queue task worker
+Step F: Start the background worker (call dialer + job processor)
 $ python run_worker.py
+
+  WARNING: it dials every lead with status NEW within 30 seconds. Use a
+  separate Supabase project for development and verified phone numbers only.
+
+Step G: Run the test suite (no external services needed)
+$ pytest
 
 ----------------------------------------------------------------------
 4. TUNNELING WEBHOOKS FOR TELEPHONY & WHATSAPP

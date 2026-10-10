@@ -18,17 +18,17 @@
 
 **Sambhaash AI** is an enterprise-grade multilingual voice AI platform designed to automate lead generation and overcome linguistic barriers in business outreach. Traditional telecalling operations suffer from massive manual overhead and high drop-off rates when agents cannot converse in a lead’s native tongue. 
 
-To solve this, Sambhaash AI acts as an autonomous telephony orchestrator that seamlessly conducts outbound calls in over 10 regional Indian languages with human-like, sub-second latency, completely automating the initial engagement and qualification process. 
+To solve this, Sambhaash AI acts as an autonomous telephony orchestrator that seamlessly conducts outbound calls in 11 Indian languages, answering each turn in a couple of seconds, completely automating the initial engagement and qualification process. 
 
 ---
 
 ## Key Features
 
-- **High-Fidelity Multilingual Speech Engine:** Full support for 10 major Indian languages using Sarvam BulBul V3 and Groq Whisper.
+- **Multilingual Speech Engine:** English, Hindi and nine regional languages (Marathi, Bengali, Gujarati, Punjabi, Odia, Tamil, Telugu, Kannada, Malayalam) using Sarvam BulBul V3 for speech and Groq Whisper for transcription. The language spoken on the call is detected, remembered and used for the reply and the follow-up.
 - **Dynamic RAG Knowledge Base:** Real-time semantic knowledge retrieval during live calls using local sentence-transformer embeddings and pgvector to handle complex client objections on the fly.
-- **Intelligent Lead Routing:** Analyzes call sentiment and automatically routes "Hot" leads directly to human Relationship Managers (RMs).
-- **WhatsApp Follow-up Agent:** Automatically engages "Warm" leads post-call via context-aware WhatsApp chats to nurture them toward conversion.
-- **Unified Admin Dashboard:** A beautiful React-based command center to upload CSV leads, monitor real-time AI accuracy, and view call transcripts.
+- **Lead Scoring & Routing:** Scores each call on intent, engagement and sentiment and classifies it HOT / WARM / COLD. HOT leads are assigned to a Relationship Manager queue on the dashboard; COLD leads are not re-dialled.
+- **WhatsApp Follow-up Agent:** Sends WARM leads a follow-up in their own language and answers their replies with an LLM.
+- **Unified Admin Dashboard:** A React command center to upload CSV leads, manage the knowledge base, review each call's transcript, score and summary, and work the RM queue.
 
 ---
 
@@ -56,7 +56,7 @@ graph TD
     FastAPI{FastAPI Backend}
     LangGraph((LangGraph Orchestrator))
     Whisper[Groq Whisper STT]
-    Llama[Groq Llama 3 8B]
+    LLM[Groq Qwen 3.8 27B]
     Sarvam[Sarvam BulBul V3 TTS]
 
     Admin -->|Uploads Leads| ReactUI
@@ -69,8 +69,8 @@ graph TD
     Twilio -->|Audio Bytes| Whisper
     Whisper -->|Transcribed Text| LangGraph
     LangGraph <-->|Semantic Search| PgVector
-    LangGraph <-->|Context & State| Llama
-    Llama -->|Generated Text| Sarvam
+    LangGraph <-->|Context & State| LLM
+    LLM -->|Generated Text| Sarvam
     Sarvam -->|Synthesized Audio| Twilio
     
     LangGraph -->|Sentiment & Intent Scoring| RedisQueue
@@ -81,11 +81,11 @@ graph TD
 
 ### How It Works (The Lifecycle)
 
-1. **Lead Ingestion & Queuing:** Administrators upload campaign lists via the React dashboard. Leads are securely stored in **Supabase**, and outreach jobs are asynchronously scheduled into a **Redis task queue** to prevent bottlenecks.
-2. **Telephony & Real-Time STT:** When a call connects via **Twilio SIP**, the live bidirectional audio stream is captured. The user's speech is chunked and streamed to **Groq Whisper** for ultra-fast, sub-second Speech-to-Text (STT) transcription.
-3. **Cognitive Processing & RAG:** The transcribed text enters our **LangGraph** orchestration pipeline. Here, the system queries a **pgvector** database (using local MiniLM embeddings) to fetch relevant knowledge base articles, ensuring the AI can handle complex, domain-specific objections accurately via **Llama 3 (8B)**.
-4. **Synthesis (TTS) & Action:** The generated response text is instantly synthesized into high-fidelity, emotionally resonant regional audio using **Sarvam AI (BulBul V3)** and streamed back to the user.
-5. **Intelligent Handoff:** Post-call, LangGraph evaluates the entire transcript's sentiment and intent. **"Hot"** leads instantly trigger a live handoff to a Relationship Manager (RM), while **"Warm"** leads are automatically nurtured via our context-aware **WhatsApp Follow-up Agent**.
+1. **Lead Ingestion:** Administrators upload campaign lists via the React dashboard. Numbers are normalized to E.164 and leads are stored in **Supabase** with status `NEW`.
+2. **Dialing:** A background worker picks up `NEW` leads and has **Twilio** place the call. Each caller utterance is recorded and posted to the backend, which answers with the next spoken reply (a record-and-respond loop, not a live audio stream).
+3. **Transcription & Retrieval:** **Groq Whisper** transcribes the recording and the language is detected. The utterance is embedded locally and matched against the knowledge base to pull relevant chunks.
+4. **Reasoning & Speech:** A **LangGraph** graph, given the call so far, picks a pitch / objection / knowledge-answer path and writes a short reply with a **Groq**-hosted LLM, which **Sarvam BulBul V3** synthesizes in the caller's language.
+5. **Scoring & Follow-up:** When the caller gives a clear yes or no, or the call reaches its turn limit, the whole conversation is scored. **HOT** leads are assigned to a Relationship Manager's queue, **WARM** leads receive a WhatsApp follow-up in their language, and **COLD** leads are parked. A call summary is generated for every scored call.
 
 ---
 
@@ -101,7 +101,7 @@ graph TD
 <img src="https://img.shields.io/badge/Supabase-3ECF8E?style=for-the-badge&logo=supabase&logoColor=white" /> <img src="https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white" /> <img src="https://img.shields.io/badge/pgvector-316192?style=for-the-badge&logo=postgresql&logoColor=white" /> <img src="https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white" />
 
 ### APIs & AI Models  
-<img src="https://img.shields.io/badge/Groq-F55036?style=for-the-badge&logo=groq&logoColor=white" /> <img src="https://img.shields.io/badge/Meta_Llama_3-040D21?style=for-the-badge&logo=meta&logoColor=white" /> <img src="https://img.shields.io/badge/OpenAI_Whisper-412991?style=for-the-badge&logo=openai&logoColor=white" /> <img src="https://img.shields.io/badge/Sarvam.ai--BulBul_V3-FF5A5F?style=for-the-badge" /> <img src="https://img.shields.io/badge/Twilio-F22F46?style=for-the-badge&logo=twilio&logoColor=white" /> <img src="https://img.shields.io/badge/Hugging_Face-FFD21E?style=for-the-badge&logo=huggingface&logoColor=black" />
+<img src="https://img.shields.io/badge/Groq-F55036?style=for-the-badge&logo=groq&logoColor=white" /> <img src="https://img.shields.io/badge/OpenAI_Whisper-412991?style=for-the-badge&logo=openai&logoColor=white" /> <img src="https://img.shields.io/badge/Sarvam.ai--BulBul_V3-FF5A5F?style=for-the-badge" /> <img src="https://img.shields.io/badge/Twilio-F22F46?style=for-the-badge&logo=twilio&logoColor=white" />
 
 ### Hosting & DevOps  
 <img src="https://img.shields.io/badge/Render-46E3B7?style=for-the-badge&logo=render&logoColor=white" /> <img src="https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white" /> <img src="https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white" />
@@ -130,6 +130,8 @@ graph TD
 - Docker (for Redis)
 - API Keys: Supabase, Groq, Sarvam, Twilio, Ngrok
 
+See [`Backend/README.md`](Backend/README.md) for configuration, safety notes and troubleshooting, and [`CODE_AUDIT.md`](CODE_AUDIT.md) for what is and is not implemented.
+
 ### Setup Instructions:
 ```bash
 # 1. Frontend Setup
@@ -147,16 +149,20 @@ cp .env.example .env # Configure environment variables
 
 # 3. Start Infrastructure & Workers
 docker run -d --name sambhaash-redis -p 6379:6379 redis:alpine
-python run_worker.py # Start async background worker
+python run_worker.py # Start dialer + job worker (it calls every NEW lead: see Backend/README.md)
 
-# 4. Start Backend API
+# 4. Start Backend API (start this before the worker)
 python -m uvicorn main:app --reload
+
+# 5. Run the tests (no external services needed)
+pytest
 ```
 
 ---
 
 ## Future Scope
 
+- **Real RM allocation:** a roster, round-robin or workload-based assignment, RM notifications, a per-RM dashboard and a live call transfer for HOT leads.
 - **More integrations:** Native integrations with standard CRM systems (Salesforce, HubSpot) to automatically update lead statuses and log call transcripts.
 - **Security enhancements:** Enhanced access controls and PII redaction during LLM processing.
 - **Localization / broader accessibility:** Expanding to international language models for global outreach and implementing custom voice branding/cloning.
