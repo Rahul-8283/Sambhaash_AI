@@ -77,7 +77,7 @@ Routing in `analyze_intent_node` and outcome detection in `orchestration/outcome
 
 The old `Orchestrator` stack (state machine, intent detector, memory manager, objection handler, RAG engine) was deleted; the LangGraph graph in `orchestration/` is the only conversational brain. `services/llm/` now holds `embedder.py`, `kb_context_injection.py`, `llm_client.py`, `summary_generator.py`, `prompt_builder.py` (summary prompt only) and `response_validator.py`.
 
-`services/scoring/` (`ScoringEngine` and friends) is instantiated in the webhook but never actually called: `_score_and_assign_lead` computes a composite from hardcoded `70/70/70` defaults and an override from the graph's keyword outcome. Wiring it in is the next planned change (`CODE_AUDIT.md` §1.3).
+`services/scoring/` is live: `_score_and_assign_lead` calls `ScoringEngine.score_conversation` on the stored history and duration. A clear HOT/COLD keyword outcome from the graph still overrides the engine's classification. The calculators are English-only keyword lists with uncalibrated thresholds.
 
 `Backend/utils/audio_utils.py`, `utils/logger.py`, `utils/text_utils.py`, `utils/__init__.py` and `scripts/ingest_appendix.py` are all 0 bytes. `utils/phone.py` (E.164 normalization) and `utils/language.py` (language-code normalization + reply-language instruction) are real and used.
 
