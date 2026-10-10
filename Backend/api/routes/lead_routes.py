@@ -175,10 +175,10 @@ async def create_lead(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Error creating lead: {str(e)}")
+        logger.exception(f"Error creating lead: {e}")
         raise HTTPException(
             status_code=500,
-            detail=f"Error creating lead: {str(e)}"
+            detail="Error creating lead"
         )
 
 
