@@ -24,7 +24,9 @@ export const ProfileSettingsPage: React.FC = () => {
         try {
           const parsed = JSON.parse(saved);
           if (parsed.role) savedRole = parsed.role;
-        } catch (e) {}
+        } catch {
+          // malformed saved profile: use the default role
+        }
       }
 
       if (session?.user) {

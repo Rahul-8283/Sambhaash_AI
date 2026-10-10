@@ -13,7 +13,6 @@ const QueueDashboard: React.FC = () => {
 
   const fetchData = async () => {
     try {
-      setIsLoading(true);
       const [statsRes, jobsRes] = await Promise.all([
         apiService.getQueueStats(),
         apiService.getDlqJobs(50) // Fetch up to 50 jobs
@@ -88,7 +87,7 @@ const QueueDashboard: React.FC = () => {
         </div>
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <button
-            onClick={fetchData}
+            onClick={() => { setIsLoading(true); fetchData(); }}
             className="flex items-center gap-2 px-3 md:px-4 py-2 bg-[#faedcd] border border-[#d4a373]/30 text-[#3d2b1f] font-bold rounded-lg hover:bg-[#faedcd]/80 transition-all shadow-sm text-sm cursor-pointer"
           >
             <RefreshCw size={18} className={isLoading ? "animate-spin" : ""} />
@@ -202,7 +201,7 @@ const QueueDashboard: React.FC = () => {
                         </div>
                       </td>
                       <td className="p-4 text-sm text-[#3d2b1f]/70">
-                        {new Date(job.updated_at || job.created_at || Date.now()).toLocaleString()}
+                        {job.updated_at || job.created_at ? new Date((job.updated_at || job.created_at) as string).toLocaleString() : "-"}
                       </td>
                       <td className="p-4 text-right">
                         <button

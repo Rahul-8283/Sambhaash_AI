@@ -83,7 +83,7 @@ export const DataTable = React.forwardRef<
     }
   };
 
-  let sortedData = [...data];
+  const sortedData = [...data];
   if (sortKey) {
     sortedData.sort((a, b) => {
       const aVal = a[sortKey as keyof typeof a];

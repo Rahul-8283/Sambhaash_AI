@@ -383,7 +383,7 @@ export const LeadsPage: React.FC = () => {
                   sortable: true,
                   render: (value) => {
                     const code = value as string;
-                    const entry = Object.entries(LANGUAGE_MAP).find(([_, val]) => val === code);
+                    const entry = Object.entries(LANGUAGE_MAP).find(([, val]) => val === code);
                     return <span className="text-sm font-bold text-[#3d2b1f]/85">{entry ? entry[0] : code}</span>;
                   },
                 },

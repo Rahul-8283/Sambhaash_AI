@@ -49,7 +49,9 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick, hideMenuButton }) =
         try {
           const parsed = JSON.parse(saved);
           if (parsed.role) return parsed.role;
-        } catch (e) {}
+        } catch {
+          // malformed saved profile: use the default role
+        }
       }
       return "Administrator";
     };

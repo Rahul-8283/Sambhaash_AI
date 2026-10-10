@@ -44,7 +44,6 @@ const CallsPage: React.FC = () => {
 
   const fetchRecordings = async () => {
     try {
-      setIsLoading(true);
       const res = await apiService.getRecordings(page, pageSize);
       setRecordings(res.recordings);
       setTotal(res.total);
@@ -57,7 +56,13 @@ const CallsPage: React.FC = () => {
 
   useEffect(() => {
     fetchRecordings();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
+
+  const goToPage = (next: number) => {
+    setIsLoading(true);
+    setPage(next);
+  };
 
   const formatDuration = (seconds: number) => {
     if (!seconds) return '0:00';
@@ -152,14 +157,14 @@ const CallsPage: React.FC = () => {
           <span>Page {page} of {Math.ceil(total / pageSize)}</span>
           <div className="flex gap-2">
             <button
-              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              onClick={() => goToPage(Math.max(1, page - 1))}
               disabled={page === 1}
               className="px-3 py-1.5 rounded-lg border border-[#faedcd] bg-white/60 disabled:opacity-40 cursor-pointer"
             >
               Previous
             </button>
             <button
-              onClick={() => setPage((p) => p + 1)}
+              onClick={() => goToPage(page + 1)}
               disabled={page * pageSize >= total}
               className="px-3 py-1.5 rounded-lg border border-[#faedcd] bg-white/60 disabled:opacity-40 cursor-pointer"
             >

@@ -34,8 +34,7 @@ export const RMPage: React.FC = () => {
   const [submitting, setSubmitting] = useState(false);
 
   // Load hot leads
-  const fetchHotLeads = async () => {
-    setLoading(true);
+  const loadHotLeads = async () => {
     try {
       // Get leads with Hot classification
       const response = await apiService.getLeads({
@@ -51,8 +50,14 @@ export const RMPage: React.FC = () => {
     }
   };
 
+  // Refresh after an action: show the spinner again
+  const fetchHotLeads = async () => {
+    setLoading(true);
+    await loadHotLeads();
+  };
+
   useEffect(() => {
-    fetchHotLeads();
+    loadHotLeads();
   }, []);
 
   // Filter leads

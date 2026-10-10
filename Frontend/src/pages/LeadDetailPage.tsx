@@ -132,7 +132,7 @@ export const LeadDetailPage: React.FC = () => {
             <div>
               <p className="text-xs font-bold text-[#3d2b1f]/60 uppercase tracking-wider">Language Preference</p>
               <p className="font-bold text-[#2d1e18] mt-0.5">
-                {Object.entries(LANGUAGE_MAP).find(([_, val]) => val === lead.language)?.[0] || lead.language}
+                {Object.entries(LANGUAGE_MAP).find(([, val]) => val === lead.language)?.[0] || lead.language}
               </p>
             </div>
             <div>

@@ -14,21 +14,21 @@ const AppendixPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadFiles();
-  }, []);
-
   const loadFiles = async () => {
     setIsLoading(true);
     try {
       const storedFiles = await apiService.listDocuments();
       setFiles(storedFiles);
-    } catch (err) {
+    } catch {
       setError("Failed to load documents from server");
     } finally {
       setIsLoading(false);
     }
   };
+
+  useEffect(() => {
+    loadFiles();
+  }, []);
 
   const handleFileSelected = async (file: File) => {
     setIsLoading(true);
@@ -70,7 +70,7 @@ const AppendixPage: React.FC = () => {
         setSuccessMessage("Document deleted successfully");
         setTimeout(() => setSuccessMessage(null), 3000);
         loadFiles();
-      } catch (err) {
+      } catch {
         setError("Failed to delete document from server");
       } finally {
         setIsLoading(false);
