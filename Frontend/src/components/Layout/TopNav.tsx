@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Menu, Bell, LogOut, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "../../services/supabase";
+import { apiService } from "../../services/apiService";
 
 interface TopNavProps {
   onMenuClick: () => void;
@@ -11,7 +12,27 @@ interface TopNavProps {
 export const TopNav: React.FC<TopNavProps> = ({ onMenuClick, hideMenuButton }) => {
   const navigate = useNavigate();
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [notifications] = useState(0);
+  // HOT leads that an RM has not yet converted: the work waiting for follow-up
+  const [notifications, setNotifications] = useState(0);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    const loadPending = async () => {
+      try {
+        const response = await apiService.getLeads({ classification: ["HOT"] }, { page: 1, limit: 100 });
+        const pending = response.data.filter((lead) => !lead.rmAssignment?.converted).length;
+        if (!cancelled) setNotifications(pending);
+      } catch {
+        if (!cancelled) setNotifications(0);
+      }
+    };
+    loadPending();
+    const timer = window.setInterval(loadPending, 60000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+    };
+  }, []);
 
   const [currentUser, setCurrentUser] = React.useState({
     name: "ADMIN",
@@ -103,7 +124,9 @@ export const TopNav: React.FC<TopNavProps> = ({ onMenuClick, hideMenuButton }) =
         {/* Notifications */}
         <div className="relative">
           <button
-            aria-label="Show notifications"
+            aria-label={notifications > 0 ? `${notifications} HOT leads awaiting follow-up` : "No HOT leads awaiting follow-up"}
+            title={notifications > 0 ? `${notifications} HOT leads awaiting follow-up` : "No HOT leads awaiting follow-up"}
+            onClick={() => navigate("/dashboard/rm")}
             className="p-2.5 bg-white/40 hover:bg-[#faedcd]/60 rounded-lg transition-colors relative border border-[#faedcd]/40 shadow-sm">
             <Bell size={20} className="text-[#3d2b1f]" />
             {notifications > 0 && (

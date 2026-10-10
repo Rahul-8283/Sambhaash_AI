@@ -2,7 +2,7 @@
  * Reusable data table component
  */
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import clsx from "clsx";
 
@@ -37,6 +37,18 @@ export const DataTable = React.forwardRef<
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
   const [selectedRows, setSelectedRows] = useState<Set<any>>(new Set());
+
+  // Drop selected ids that are no longer on screen (page or filter change), so the
+  // "select all" checkbox and the parent's selection never refer to hidden rows
+  useEffect(() => {
+    const present = new Set(data.map((r) => r[rowKey]));
+    const kept = new Set([...selectedRows].filter((id) => present.has(id)));
+    if (kept.size !== selectedRows.size) {
+      setSelectedRows(kept);
+      if (onSelectionChange) onSelectionChange(data.filter((r) => kept.has(r[rowKey])));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data]);
 
   const handleSort = (key: string) => {
     if (sortKey === key) {

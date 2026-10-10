@@ -40,33 +40,14 @@ export const Footer: React.FC = () => {
           </ul>
         </div>
 
-        {/* Settings Column */}
-        <div className="space-y-3 hidden md:block">
-          <h4 className="text-xs font-black text-[#2d1e18] uppercase tracking-wider">AI Config Workspace</h4>
-          <ul className="space-y-2 text-xs font-bold text-[#3d2b1f]/70">
-            <li>
-              <button className="hover:text-[#d4a373] transition-colors cursor-pointer bg-transparent border-none p-0">Prompt Guidelines</button>
-            </li>
-            <li>
-              <button className="hover:text-[#d4a373] transition-colors cursor-pointer bg-transparent border-none p-0">Language Routing</button>
-            </li>
-            <li>
-              <button className="hover:text-[#d4a373] transition-colors cursor-pointer bg-transparent border-none p-0">Retry Policies</button>
-            </li>
-            <li>
-              <button className="hover:text-[#d4a373] transition-colors cursor-pointer bg-transparent border-none p-0">Webhooks & API Keys</button>
-            </li>
-          </ul>
-        </div>
-
         {/* Core Tech Column */}
         <div className="space-y-3 hidden md:block">
           <h4 className="text-xs font-black text-[#2d1e18] uppercase tracking-wider">Our AI Stack</h4>
           <ul className="space-y-2 text-xs font-bold text-[#3d2b1f]/70">
-            <li className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#d4a373]" /> Groq LLaMA 3.3</li>
+            <li className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#d4a373]" /> Groq Qwen 3.8</li>
             <li className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#d4a373]" /> Sarvam Bulbul V3</li>
-            <li className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#d4a373]" /> Whisper Large V3</li>
-            <li className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#d4a373]" /> Supabase pgvector</li>
+            <li className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#d4a373]" /> Whisper Large V3 Turbo</li>
+            <li className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-[#d4a373]" /> Supabase + local MiniLM embeddings</li>
           </ul>
         </div>
       </div>
