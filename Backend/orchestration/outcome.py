@@ -3,6 +3,11 @@ Keyword-based call outcome detection
 
 Matches whole words only, so "I don't know" does not count as "no" and
 "yesterday" does not count as "yes".
+
+A bare "no"/"stop" only ends the call when it stands alone. Inside a longer
+sentence it is usually a discourse marker, not a refusal: a live call ended on
+"No, just tell me what this project is about and what you actually do" -- a
+request for information that was scored COLD and hung up on.
 """
 
 import json
@@ -23,6 +28,18 @@ _NEGATED_INTEREST = re.compile(
 )
 
 
+# A standalone refusal is short ("no", "no thanks", "no, stop calling"). Longer
+# utterances containing "no" are treated as unsignalled, so the call continues.
+_MAX_BARE_REFUSAL_WORDS = 3
+
+
+def _is_bare_refusal(text: str) -> bool:
+    """True when the whole utterance is a short refusal rather than a sentence."""
+    if "?" in text:
+        return False
+    return len(text.split()) <= _MAX_BARE_REFUSAL_WORDS
+
+
 def classify_utterance(text: str) -> Optional[str]:
     """Return "HOT" or "COLD" if the utterance carries a clear signal, else None."""
     if not text:
@@ -31,7 +48,7 @@ def classify_utterance(text: str) -> Optional[str]:
         return "COLD"
     if _HOT_PATTERN.search(text):
         return "HOT"
-    if _COLD_PATTERN.search(text):
+    if _COLD_PATTERN.search(text) and _is_bare_refusal(text):
         return "COLD"
     return None
 

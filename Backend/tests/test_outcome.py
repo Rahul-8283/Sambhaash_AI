@@ -45,3 +45,24 @@ def test_objection_types():
     assert classify_objection("not interested") == "not_interested"
     assert classify_objection("hmm") == "other"
     assert classify_objection("") == "other"
+
+
+def test_bare_refusal_ends_the_call_but_a_discourse_marker_does_not():
+    # the live call that regressed: an information request, not a refusal
+    assert classify_utterance("No, just tell me what this project is about and what you actually do") is None
+    assert classify_utterance("no problem, go on") is None
+    assert classify_utterance("I have no questions right now") is None
+    # short standalone refusals still end the call
+    assert classify_utterance("No.") == "COLD"
+    assert classify_utterance("no thanks") == "COLD"
+    assert classify_utterance("no, stop calling") == "COLD"
+    # a question is never a refusal, however short
+    assert classify_utterance("no?") is None
+
+
+def test_long_refusals_still_caught_by_negated_interest():
+    assert classify_utterance("look, I am really not interested in any of this") == "COLD"
+
+
+def test_discourse_marker_leaves_the_call_warm():
+    assert classify_outcome(["No, just tell me what this is about", "hello"]) == "WARM"
