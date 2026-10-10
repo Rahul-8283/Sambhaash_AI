@@ -153,6 +153,34 @@ export interface ApiError {
   detail?: string | any;
 }
 
+/**
+ * FastAPI returns `detail` as a string for HTTPException, but as an array of
+ * {loc, msg} objects for 422 validation errors. Without flattening, the array
+ * reaches the UI and renders as "[object Object]".
+ */
+interface ValidationDetail {
+  loc?: unknown[];
+  msg?: string;
+}
+
+function formatDetail(detail: unknown): string | undefined {
+  if (typeof detail === 'string') return detail;
+  if (Array.isArray(detail)) {
+    const messages = detail
+      .map((item: unknown) => {
+        if (typeof item === 'string') return item;
+        const entry = item as ValidationDetail;
+        if (!entry?.msg) return null;
+        // loc is like ["body", "email"]; the last entry names the offending field
+        const field = Array.isArray(entry.loc) ? entry.loc[entry.loc.length - 1] : undefined;
+        return field ? `${String(field)}: ${entry.msg}` : entry.msg;
+      })
+      .filter((m): m is string => Boolean(m));
+    if (messages.length > 0) return messages.join('; ');
+  }
+  return undefined;
+}
+
 // ==================== API SERVICE CLASS ====================
 
 class ApiService {
@@ -208,7 +236,7 @@ class ApiService {
       const data = error.response.data as any;
       return {
         status: error.response.status,
-        message: data.detail || data.message || 'An error occurred',
+        message: formatDetail(data.detail) || data.message || 'An error occurred',
         detail: data.detail,
       };
     }

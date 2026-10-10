@@ -6,7 +6,9 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Upload, Filter } from "lucide-react";
+import toast from "react-hot-toast";
 import { apiService } from "../services/apiService";
+import type { ApiError } from "../services/apiService";
 import type { Lead, LeadFilters, LeadStatus } from "../types";
 import DataTable from "../components/DataTable";
 import Badge from "../components/Badge";
@@ -125,7 +127,8 @@ export const LeadsPage: React.FC = () => {
       setPage(1);
     } catch (error) {
       console.error("Error creating lead:", error);
-      alert("Failed to create lead.");
+      const { message } = error as ApiError;
+      toast.error(message || "Failed to create lead.");
     } finally {
       setLoading(false);
     }
