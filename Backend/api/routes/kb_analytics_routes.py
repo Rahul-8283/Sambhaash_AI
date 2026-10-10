@@ -11,7 +11,7 @@ import logging
 
 from services.database.supabase_client import get_db_client, SupabaseClient
 from services.database.repository import Repository
-from services.llm.kb_context_injection import KBContextInjectionService
+from services.llm.kb_context_injection import KBContextInjectionService, parse_usage_log
 
 logger = logging.getLogger(__name__)
 
@@ -105,6 +105,11 @@ async def get_call_kb_analytics(
         raise HTTPException(status_code=500, detail="Failed to get analytics")
 
 
+def _usage_entries(raw) -> List[Dict[str, Any]]:
+    """Valid usage entries (dicts) from a session's kb_usage_log."""
+    return [e for e in parse_usage_log(raw) if isinstance(e, dict)]
+
+
 @router.get(
     "/effectiveness",
     response_model=KBEffectivenessMetrics,
@@ -115,131 +120,80 @@ async def get_kb_effectiveness(
     limit_days: int = Query(7, ge=1, le=90, description="Analyze last N days"),
 ) -> KBEffectivenessMetrics:
     """
-    Get aggregate metrics about KB effectiveness.
-    
-    Metrics:
-    - Total calls analyzed
-    - Calls that used KB context
-    - Average documents used per call
-    - Average relevance score
-    - Most frequently used documents
-    - KB coverage (% of calls using KB)
+    Aggregate KB usage over the last N days, computed from each call's kb_usage_log.
+
+    - total_calls_analyzed: calls started in the window
+    - calls_with_kb_usage: calls where at least one KB lookup returned context
+    - avg_documents_per_call: average KB lookups per call
+    - avg_relevance_score: mean similarity of every retrieved chunk (0 if none)
+    - most_used_documents: documents by number of retrievals
+    - kb_coverage_percentage: % of calls that used the KB
+
+    With no usage the metrics are zero and the list is empty.
     """
     try:
-        import json
         repo = Repository(db)
-        
-        # Query recent calls with KB usage using robust JSON type check
-        query = f"""
-        SELECT 
-            COUNT(*) as total_calls,
-            SUM(CASE WHEN kb_usage_log IS NOT NULL AND json_typeof(kb_usage_log) = 'array' AND json_array_length(kb_usage_log) > 0 THEN 1 ELSE 0 END) as calls_with_kb,
-            AVG(CASE WHEN kb_usage_log IS NOT NULL AND json_typeof(kb_usage_log) = 'array' THEN json_array_length(kb_usage_log) ELSE 0 END) as avg_queries,
-            MAX(created_at) as latest_call
-        FROM call_sessions
-        WHERE created_at > NOW() - INTERVAL '{limit_days} days'
-        """
-        
-        stats = await repo.db.execute_fetchone(query, ())
-        
-        total_calls = int(stats.get("total_calls", 0)) if stats and stats.get("total_calls") is not None else 0
-        calls_with_kb = int(stats.get("calls_with_kb", 0)) if stats and stats.get("calls_with_kb") is not None else 0
-        avg_queries = float(stats.get("avg_queries", 0)) if stats and stats.get("avg_queries") is not None else 0.0
-        
-        # Calculate coverage
-        kb_coverage = (calls_with_kb / total_calls * 100) if total_calls > 0 else 0.0
-        
-        # Query most used documents by casting JSON to text for grouping
-        most_used_query = f"""
-        SELECT 
-            kb_usage_log::text as kb_usage_log_text,
-            COUNT(*) as usage_count
-        FROM call_sessions
-        WHERE created_at > NOW() - INTERVAL '{limit_days} days'
-        AND kb_usage_log IS NOT NULL 
-        AND json_typeof(kb_usage_log) = 'array' 
-        AND json_array_length(kb_usage_log) > 0
-        GROUP BY kb_usage_log::text
-        ORDER BY usage_count DESC
-        LIMIT 5
-        """
-        
-        rows = await repo.db.execute_query(most_used_query, ())
-        
-        doc_counts = {}
-        doc_relevance = {}
-        
-        for row in rows:
-            try:
-                log_text = row.get("kb_usage_log_text")
-                usage_count = row.get("usage_count", 1)
-                if log_text:
-                    entries = json.loads(log_text)
-                    for entry in entries:
-                        docs = entry.get("documents_used", [])
-                        scores = entry.get("relevance_scores", [])
-                        for idx, doc in enumerate(docs):
-                            doc_counts[doc] = doc_counts.get(doc, 0) + usage_count
-                            score = scores[idx] if idx < len(scores) else 0.8
-                            doc_relevance.setdefault(doc, []).append(score)
-            except Exception as e:
-                logger.error(f"Error parsing kb_usage_log entry: {e}")
-                
-        # Build most_used_documents dynamically
-        most_used_documents = []
-        for doc, count in sorted(doc_counts.items(), key=lambda x: x[1], reverse=True)[:5]:
-            scores = doc_relevance.get(doc, [0.8])
-            avg_rel = sum(scores) / len(scores) if scores else 0.8
-            most_used_documents.append({
-                "document_name": doc,
-                "usage_count": count,
-                "avg_relevance": round(avg_rel, 2)
-            })
-            
-        # Fetch actually uploaded documents from database to populate analytics dynamically!
-        try:
-            uploaded_docs = await repo.list_documents()
-            for idx, udoc in enumerate(uploaded_docs):
-                doc_name = udoc.get("file_name", "Unknown File")
-                # Check if this document is already in the list
-                if not any(d["document_name"] == doc_name for d in most_used_documents):
-                    # Give it beautiful, distinct usage counts and relevance scores for presentation
-                    demo_count = 35 - (idx * 8) if idx < 4 else 10
-                    demo_count = max(demo_count, 6)
-                    most_used_documents.append({
-                        "document_name": doc_name,
-                        "usage_count": demo_count,
-                        "avg_relevance": round(0.86 - (idx * 0.04), 2)
-                    })
-        except Exception as doc_err:
-            logger.error(f"Error querying uploaded documents for active analytics fallback: {doc_err}")
 
-        # Fallback to defaults if absolutely no logs and no uploaded docs exist yet
-        if not most_used_documents:
-            most_used_documents = [
-                {
-                    "document_name": "Appendix A",
-                    "usage_count": 42,
-                    "avg_relevance": 0.82
-                },
-                {
-                    "document_name": "FAQ",
-                    "usage_count": 28,
-                    "avg_relevance": 0.78
-                }
-            ]
-            
+        rows = await repo.db.execute_query(
+            """
+            SELECT kb_usage_log
+            FROM call_sessions
+            WHERE created_at > NOW() - make_interval(days => $1)
+            """,
+            (limit_days,),
+        )
+
+        total_calls = len(rows)
+        calls_with_kb = 0
+        total_queries = 0
+        all_scores: List[float] = []
+        doc_counts: Dict[str, int] = {}
+        doc_scores: Dict[str, List[float]] = {}
+
+        for row in rows:
+            entries = _usage_entries(row.get("kb_usage_log"))
+            total_queries += len(entries)
+            used_kb = False
+            for entry in entries:
+                docs = entry.get("documents_used") or []
+                scores = entry.get("relevance_scores") or []
+                for idx, doc_id in enumerate(docs):
+                    used_kb = True
+                    doc_counts[doc_id] = doc_counts.get(doc_id, 0) + 1
+                    if idx < len(scores):
+                        all_scores.append(float(scores[idx]))
+                        doc_scores.setdefault(doc_id, []).append(float(scores[idx]))
+            if used_kb:
+                calls_with_kb += 1
+
+        top = sorted(doc_counts.items(), key=lambda kv: kv[1], reverse=True)[:5]
+        names: Dict[str, str] = {}
+        if top:
+            for doc in await repo.list_documents():
+                names[str(doc.get("id"))] = doc.get("file_name") or "Unknown document"
+
+        most_used_documents = [
+            {
+                "document_id": doc_id,
+                "document_name": names.get(doc_id, "Deleted document"),
+                "usage_count": count,
+                "avg_relevance": round(sum(doc_scores[doc_id]) / len(doc_scores[doc_id]), 2)
+                if doc_scores.get(doc_id) else 0.0,
+            }
+            for doc_id, count in top
+        ]
+
         logger.info(f"[KB_ANALYTICS] Effectiveness: {calls_with_kb}/{total_calls} calls used KB")
-        
+
         return KBEffectivenessMetrics(
             total_calls_analyzed=total_calls,
             calls_with_kb_usage=calls_with_kb,
-            avg_documents_per_call=avg_queries,
-            avg_relevance_score=0.75,
+            avg_documents_per_call=(total_queries / total_calls) if total_calls else 0.0,
+            avg_relevance_score=(sum(all_scores) / len(all_scores)) if all_scores else 0.0,
             most_used_documents=most_used_documents,
-            kb_coverage_percentage=kb_coverage
+            kb_coverage_percentage=(calls_with_kb / total_calls * 100) if total_calls else 0.0,
         )
-    
+
     except Exception as e:
         logger.error(f"[KB_ANALYTICS] Effectiveness error: {e}")
         raise HTTPException(status_code=500, detail="Failed to get effectiveness metrics")
@@ -251,39 +205,79 @@ async def get_kb_effectiveness(
     summary="Get impact metrics for a specific KB document"
 )
 async def get_document_impact(
-    doc_id: str,
+    doc_id: UUID,
+    limit_days: int = Query(30, ge=1, le=365, description="Analyze last N days"),
     db: SupabaseClient = Depends(get_db_client),
 ) -> Dict[str, Any]:
     """
-    Get impact metrics for a specific KB document.
-    
-    Shows:
-    - How many times this document was retrieved
-    - Average relevance score when retrieved
-    - Success rate in calls (did lead convert after KB retrieval)
-    - Top queries that triggered this document
+    How a document was used: retrievals, average relevance, calls that used it,
+    how many of those leads were converted, and the queries that retrieved it.
     """
     try:
-        logger.info(f"[KB_ANALYTICS] Document impact analysis: {doc_id}")
-        
-        # In production, would query call sessions and track which documents were used
-        # and correlate with conversion outcomes
-        
+        repo = Repository(db)
+        doc_key = str(doc_id)
+
+        document = await repo.db.execute_fetchone(
+            "SELECT id, file_name FROM documents WHERE id = $1", (doc_key,)
+        )
+        if not document:
+            raise HTTPException(status_code=404, detail="Document not found")
+
+        rows = await repo.db.execute_query(
+            """
+            SELECT cs.kb_usage_log, l.status AS lead_status
+            FROM call_sessions cs
+            LEFT JOIN leads l ON l.id = cs.lead_id
+            WHERE cs.created_at > NOW() - make_interval(days => $1)
+            """,
+            (limit_days,),
+        )
+
+        times_retrieved = 0
+        scores: List[float] = []
+        calls_using = 0
+        converted = 0
+        queries: Dict[str, int] = {}
+
+        for row in rows:
+            used = False
+            for entry in _usage_entries(row.get("kb_usage_log")):
+                docs = entry.get("documents_used") or []
+                relevance = entry.get("relevance_scores") or []
+                for idx, used_id in enumerate(docs):
+                    if used_id != doc_key:
+                        continue
+                    used = True
+                    times_retrieved += 1
+                    if idx < len(relevance):
+                        scores.append(float(relevance[idx]))
+                    query = (entry.get("query") or "").strip()
+                    if query:
+                        queries[query] = queries.get(query, 0) + 1
+            if used:
+                calls_using += 1
+                if str(row.get("lead_status") or "").upper() == "CONVERTED":
+                    converted += 1
+
+        top_queries = [
+            {"query": q, "count": c}
+            for q, c in sorted(queries.items(), key=lambda kv: kv[1], reverse=True)[:5]
+        ]
+
         return {
-            "document_id": doc_id,
-            "times_retrieved": 24,
-            "avg_relevance_score": 0.81,
-            "calls_using_document": 24,
-            "leads_converted_with_this_doc": 6,
-            "conversion_rate": 0.25,
-            "top_queries": [
-                {"query": "How to use this product", "count": 5},
-                {"query": "Pricing information", "count": 4},
-                {"query": "Features and benefits", "count": 3}
-            ],
-            "impact_score": 0.78
+            "document_id": doc_key,
+            "document_name": document.get("file_name"),
+            "days_analyzed": limit_days,
+            "times_retrieved": times_retrieved,
+            "avg_relevance_score": round(sum(scores) / len(scores), 3) if scores else 0.0,
+            "calls_using_document": calls_using,
+            "leads_converted_with_this_doc": converted,
+            "conversion_rate": round(converted / calls_using, 3) if calls_using else 0.0,
+            "top_queries": top_queries,
         }
-    
+
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"[KB_ANALYTICS] Document impact error: {e}")
         raise HTTPException(status_code=500, detail="Failed to get document impact")

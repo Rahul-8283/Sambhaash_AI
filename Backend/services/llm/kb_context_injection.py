@@ -17,6 +17,16 @@ from services.llm.embedder import EmbedderService
 logger = logging.getLogger(__name__)
 
 
+def parse_usage_log(raw) -> List[Dict]:
+    """The kb_usage_log column as a list, whether the driver gave JSON text or a list."""
+    if isinstance(raw, str):
+        try:
+            raw = json.loads(raw)
+        except ValueError:
+            return []
+    return raw if isinstance(raw, list) else []
+
+
 class KBContextInjectionService:
     """
     Retrieves KB context for calls and formats for LLM injection.
@@ -241,7 +251,7 @@ class KBContextInjectionService:
                 return
             
             # Parse existing KB usage log
-            kb_usage = json.loads(session.get("kb_usage_log", "[]"))
+            kb_usage = parse_usage_log(session.get("kb_usage_log"))
             
             # Add new usage entry
             usage_entry = {
@@ -280,7 +290,7 @@ class KBContextInjectionService:
             if not session:
                 return {"error": "Session not found"}
             
-            kb_usage = json.loads(session.get("kb_usage_log", "[]"))
+            kb_usage = parse_usage_log(session.get("kb_usage_log"))
             
             if not kb_usage:
                 return {
