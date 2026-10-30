@@ -4,6 +4,7 @@ Handles recording storage, transcription, and analysis
 """
 
 import logging
+import re
 from typing import Optional, Dict, Any
 from uuid import UUID
 from datetime import datetime
@@ -16,6 +17,10 @@ from services.storage_client import SupabaseStorageClient
 from services.stt.whisper_service import WhisperService
 
 logger = logging.getLogger(__name__)
+
+
+def _contains_word(text: str, words) -> bool:
+    return any(re.search(r"\b" + re.escape(w) + r"\b", text) for w in words)
 
 
 class CallRecordingService:
@@ -228,7 +233,7 @@ class CallRecordingService:
             }
             
             for topic, keywords in topic_keywords.items():
-                if any(kw in text_lower for kw in keywords):
+                if _contains_word(text_lower, keywords):
                     topics.append(topic)
             
             return topics[:5]  # Return top 5
@@ -247,8 +252,8 @@ class CallRecordingService:
             positive_words = ["great", "excellent", "good", "love", "perfect", "amazing", "wonderful", "fantastic", "thanks"]
             negative_words = ["bad", "terrible", "hate", "worst", "awful", "issue", "problem", "concern", "worry", "unfortunately"]
             
-            pos_count = sum(1 for word in positive_words if word in text_lower)
-            neg_count = sum(1 for word in negative_words if word in text_lower)
+            pos_count = sum(1 for word in positive_words if _contains_word(text_lower, [word]))
+            neg_count = sum(1 for word in negative_words if _contains_word(text_lower, [word]))
             
             if pos_count > neg_count:
                 return "positive"
