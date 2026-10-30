@@ -51,6 +51,9 @@ class FakeRepository:
     async def assign_lead_to_rm(self, *args):
         self.writes.append(("rm", args))
 
+    async def get_rm_open_counts(self, rm_names):
+        return {}
+
     async def get_lead(self, lead_id):
         return {"phone": "+910000000000", "language": "en"}
 

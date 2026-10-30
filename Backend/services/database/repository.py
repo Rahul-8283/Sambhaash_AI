@@ -718,6 +718,19 @@ class Repository:
         logger.info(f"✅ Assigned lead {lead_id} to RM: {rm_name}")
         return result
     
+    async def get_rm_open_counts(self, rm_names: List[str]) -> Dict[str, int]:
+        """Open (unconverted) assignments per RM, for load-balanced allocation."""
+        rows = await self.db.execute_query(
+            """
+            SELECT rm_name, COUNT(*) AS open_count
+            FROM rm_assignments
+            WHERE converted = FALSE AND rm_name = ANY($1::text[])
+            GROUP BY rm_name
+            """,
+            (rm_names,),
+        )
+        return {row["rm_name"]: int(row["open_count"]) for row in rows}
+
     async def get_rm_queue(self, rm_name: str) -> List[Dict[str, Any]]:
         """
         Get all HOT leads assigned to an RM.

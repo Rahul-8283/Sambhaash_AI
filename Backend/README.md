@@ -92,7 +92,7 @@ crashing startup.
 | `CORS_ORIGINS`, `TRUSTED_HOSTS` | comma-separated allow-lists |
 | `PUBLIC_RATE_LIMIT_MAX`, `PUBLIC_RATE_LIMIT_WINDOW_SECONDS` | landing-form limit (5 per 600 s per IP) |
 | `EMBEDDING_CACHE_DIR` | where the ONNX embedding model is cached |
-| `DEFAULT_RM_NAME`, `DEFAULT_COUNTRY_CODE`, `MAX_TURNS_PER_SESSION` | assignment name, phone normalization, call length |
+| `RM_ROSTER` (`Asha:+9198...,Ravi`), `DEFAULT_RM_NAME`, `DEFAULT_COUNTRY_CODE`, `MAX_TURNS_PER_SESSION` | assignment name, phone normalization, call length |
 
 `HF_API_KEY` is no longer used.
 
@@ -110,7 +110,7 @@ crashing startup.
 4. On a clear yes/no from the caller, or `MAX_TURNS_PER_SESSION`, the call is
    scored by `ScoringEngine` and ended. A clear HOT/COLD keyword wins over the
    engine's classification.
-5. HOT → assigned to `DEFAULT_RM_NAME`; WARM → WhatsApp follow-up job; COLD →
+5. HOT → assigned to the least-loaded RM in `RM_ROSTER` (or `DEFAULT_RM_NAME` when no roster) and, if that RM has a number, notified on WhatsApp; WARM → WhatsApp follow-up job; COLD →
    status `FOLLOW_UP` (never re-dialled). A summary job is always queued.
 
 Language: the language established on the call hints Whisper from turn 2 on,

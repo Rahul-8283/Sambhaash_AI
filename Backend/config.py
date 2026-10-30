@@ -102,6 +102,9 @@ class Settings(BaseSettings):
 
     # ==================== RM SETTINGS ====================
     default_rm_name: str = Field(default="Auto", env="DEFAULT_RM_NAME")
+    # Comma-separated RMs for HOT-lead assignment, optionally with a WhatsApp number to
+    # notify: "Asha:+919800000001,Ravi:+919800000002". Empty = everyone goes to default_rm_name.
+    rm_roster: str = Field(default="", env="RM_ROSTER")
     auto_assign_hot_leads: bool = Field(default=True, env="AUTO_ASSIGN_HOT_LEADS")
     
     # ==================== WHATSAPP ====================

@@ -174,6 +174,10 @@ class BackgroundWorker:
                 lead_id,
                 language=language
             )
+        elif message_type == "rm_notification":
+            result = await self.whatsapp_service.send_to_number(
+                payload["rm_phone"], payload.get("message", "")
+            )
         elif message_type == "custom":
             result = await self.whatsapp_service.send_custom_message(
                 lead_id,

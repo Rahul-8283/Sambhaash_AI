@@ -26,6 +26,7 @@ from orchestration.history import history_to_messages as conversation_messages
 from orchestration.objections import classify_objection
 from utils.language import call_language, last_turn_language, to_language_code
 from services.llm.kb_context_injection import KBContextInjectionService
+from services.rm_allocator import choose_rm
 from services.call_recording_service import CallRecordingService
 from worker.queue_manager import QueueManager, JobType
 
@@ -223,9 +224,25 @@ async def _score_and_assign_lead(
                 # Auto-actions based on classification
                 if classification == "HOT":
                         # Assign to RM immediately
-                        rm_name = get_config().default_rm_name or "Auto"
-                        await repository.assign_lead_to_rm(lead_id, rm_name)
-                        logger.info(f"[SCORE] HOT lead assigned to RM: {rm_name}")
+                        rm = await choose_rm(repository)
+                        await repository.assign_lead_to_rm(lead_id, rm.name)
+                        logger.info(f"[SCORE] HOT lead assigned to RM: {rm.name}")
+                        if rm.phone:
+                                try:
+                                        lead = await repository.get_lead(lead_id) or {}
+                                        await queue_manager.enqueue_job(JobType.SEND_WHATSAPP.value, {
+                                                "lead_id": str(lead_id),
+                                                "message_type": "rm_notification",
+                                                "rm_phone": rm.phone,
+                                                "message": (
+                                                        f"New HOT lead assigned to you: {lead.get('name') or 'Unknown'}, "
+                                                        f"{lead.get('phone') or 'no phone'} "
+                                                        f"(language: {lead.get('language') or 'n/a'}). "
+                                                        "Please call them back soon."
+                                                ),
+                                        })
+                                except Exception as e:
+                                        logger.error(f"[SCORE] Could not queue RM notification: {e}")
                 
                 elif classification == "WARM":
                         # Schedule WhatsApp follow-up

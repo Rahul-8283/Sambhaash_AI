@@ -279,6 +279,15 @@ Thank you! 🙏"""
                 "error": str(e)
             }
 
+    async def send_to_number(self, phone: str, message: str) -> Dict[str, Any]:
+        """Send a message to a phone number that is not a lead (e.g. an RM)."""
+        try:
+            result = await self._send_via_twilio(phone, message)
+            return {"success": True, "phone": phone, "sid": result.get("sid")}
+        except Exception as e:
+            logger.error(f"Error sending message to {phone}: {e}")
+            return {"success": False, "error": str(e)}
+
     async def _send_via_twilio(self, phone: str, message: str) -> Dict[str, Any]:
         """
         Send message via Twilio WhatsApp API.
