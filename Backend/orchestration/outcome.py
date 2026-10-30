@@ -33,6 +33,20 @@ _NEGATED_INTEREST = re.compile(
 _MAX_BARE_REFUSAL_WORDS = 3
 
 
+# "don't call me again", "stop calling", "remove my number", "mujhe call mat karo".
+# A caller who says this must never be dialled or messaged again.
+_DO_NOT_CONTACT = re.compile(
+    r"\b(?:do not|don't|dont|never|stop)\s+(?:\w+\s+){0,2}(?:call|calling|contact|disturb|message|messaging|text)\b"
+    r"|\bremove\s+(?:me|my\s+(?:number|name))\b|\bdo not disturb\b|\bdnd\b|\bunsubscribe\b"
+    r"|\b(?:call|phone|message|msg)\s+mat\s+(?:karo|karna|kijiye)\b",
+    re.IGNORECASE,
+)
+
+
+def is_do_not_contact(text: str) -> bool:
+    return bool(text) and bool(_DO_NOT_CONTACT.search(text))
+
+
 def _is_bare_refusal(text: str) -> bool:
     """True when the whole utterance is a short refusal rather than a sentence."""
     if "?" in text:
@@ -44,6 +58,8 @@ def classify_utterance(text: str) -> Optional[str]:
     """Return "HOT" or "COLD" if the utterance carries a clear signal, else None."""
     if not text:
         return None
+    if is_do_not_contact(text):
+        return "COLD"
     if _NEGATED_INTEREST.search(text):
         return "COLD"
     if _HOT_PATTERN.search(text):

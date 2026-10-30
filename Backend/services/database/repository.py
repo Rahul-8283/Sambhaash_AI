@@ -718,6 +718,33 @@ class Repository:
         logger.info(f"✅ Assigned lead {lead_id} to RM: {rm_name}")
         return result
     
+    async def list_nurture_candidates(
+        self,
+        cooldown_hours: int,
+        max_attempts: int,
+        limit: int = 20,
+    ) -> List[Dict[str, Any]]:
+        """
+        FOLLOW_UP leads due another attempt: under the attempt cap, last tried
+        longer ago than the cooldown, and never scored COLD (a COLD lead said no).
+        """
+        query = """
+        SELECT l.*
+        FROM leads l
+        WHERE l.status = 'FOLLOW_UP'
+          AND (SELECT COUNT(*) FROM call_sessions cs WHERE cs.lead_id = l.id) < $2
+          AND COALESCE(
+                (SELECT MAX(cs.created_at) FROM call_sessions cs WHERE cs.lead_id = l.id),
+                l.created_at
+              ) < NOW() - ($1 * INTERVAL '1 hour')
+          AND NOT EXISTS (
+                SELECT 1 FROM lead_scores ls WHERE ls.lead_id = l.id AND ls.classification = 'COLD'
+              )
+        ORDER BY l.created_at ASC
+        LIMIT $3
+        """
+        return await self.db.execute_query(query, (cooldown_hours, max_attempts, limit))
+
     async def get_rm_open_counts(self, rm_names: List[str]) -> Dict[str, int]:
         """Open (unconverted) assignments per RM, for load-balanced allocation."""
         rows = await self.db.execute_query(

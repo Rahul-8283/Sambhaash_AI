@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from uuid import UUID
 
 from config import get_config
@@ -80,6 +80,7 @@ class CallInitiator:
             while True:
                 try:
                     await self.find_and_call_new_leads()
+                    await self.find_and_call_nurture_leads()
                     await asyncio.sleep(poll_interval)
                 except Exception as e:
                     logger.error(f"[CALL_INIT] Scheduler loop error: {e}", exc_info=False)
@@ -127,6 +128,34 @@ class CallInitiator:
         except Exception as e:
             logger.error(f"[CALL_INIT] Error finding NEW leads: {e}", exc_info=False)
     
+    def _within_call_window(self, now: Optional[datetime] = None) -> bool:
+        """True during the allowed calling hours, in India Standard Time."""
+        ist = timezone(timedelta(hours=5, minutes=30))
+        hour = (now or datetime.now(ist)).astimezone(ist).hour
+        return self.config.call_window_start_hour <= hour < self.config.call_window_end_hour
+
+    async def find_and_call_nurture_leads(self):
+        """Retry FOLLOW_UP leads that never answered, inside calling hours (opt-in)."""
+        if not self.config.nurture_enabled or not self.repository:
+            return
+        if not self._within_call_window():
+            return
+        try:
+            leads = await self.repository.list_nurture_candidates(
+                cooldown_hours=self.config.nurture_cooldown_hours,
+                max_attempts=self.config.nurture_max_attempts,
+                limit=10,
+            )
+            if leads:
+                logger.info(f"[CALL_INIT] Nurture: {len(leads)} FOLLOW_UP leads due another attempt")
+            for lead in leads:
+                try:
+                    await self.initiate_call_for_lead(lead)
+                except Exception as e:
+                    logger.error(f"[CALL_INIT] Nurture call failed: {e}", exc_info=False)
+        except Exception as e:
+            logger.error(f"[CALL_INIT] Error finding nurture leads: {e}", exc_info=False)
+
     @staticmethod
     def _is_permanent_failure(error: Exception) -> bool:
         """

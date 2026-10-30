@@ -107,6 +107,16 @@ class Settings(BaseSettings):
     rm_roster: str = Field(default="", env="RM_ROSTER")
     auto_assign_hot_leads: bool = Field(default=True, env="AUTO_ASSIGN_HOT_LEADS")
     
+    # ==================== NURTURE ====================
+    # Retry leads that never picked up (voicemail, busy, silent). Off by default.
+    # Leads who said no, or asked not to be contacted, are never retried.
+    nurture_enabled: bool = Field(default=False, env="NURTURE_ENABLED")
+    nurture_max_attempts: int = Field(default=3, env="NURTURE_MAX_ATTEMPTS")
+    nurture_cooldown_hours: int = Field(default=72, env="NURTURE_COOLDOWN_HOURS")
+    # Calls are only placed between these hours (India Standard Time)
+    call_window_start_hour: int = Field(default=9, env="CALL_WINDOW_START_HOUR")
+    call_window_end_hour: int = Field(default=21, env="CALL_WINDOW_END_HOUR")
+
     # ==================== WHATSAPP ====================
     whatsapp_template_language: str = Field(default="hi", env="WHATSAPP_TEMPLATE_LANGUAGE")
     whatsapp_send_on_warm: bool = Field(default=True, env="WHATSAPP_SEND_ON_WARM")

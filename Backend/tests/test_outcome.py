@@ -66,3 +66,19 @@ def test_long_refusals_still_caught_by_negated_interest():
 
 def test_discourse_marker_leaves_the_call_warm():
     assert classify_outcome(["No, just tell me what this is about", "hello"]) == "WARM"
+
+
+def test_do_not_contact_requests_are_detected():
+    from orchestration.outcome import classify_utterance, is_do_not_contact
+
+    for text in ("Please don't call me again", "stop calling me", "remove my number from your list",
+                 "mujhe call mat karo", "I want to unsubscribe", "Do not disturb me"):
+        assert is_do_not_contact(text), text
+        assert classify_utterance(text) == "COLD", text
+
+
+def test_ordinary_sentences_are_not_do_not_contact():
+    from orchestration.outcome import is_do_not_contact
+
+    for text in ("Can you call me tomorrow?", "Yes please call me back", "I will call you later", ""):
+        assert not is_do_not_contact(text), text

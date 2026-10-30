@@ -170,6 +170,15 @@ def test_cold_signal_ends_call_without_rm_or_requeue(call):
     assert all(f.get("status") != "NEW" for f in repo.written("lead"))
 
 
+def test_do_not_contact_request_rejects_the_lead_permanently(call):
+    client, repo, stt, jobs, spoken = call(["please don't call me again"])
+    _post_turn(client, f"?session_id={uuid.uuid4()}&lead_id={uuid.uuid4()}")
+    assert repo.written("score")[0]["classification"] == "COLD"
+    statuses = [f.get("status") for f in repo.written("lead")]
+    assert "REJECTED" in statuses and "FOLLOW_UP" not in statuses
+    assert not repo.written("rm") and "send_whatsapp" not in [t for t, _ in jobs]
+
+
 def test_stored_turn_shape_scores_without_crashing():
     repo = FakeRepository(history=turns(("tell me more, sounds good", "sure"), ("how does it work?", "like this")))
     engine = ScoringEngine(repo)

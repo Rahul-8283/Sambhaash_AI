@@ -21,7 +21,7 @@ from services.database.supabase_client import get_db_client
 from services.database.repository import Repository
 from services.scoring.scoring_engine import ScoringEngine
 from services.database.models import LeadStatus
-from orchestration.outcome import classify_outcome, user_texts_from_history
+from orchestration.outcome import classify_outcome, is_do_not_contact, user_texts_from_history
 from orchestration.history import history_to_messages as conversation_messages
 from orchestration.objections import classify_objection
 from utils.language import call_language, last_turn_language, to_language_code
@@ -182,7 +182,11 @@ async def _score_and_assign_lead(
                 sentiment = scored["sentiment_score"]
                 composite = scored["composite_score"]
 
-                if classification_override in ("HOT", "COLD"):
+                do_not_contact = any(is_do_not_contact(t) for t in user_texts_from_history(history))
+
+                if do_not_contact:
+                        classification = "COLD"
+                elif classification_override in ("HOT", "COLD"):
                         classification = classification_override
                 else:
                         classification = scored["classification"]
@@ -218,8 +222,15 @@ async def _score_and_assign_lead(
                 # re-call people who just declined, indefinitely.
                 await repository.update_lead(
                         lead_id=lead_id,
-                        status=LeadStatus.INTERESTED.value if classification in ("HOT", "WARM") else LeadStatus.FOLLOW_UP.value
+                        # REJECTED is never dialled or nurtured: the caller asked not to be contacted
+                        status=(
+                                LeadStatus.REJECTED.value if do_not_contact
+                                else LeadStatus.INTERESTED.value if classification in ("HOT", "WARM")
+                                else LeadStatus.FOLLOW_UP.value
+                        )
                 )
+                if do_not_contact:
+                        logger.info(f"[SCORE] Lead {lead_id} asked not to be contacted; marked REJECTED")
                 
                 # Auto-actions based on classification
                 if classification == "HOT":
