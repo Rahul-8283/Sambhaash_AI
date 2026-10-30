@@ -40,8 +40,9 @@ Templates are plain text keyed `<type>_<language-code>`.
 | `conversion` | en, hi (other languages fall back to English) |
 
 The non-English/Hindi follow-ups are machine translations and need a native
-speaker's review. The follow-up copy currently advertises a loan offer while the
-voice agent pitches the Partner Program; align them before real use.
+speaker's review. The follow-up thanks the lead for talking about the Rupeezy
+Partner Program and says the team will share details; it makes no offer, price
+or link claims. `conversion` is a partner welcome, not a loan approval.
 
 Language comes from the lead record, which is updated from the language spoken
 on the call. Numbers are normalized to E.164 (`utils/phone.py`) at upload.

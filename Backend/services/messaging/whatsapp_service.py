@@ -23,39 +23,40 @@ from utils.language import to_language_code
 logger = logging.getLogger(__name__)
 
 
-# Warm follow-up copy per language: (greeting, intro, offer header, offers, link label, question label).
-# hi/en are the original reviewed texts. The other languages are machine
-# translations of the same copy and need review by a native speaker before
-# going to real leads.
+# Warm follow-up copy per language: (greeting, thanks, next step, question label).
+# The message thanks the caller for talking about the Rupeezy Partner Program and
+# says the team will share details. It makes no offer, price or link claims.
+# en/hi follow the original wording; the other languages are machine translations
+# and need review by a native speaker before going to real leads.
 _WARM_FOLLOW_UP_COPY = {
-    "mr": ("नमस्कार {name}! 👋", "हे Rupeezy कडून आहे. आपले संभाषण खूप छान झाले!", "तुमच्यासाठी खास ऑफर:",
-           ("त्वरित ₹5,000 पर्यंत कर्ज", "0% प्रक्रिया शुल्क", "5 मिनिटांत मंजुरी"), "लिंक", "काही प्रश्न? आम्हाला कॉल करा"),
-    "bn": ("নমস্কার {name}! 👋", "এটি Rupeezy থেকে। আপনার সঙ্গে আমাদের কথোপকথন খুব ভালো হয়েছে!", "আপনার জন্য বিশেষ অফার:",
-           ("তাৎক্ষণিক ₹5,000 পর্যন্ত ঋণ", "0% প্রসেসিং ফি", "5 মিনিটে অনুমোদন"), "লিঙ্ক", "কোনো প্রশ্ন? আমাদের কল করুন"),
-    "gu": ("નમસ્તે {name}! 👋", "આ Rupeezy તરફથી છે. તમારી સાથે અમારી વાતચીત ખૂબ સરસ રહી!", "તમારા માટે ખાસ ઑફર:",
-           ("તરત ₹5,000 સુધીની લોન", "0% પ્રોસેસિંગ ફી", "5 મિનિટમાં મંજૂરી"), "લિંક", "કોઈ પ્રશ્ન? અમને કૉલ કરો"),
-    "pa": ("ਸਤ ਸ੍ਰੀ ਅਕਾਲ {name}! 👋", "ਇਹ Rupeezy ਵੱਲੋਂ ਹੈ। ਤੁਹਾਡੇ ਨਾਲ ਸਾਡੀ ਗੱਲਬਾਤ ਬਹੁਤ ਵਧੀਆ ਰਹੀ!", "ਤੁਹਾਡੇ ਲਈ ਖ਼ਾਸ ਪੇਸ਼ਕਸ਼:",
-           ("ਤੁਰੰਤ ₹5,000 ਤੱਕ ਦਾ ਲੋਨ", "0% ਪ੍ਰੋਸੈਸਿੰਗ ਫ਼ੀਸ", "5 ਮਿੰਟ ਵਿੱਚ ਮਨਜ਼ੂਰੀ"), "ਲਿੰਕ", "ਕੋਈ ਸਵਾਲ? ਸਾਨੂੰ ਕਾਲ ਕਰੋ"),
-    "or": ("ନମସ୍କାର {name}! 👋", "ଏହା Rupeezy ପକ୍ଷରୁ। ଆପଣଙ୍କ ସହ ଆମର କଥାବାର୍ତ୍ତା ବହୁତ ଭଲ ହେଲା!", "ଆପଣଙ୍କ ପାଇଁ ବିଶେଷ ଅଫର:",
-           ("ତୁରନ୍ତ ₹5,000 ପର୍ଯ୍ୟନ୍ତ ଋଣ", "0% ପ୍ରୋସେସିଂ ଫି", "5 ମିନିଟରେ ଅନୁମୋଦନ"), "ଲିଙ୍କ", "କୌଣସି ପ୍ରଶ୍ନ? ଆମକୁ କଲ୍ କରନ୍ତୁ"),
-    "ta": ("வணக்கம் {name}! 👋", "இது Rupeezy சார்பில். உங்களுடன் எங்கள் உரையாடல் மிகவும் நன்றாக இருந்தது!", "உங்களுக்கான சிறப்பு சலுகை:",
-           ("உடனடி ₹5,000 வரை கடன்", "0% செயலாக்கக் கட்டணம்", "5 நிமிடங்களில் அனுமதி"), "இணைப்பு", "கேள்விகள் உள்ளதா? எங்களை அழையுங்கள்"),
-    "te": ("నమస్తే {name}! 👋", "ఇది Rupeezy నుండి. మీతో మా సంభాషణ చాలా బాగా జరిగింది!", "మీ కోసం ప్రత్యేక ఆఫర్:",
-           ("తక్షణమే ₹5,000 వరకు రుణం", "0% ప్రాసెసింగ్ ఫీజు", "5 నిమిషాల్లో ఆమోదం"), "లింక్", "ఏవైనా ప్రశ్నలు? మాకు కాల్ చేయండి"),
-    "kn": ("ನಮಸ್ಕಾರ {name}! 👋", "ಇದು Rupeezy ಕಡೆಯಿಂದ. ನಿಮ್ಮೊಂದಿಗೆ ನಮ್ಮ ಮಾತುಕತೆ ತುಂಬಾ ಚೆನ್ನಾಗಿತ್ತು!", "ನಿಮಗಾಗಿ ವಿಶೇಷ ಆಫರ್:",
-           ("ತಕ್ಷಣ ₹5,000 ವರೆಗೆ ಸಾಲ", "0% ಪ್ರಕ್ರಿಯೆ ಶುಲ್ಕ", "5 ನಿಮಿಷಗಳಲ್ಲಿ ಅನುಮೋದನೆ"), "ಲಿಂಕ್", "ಪ್ರಶ್ನೆಗಳಿವೆಯೇ? ನಮಗೆ ಕರೆ ಮಾಡಿ"),
-    "ml": ("നമസ്കാരം {name}! 👋", "ഇത് Rupeezy യിൽ നിന്നാണ്. നിങ്ങളുമായുള്ള ഞങ്ങളുടെ സംഭാഷണം വളരെ നന്നായിരുന്നു!", "നിങ്ങൾക്കായുള്ള പ്രത്യേക ഓഫർ:",
-           ("ഉടൻ ₹5,000 വരെ വായ്പ", "0% പ്രോസസ്സിംഗ് ഫീസ്", "5 മിനിറ്റിൽ അംഗീകാരം"), "ലിങ്ക്", "സംശയങ്ങളുണ്ടോ? ഞങ്ങളെ വിളിക്കുക"),
+    "en": ("Hi {name}! 👋", "This is Rupeezy. Thank you for speaking with us about the Rupeezy Partner Program.",
+           "Our team will share the details with you shortly.", "Questions? Call us"),
+    "hi": ("नमस्ते {name}! 👋", "यह Rupeezy की ओर से है। Rupeezy पार्टनर प्रोग्राम के बारे में हमसे बात करने के लिए धन्यवाद।",
+           "हमारी टीम जल्द ही आपको पूरी जानकारी भेजेगी।", "कोई सवाल? हमें कॉल करें"),
+    "mr": ("नमस्कार {name}! 👋", "हे Rupeezy कडून आहे. Rupeezy पार्टनर प्रोग्रामबद्दल आमच्याशी बोलल्याबद्दल धन्यवाद.",
+           "आमची टीम लवकरच तुम्हाला सविस्तर माहिती पाठवेल.", "काही प्रश्न? आम्हाला कॉल करा"),
+    "bn": ("নমস্কার {name}! 👋", "এটি Rupeezy থেকে। Rupeezy পার্টনার প্রোগ্রাম সম্পর্কে আমাদের সঙ্গে কথা বলার জন্য ধন্যবাদ।",
+           "আমাদের টিম শীঘ্রই আপনাকে বিস্তারিত তথ্য পাঠাবে।", "কোনো প্রশ্ন? আমাদের কল করুন"),
+    "gu": ("નમસ્તે {name}! 👋", "આ Rupeezy તરફથી છે. Rupeezy પાર્ટનર પ્રોગ્રામ વિશે અમારી સાથે વાત કરવા બદલ આભાર.",
+           "અમારી ટીમ ટૂંક સમયમાં તમને વિગતો મોકલશે.", "કોઈ પ્રશ્ન? અમને કૉલ કરો"),
+    "pa": ("ਸਤ ਸ੍ਰੀ ਅਕਾਲ {name}! 👋", "ਇਹ Rupeezy ਵੱਲੋਂ ਹੈ। Rupeezy ਪਾਰਟਨਰ ਪ੍ਰੋਗਰਾਮ ਬਾਰੇ ਸਾਡੇ ਨਾਲ ਗੱਲ ਕਰਨ ਲਈ ਧੰਨਵਾਦ।",
+           "ਸਾਡੀ ਟੀਮ ਜਲਦੀ ਹੀ ਤੁਹਾਨੂੰ ਪੂਰੀ ਜਾਣਕਾਰੀ ਭੇਜੇਗੀ।", "ਕੋਈ ਸਵਾਲ? ਸਾਨੂੰ ਕਾਲ ਕਰੋ"),
+    "or": ("ନମସ୍କାର {name}! 👋", "ଏହା Rupeezy ପକ୍ଷରୁ। Rupeezy ପାର୍ଟନର ପ୍ରୋଗ୍ରାମ ବିଷୟରେ ଆମ ସହ କଥା ହେବା ପାଇଁ ଧନ୍ୟବାଦ।",
+           "ଆମ ଟିମ୍ ଶୀଘ୍ର ଆପଣଙ୍କୁ ବିବରଣୀ ପଠାଇବ।", "କୌଣସି ପ୍ରଶ୍ନ? ଆମକୁ କଲ୍ କରନ୍ତୁ"),
+    "ta": ("வணக்கம் {name}! 👋", "இது Rupeezy சார்பில். Rupeezy பார்ட்னர் திட்டம் குறித்து எங்களுடன் பேசியதற்கு நன்றி.",
+           "எங்கள் குழு விரைவில் உங்களுக்கு விவரங்களை அனுப்பும்.", "கேள்விகள் உள்ளதா? எங்களை அழையுங்கள்"),
+    "te": ("నమస్తే {name}! 👋", "ఇది Rupeezy నుండి. Rupeezy పార్టనర్ ప్రోగ్రామ్ గురించి మాతో మాట్లాడినందుకు ధన్యవాదాలు.",
+           "మా బృందం త్వరలో మీకు వివరాలు పంపుతుంది.", "ఏవైనా ప్రశ్నలు? మాకు కాల్ చేయండి"),
+    "kn": ("ನಮಸ್ಕಾರ {name}! 👋", "ಇದು Rupeezy ಕಡೆಯಿಂದ. Rupeezy ಪಾರ್ಟ್ನರ್ ಪ್ರೋಗ್ರಾಂ ಬಗ್ಗೆ ನಮ್ಮೊಂದಿಗೆ ಮಾತನಾಡಿದ್ದಕ್ಕಾಗಿ ಧನ್ಯವಾದಗಳು.",
+           "ನಮ್ಮ ತಂಡ ಶೀಘ್ರದಲ್ಲೇ ನಿಮಗೆ ವಿವರಗಳನ್ನು ಕಳುಹಿಸುತ್ತದೆ.", "ಪ್ರಶ್ನೆಗಳಿವೆಯೇ? ನಮಗೆ ಕರೆ ಮಾಡಿ"),
+    "ml": ("നമസ്കാരം {name}! 👋", "ഇത് Rupeezy യിൽ നിന്നാണ്. Rupeezy പാർട്ണർ പ്രോഗ്രാമിനെക്കുറിച്ച് ഞങ്ങളോട് സംസാരിച്ചതിന് നന്ദി.",
+           "ഞങ്ങളുടെ ടീം ഉടൻ തന്നെ വിശദാംശങ്ങൾ അയയ്ക്കും.", "സംശയങ്ങളുണ്ടോ? ഞങ്ങളെ വിളിക്കുക"),
 }
 
 
 def _warm_follow_up_message(copy) -> str:
-    greeting, intro, header, offers, link_label, question = copy
-    lines = "\n".join(f"✅ {offer}" for offer in offers)
-    return (
-        f"{greeting}\n\n{intro}\n\n{header}\n{lines}\n\n"
-        f"{link_label}: https://rupeezy.app/offer/{{lead_id}}\n\n{question}: {{phone_number}}"
-    )
+    greeting, thanks, next_step, question = copy
+    return f"{greeting}\n\n{thanks}\n\n{next_step}\n\n{question}: {{phone_number}}"
 
 
 class WhatsAppService:
@@ -71,36 +72,6 @@ class WhatsAppService:
 
     # Message templates
     TEMPLATES = {
-        "warm_follow_up_hi": {
-            "language": "hi",
-            "message": """नमस्ते {name}! 👋
-
-यह Rupeezy की ओर से है। आपके साथ हमारी बातचीत बहुत अच्छी रही।
-
-आपके लिए विशेष ऑफर:
-✅ तुरंत ₹5,000 तक का लोन
-✅ 0% प्रोसेसिंग फीस
-✅ 5 मिनट में अनुमोदन
-
-लिंक: https://rupeezy.app/offer/{lead_id}
-
-कोई सवाल? हमें कॉल करें: {phone_number}"""
-        },
-        "warm_follow_up_en": {
-            "language": "en",
-            "message": """Hi {name}! 👋
-
-This is Rupeezy. Our conversation went great!
-
-Special offer for you:
-✅ Instant ₹5,000+ loan
-✅ 0% Processing Fee
-✅ Approved in 5 minutes
-
-Link: https://rupeezy.app/offer/{lead_id}
-
-Questions? Call us: {phone_number}"""
-        },
         "hot_reminder_hi": {
             "language": "hi",
             "message": """नमस्ते {name}! ⏰
@@ -115,31 +86,17 @@ https://rupeezy.app/app/{lead_id}"""
         },
         "conversion_en": {
             "language": "en",
-            "message": """🎉 Congratulations {name}!
+            "message": """🎉 Welcome aboard, {name}!
 
-Your loan has been approved!
-
-Amount: ₹{amount}
-Tenure: {tenure} months
-Interest rate: {interest_rate}%
-
-Get your money instantly:
-https://rupeezy.app/dashboard/{lead_id}
+You are now a Rupeezy partner. Your relationship manager will be in touch to help you get started.
 
 Thank you! 🙏"""
         },
         "conversion_hi": {
             "language": "hi",
-            "message": """🎉 बधाई हो {name}!
+            "message": """🎉 स्वागत है, {name}!
 
-आपका लोन स्वीकृत हो गया!
-
-राशि: ₹{amount}
-चुकाने की अवधि: {tenure} महीने
-ब्याज दर: {interest_rate}%
-
-अपना पैसा तुरंत प्राप्त करें:
-https://rupeezy.app/dashboard/{lead_id}
+अब आप Rupeezy के पार्टनर हैं। शुरुआत में मदद के लिए आपके रिलेशनशिप मैनेजर आपसे संपर्क करेंगे।
 
 धन्यवाद! 🙏"""
         }
@@ -198,7 +155,6 @@ https://rupeezy.app/dashboard/{lead_id}
             # Format message
             message = template["message"].format(
                 name=name,
-                lead_id=lead_id,
                 phone_number=self.config.support_phone_number or "+91-9999999999"
             )
             
@@ -228,9 +184,6 @@ https://rupeezy.app/dashboard/{lead_id}
     async def send_conversion_confirmation(
         self,
         lead_id: str,
-        amount: float,
-        tenure: int = 12,
-        interest_rate: float = 8.5,
         language: str = "hi"
     ) -> Dict[str, Any]:
         """
@@ -238,9 +191,6 @@ https://rupeezy.app/dashboard/{lead_id}
         
         Args:
             lead_id: UUID of the lead
-            amount: Loan amount
-            tenure: Repayment tenure in months
-            interest_rate: Annual interest rate
             language: Language preference
             
         Returns:
@@ -261,13 +211,7 @@ https://rupeezy.app/dashboard/{lead_id}
                 template = self.TEMPLATES.get("conversion_en")
             
             # Format message
-            message = template["message"].format(
-                name=name,
-                amount=int(amount),
-                tenure=tenure,
-                interest_rate=interest_rate,
-                lead_id=lead_id
-            )
+            message = template["message"].format(name=name)
             
             # Send via Twilio
             result = await self._send_via_twilio(phone, message)
@@ -279,7 +223,6 @@ https://rupeezy.app/dashboard/{lead_id}
                 "lead_id": lead_id,
                 "phone": phone,
                 "message_type": "conversion_confirmation",
-                "amount": amount,
                 "sid": result.get("sid"),
                 "sent_at": datetime.utcnow().isoformat()
             }

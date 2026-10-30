@@ -51,13 +51,14 @@ def test_every_follow_up_template_formats():
     keys = [k for k in WhatsAppService.TEMPLATES if k.startswith("warm_follow_up_")]
     assert {"en", "hi", "mr", "bn", "gu", "pa", "or", "ta", "te", "kn", "ml"} <= {k.rsplit("_", 1)[1] for k in keys}
     for key in keys:
-        text = WhatsAppService.TEMPLATES[key]["message"].format(name="Asha", lead_id="L1", phone_number="+91-99")
-        assert "Asha" in text and "L1" in text
+        text = WhatsAppService.TEMPLATES[key]["message"].format(name="Asha", phone_number="+91-99")
+        assert "Asha" in text and "+91-99" in text
+        assert "₹" not in text and "http" not in text and "Rupeezy" in text
 
 
 def test_conversion_templates_cover_en_and_hi():
     for key in ("conversion_en", "conversion_hi"):
-        WhatsAppService.TEMPLATES[key]["message"].format(name="A", amount=5000, tenure=12, interest_rate=8.5, lead_id="L")
+        WhatsAppService.TEMPLATES[key]["message"].format(name="A")
 
 
 def test_whisper_languages_exclude_odia():

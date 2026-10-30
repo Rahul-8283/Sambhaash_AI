@@ -172,9 +172,6 @@ class BackgroundWorker:
         elif message_type == "conversion":
             result = await self.whatsapp_service.send_conversion_confirmation(
                 lead_id,
-                amount=payload.get("amount", 0),
-                tenure=payload.get("tenure", 12),
-                interest_rate=payload.get("interest_rate", 8.5),
                 language=language
             )
         elif message_type == "custom":
