@@ -35,6 +35,10 @@ async def setup_ngrok_tunnel() -> Optional[str]:
         logger.info("[NGROK] Production mode detected - skipping ngrok tunnel")
         return None
     
+    if not settings.enable_ngrok:
+        logger.info("[NGROK] ENABLE_NGROK is not set - not publishing a tunnel")
+        return None
+
     # Check if ngrok auth token is configured
     if not settings.ngrok_auth_token:
         logger.warning("[NGROK] Development mode but NGROK_AUTH_TOKEN not set - skipping tunnel")

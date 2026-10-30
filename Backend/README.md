@@ -68,8 +68,8 @@ tunnel and writes its URL to `ngrok_url.json`, which the worker reads.
   play a trial message that needs a keypress before the call connects.
 - `uvicorn --reload` restarts the server when a file changes, which drops a call
   that is in progress. Do not edit code during a test call.
-- `MODE=development` with an `NGROK_AUTH_TOKEN` publishes a public tunnel on
-  startup. Use `MODE=production` locally to skip it.
+- The ngrok tunnel is opt-in: it opens on startup only with `MODE=development`,
+  `ENABLE_NGROK=true` and an `NGROK_AUTH_TOKEN`.
 
 ## Environment
 

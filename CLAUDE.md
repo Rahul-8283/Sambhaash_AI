@@ -112,14 +112,14 @@ Route prefixes: `/api/leads`, `/api/rm`, `/api/calls`, `/api/queue`, `/api/v1/su
 
 ### ngrok in development
 
-With `MODE=development`, the **API process** opens the tunnel on startup (`services/ngrok_setup.py`) and writes the URL to `Backend/ngrok_url.json`; the worker reads that file to build Twilio callback URLs. So start the API before the worker. With `MODE=production` the tunnel is skipped and `TWILIO_WEBHOOK_BASE_URL` is used directly.
+With `MODE=development` and `ENABLE_NGROK=true`, the **API process** opens the tunnel on startup (`services/ngrok_setup.py`) and writes the URL to `Backend/ngrok_url.json`; the worker reads that file to build Twilio callback URLs. So start the API before the worker. With `MODE=production` the tunnel is skipped and `TWILIO_WEBHOOK_BASE_URL` is used directly.
 
 ## Working constraints
 
 - **Supabase is a shared, live database** with real leads and call sessions. Point a separate Supabase project at development before running anything that writes.
 - **Don't start `run_worker.py` while `NEW` leads exist** unless you intend real phone calls — the initiator dials every `NEW` lead within 30s.
 - Twilio trial accounts can only call/message numbers added under Verified Caller IDs.
-- `MODE=development` + an `NGROK_AUTH_TOKEN` publishes a public tunnel on API startup. Run locally with `MODE=production` to avoid that.
+- The ngrok tunnel is opt-in (`ENABLE_NGROK=true` with `MODE=development` and an `NGROK_AUTH_TOKEN`); it is off by default.
 - Dependency pins are loose on pre-1.0 LangChain/LangGraph packages (`langgraph>=0.1.0` etc.) while the codebase touches their internals. A fresh install can resolve to something incompatible.
 - The frontend builds to one ~1.1 MB JS chunk, over Vite's 500 kB warning threshold.
 

@@ -68,6 +68,7 @@ class Settings(BaseSettings):
     
     # ==================== NGROK ====================
     ngrok_auth_token: str = Field(default="ngrok_auth_token", env="NGROK_AUTH_TOKEN")
+    enable_ngrok: bool = Field(default=False, env="ENABLE_NGROK")
     
     # ==================== SARVAM ====================
     sarvam_api_key: str = Field(default="sk-test-default", env="SARVAM_API_KEY")
