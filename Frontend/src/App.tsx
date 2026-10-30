@@ -1,25 +1,31 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import MainLayout from "./components/Layout/MainLayout";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
 import { Toaster } from "react-hot-toast";
 
 // Pages
-import LandingPage from "./pages/LandingPage";
-import LeadsPage from "./pages/LeadsPage";
-import LeadDetailPage from "./pages/LeadDetailPage";
-import AnalyticsPage from "./pages/AnalyticsPage";
-import AppendixPage from "./pages/AppendixPage";
-import RMPage from "./pages/RMPage";
-import ProfileSettingsPage from "./pages/ProfileSettingsPage";
-import QueueDashboard from "./pages/QueueDashboard";
-import CallSummaries from "./pages/CallSummaries";
-import CallsPage from "./pages/CallsPage";
+const LandingPage = lazy(() => import("./pages/LandingPage"));
+const LeadsPage = lazy(() => import("./pages/LeadsPage"));
+const LeadDetailPage = lazy(() => import("./pages/LeadDetailPage"));
+const AnalyticsPage = lazy(() => import("./pages/AnalyticsPage"));
+const AppendixPage = lazy(() => import("./pages/AppendixPage"));
+const RMPage = lazy(() => import("./pages/RMPage"));
+const ProfileSettingsPage = lazy(() => import("./pages/ProfileSettingsPage"));
+const QueueDashboard = lazy(() => import("./pages/QueueDashboard"));
+const CallSummaries = lazy(() => import("./pages/CallSummaries"));
+const CallsPage = lazy(() => import("./pages/CallsPage"));
 import ErrorBoundary from "./components/ErrorBoundary";
+
+const PageFallback = () => (
+  <div className="flex h-screen items-center justify-center text-sm text-gray-500">Loading...</div>
+);
 
 function App() {
   return (
     <BrowserRouter>
       <Toaster position="top-center" reverseOrder={false} />
+      <Suspense fallback={<PageFallback />}>
       <Routes>
         <Route path="/" element={<LandingPage />} />
         <Route path="/dashboard/*" element={
@@ -44,6 +50,7 @@ function App() {
         } />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 }

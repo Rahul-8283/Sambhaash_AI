@@ -121,7 +121,6 @@ With `MODE=development` and `ENABLE_NGROK=true`, the **API process** opens the t
 - Twilio trial accounts can only call/message numbers added under Verified Caller IDs.
 - The ngrok tunnel is opt-in (`ENABLE_NGROK=true` with `MODE=development` and an `NGROK_AUTH_TOKEN`); it is off by default.
 - Dependency pins are loose on pre-1.0 LangChain/LangGraph packages (`langgraph>=0.1.0` etc.) while the codebase touches their internals. A fresh install can resolve to something incompatible.
-- The frontend builds to one ~1.1 MB JS chunk, over Vite's 500 kB warning threshold.
 
 ## Other docs
 
