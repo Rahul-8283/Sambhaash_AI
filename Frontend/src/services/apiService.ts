@@ -89,12 +89,81 @@ export interface DlqJob {
   id: string;
   type: string;
   lead_id: string;
-  payload: any;
+  payload: Record<string, unknown>;
   retry_count: number;
   status: string;
   created_at: string;
   updated_at: string;
   error?: string;
+}
+
+export interface KBDocument {
+  document_id: string;
+  file_name: string;
+  document_type: string;
+  chunk_count: number;
+  uploaded_at: string;
+  storage_url?: string;
+}
+
+export interface KBUploadResponse {
+  status: string;
+  document_id: string;
+  file_name: string;
+  chunks_created: number;
+  storage_path: string;
+  storage_url: string;
+  message: string;
+}
+
+export interface KBSearchChunk {
+  chunk_id: string;
+  document_id: string;
+  text: string;
+  language: string;
+  source_section?: string | null;
+  objection_type?: string | null;
+  similarity_score?: number | null;
+}
+
+export interface KBSearchResponse {
+  query: string;
+  top_k: number;
+  results: KBSearchChunk[];
+  total_found: number;
+}
+
+export interface KBMostUsedDocument {
+  document_id: string;
+  document_name: string;
+  usage_count: number;
+  avg_relevance: number;
+}
+
+export interface KBEffectiveness {
+  total_calls_analyzed: number;
+  calls_with_kb_usage: number;
+  avg_documents_per_call: number;
+  avg_relevance_score: number;
+  most_used_documents: KBMostUsedDocument[];
+  kb_coverage_percentage: number;
+}
+
+export interface CallSummaryDetail {
+  one_line_summary?: string;
+  topics_covered?: string[];
+  objections_raised?: string[];
+}
+
+export interface CallSummaryRecord {
+  session_id: string;
+  lead_id: string;
+  lead_name?: string | null;
+  lead_phone?: string | null;
+  duration_seconds?: number | null;
+  classification?: string | null;
+  created_at?: string | null;
+  summary?: CallSummaryDetail | null;
 }
 
 export interface RMLeaderboardEntry {
@@ -233,7 +302,7 @@ class ApiService {
 
   private handleError(error: AxiosError): ApiError {
     if (error.response?.data) {
-      const data = error.response.data as any;
+      const data = error.response.data as { detail?: unknown; message?: string };
       return {
         status: error.response.status,
         message: formatDetail(data.detail) || data.message || 'An error occurred',
@@ -259,7 +328,7 @@ class ApiService {
       limit: pagination?.limit,
       offset: pagination?.page ? (pagination.page - 1) * (pagination.limit || 20) : undefined,
     };
-    const response: AxiosResponse<any> = await this.api.get('/api/leads', { params });
+    const response: AxiosResponse<{ leads?: Lead[]; total?: number; limit?: number }> = await this.api.get('/api/leads', { params });
     
     // Transform backend response to frontend LeadListResponse if necessary
     // Backend returns: { total, limit, offset, leads }
@@ -350,18 +419,18 @@ class ApiService {
   }
 
   // --- Knowledge Base (Admin) Endpoints ---
-  public async uploadDocument(file: File, docType: string = 'appendix_a', language: string = 'hi'): Promise<any> {
+  public async uploadDocument(file: File, docType: string = 'appendix_a', language: string = 'hi'): Promise<KBUploadResponse> {
     const formData = new FormData();
     formData.append('file', file);
-    const response: AxiosResponse<any> = await this.api.post('/admin/kb/upload', formData, {
+    const response: AxiosResponse<KBUploadResponse> = await this.api.post('/admin/kb/upload', formData, {
       params: { doc_type: docType, language },
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return response.data;
   }
 
-  public async listDocuments(): Promise<any[]> {
-    const response: AxiosResponse<any[]> = await this.api.get('/admin/kb/documents');
+  public async listDocuments(): Promise<KBDocument[]> {
+    const response: AxiosResponse<KBDocument[]> = await this.api.get('/admin/kb/documents');
     return response.data;
   }
 
@@ -369,15 +438,15 @@ class ApiService {
     await this.api.delete(`/admin/kb/documents/${docId}`);
   }
 
-  public async searchKB(query: string, params?: { top_k?: number; language?: string }): Promise<any> {
-    const response: AxiosResponse<any> = await this.api.get('/admin/kb/search', {
+  public async searchKB(query: string, params?: { top_k?: number; language?: string }): Promise<KBSearchResponse> {
+    const response: AxiosResponse<KBSearchResponse> = await this.api.get('/admin/kb/search', {
       params: { query, ...params },
     });
     return response.data;
   }
 
-  public async getKBEffectiveness(days: number = 7): Promise<any> {
-    const response: AxiosResponse<any> = await this.api.get('/admin/kb/analytics/effectiveness', {
+  public async getKBEffectiveness(days: number = 7): Promise<KBEffectiveness> {
+    const response: AxiosResponse<KBEffectiveness> = await this.api.get('/admin/kb/analytics/effectiveness', {
       params: { limit_days: days },
     });
     return response.data;
@@ -420,9 +489,9 @@ class ApiService {
   }
 
   // ==================== SUMMARIES ====================
-  public async getSummaries(): Promise<{ data: any[]; total: number }> {
+  public async getSummaries(): Promise<{ data: CallSummaryRecord[]; total: number }> {
     try {
-      const response = await this.api.get<{ data: any[]; total: number }>('/api/v1/summaries/');
+      const response = await this.api.get<{ data: CallSummaryRecord[]; total: number }>('/api/v1/summaries/');
       return response.data;
     } catch (error) {
       throw this.handleError(error as AxiosError);

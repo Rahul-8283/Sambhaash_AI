@@ -50,8 +50,9 @@ export const LeadCaptureForm: React.FC = () => {
       });
 
       setFormData({ name: "", email: "", phone: "", language: "en" });
-    } catch (error: any) {
-      toast.error(error.response?.data?.detail || error.message || "Failed to submit form");
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { detail?: string } }; message?: string };
+      toast.error(err.response?.data?.detail || err.message || "Failed to submit form");
     } finally {
       setIsSubmitting(false);
       setShowVerificationModal(false);

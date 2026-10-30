@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { PhoneCall, Calendar, Clock, AlertCircle } from "lucide-react";
 import { apiService } from "../services/apiService";
+import type { CallSummaryRecord } from "../services/apiService";
 import { formatDateTime } from "../utils/formatters";
 
 export const CallSummaries: React.FC = () => {
-  const [summaries, setSummaries] = useState<any[]>([]);
+  const [summaries, setSummaries] = useState<CallSummaryRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -68,24 +69,24 @@ export const CallSummaries: React.FC = () => {
                     </p>
                   )}
                   
-                  {item.summary?.topics_covered?.length > 0 && (
+                  {(item.summary?.topics_covered?.length ?? 0) > 0 && (
                     <div>
                       <h4 className="text-xs uppercase tracking-wider font-bold text-gray-400 mb-2">Topics Covered</h4>
                       <div className="flex flex-wrap gap-2">
-                        {item.summary.topics_covered.map((topic: string, i: number) => (
+                        {item.summary?.topics_covered?.map((topic, i) => (
                           <span key={i} className="px-2 py-1 bg-gray-100 text-gray-600 text-xs rounded-md">{topic}</span>
                         ))}
                       </div>
                     </div>
                   )}
 
-                  {item.summary?.objections_raised?.length > 0 && (
+                  {(item.summary?.objections_raised?.length ?? 0) > 0 && (
                     <div>
                       <h4 className="text-xs uppercase tracking-wider font-bold text-gray-400 mb-2 flex items-center gap-1">
                         <AlertCircle className="w-3 h-3" /> Objections
                       </h4>
                       <ul className="text-sm text-gray-600 space-y-1 list-disc list-inside">
-                        {item.summary.objections_raised.map((obj: string, i: number) => (
+                        {item.summary?.objections_raised?.map((obj, i) => (
                           <li key={i}>{obj}</li>
                         ))}
                       </ul>

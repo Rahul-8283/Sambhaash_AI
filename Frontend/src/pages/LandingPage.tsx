@@ -69,8 +69,8 @@ export const LandingPage: React.FC = () => {
         },
       });
       if (error) throw error;
-    } catch (err: any) {
-      console.error("Sign in failed:", err.message);
+    } catch (err: unknown) {
+      console.error("Sign in failed:", err instanceof Error ? err.message : err);
     }
   };
 

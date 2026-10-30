@@ -74,9 +74,9 @@ export const ProfileSettingsPage: React.FC = () => {
       
       setSuccess(true);
       toast.success("Profile updated successfully!");
-    } catch (e: any) {
+    } catch (e: unknown) {
       console.error("Failed to update profile in Supabase:", e);
-      toast.error(e.message || "Failed to update profile.");
+      toast.error((e instanceof Error && e.message) || "Failed to update profile.");
     } finally {
       setSaving(false);
       setTimeout(() => setSuccess(false), 3000);

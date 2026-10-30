@@ -56,7 +56,7 @@ export const LeadsPage: React.FC = () => {
     loadLeads();
   }, [page, filters, searchQuery]);
 
-  const handleFilterChange = (key: string, value: any) => {
+  const handleFilterChange = (key: string, value: string | string[] | undefined) => {
     setFilters((prev) => ({ ...prev, [key]: value || undefined }));
     setPage(1);
   };
@@ -370,7 +370,7 @@ export const LeadsPage: React.FC = () => {
                   label: "Score",
                   sortable: false,
                   render: (value) => {
-                    const score = value as any;
+                    const score = value as Lead["currentScore"];
                     return (
                       <Badge
                         variant="score"
@@ -394,7 +394,7 @@ export const LeadsPage: React.FC = () => {
                   key: "rmAssignment",
                   label: "RM Assigned",
                   render: (value) => {
-                    const rm = value as any;
+                    const rm = value as Lead["rmAssignment"];
                     return rm?.rmName ? (
                       <span className="text-sm font-bold text-[#3d2b1f]/90">{rm.rmName}</span>
                     ) : (

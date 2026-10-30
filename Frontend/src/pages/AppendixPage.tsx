@@ -6,10 +6,10 @@ import React, { useState, useEffect } from "react";
 import { FileText, Download, Trash2, Calendar, Info } from "lucide-react";
 import FileUpload from "../components/FileUpload";
 import { apiService } from "../services/apiService";
-import type { AppendixFile } from "../utils/appendixStorage";
+import type { KBDocument } from "../services/apiService";
 
 const AppendixPage: React.FC = () => {
-  const [files, setFiles] = useState<AppendixFile[]>([]);
+  const [files, setFiles] = useState<KBDocument[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -66,7 +66,7 @@ const AppendixPage: React.FC = () => {
       setIsLoading(true);
       try {
         await apiService.deleteDocument(id);
-        setFiles(files.filter((f) => (f as any).document_id !== id));
+        setFiles(files.filter((f) => f.document_id !== id));
         setSuccessMessage("Document deleted successfully");
         setTimeout(() => setSuccessMessage(null), 3000);
         loadFiles();
@@ -78,7 +78,7 @@ const AppendixPage: React.FC = () => {
     }
   };
 
-  const handleDownloadFile = (file: any) => {
+  const handleDownloadFile = (file: KBDocument) => {
     if (file.storage_url) {
       window.open(file.storage_url, "_blank");
     } else {
@@ -87,7 +87,7 @@ const AppendixPage: React.FC = () => {
   };
 
   const handleClearAll = async () => {
-    const targets = files.map((f) => (f as any).document_id as string).filter(Boolean);
+    const targets = files.map((f) => f.document_id).filter(Boolean);
     if (targets.length === 0) return;
     const confirmed = window.confirm(
       `Delete all ${targets.length} document(s) and their AI indexing? This cannot be undone.`
@@ -183,7 +183,7 @@ const AppendixPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[#faedcd]/60">
-                {files.map((file: any) => (
+                {files.map((file) => (
                   <tr key={file.document_id} className="border-b border-[#faedcd]/60 hover:bg-white/35 transition-colors">
                     <td className="px-6 py-4 text-sm font-bold text-[#2d1e18]">
                       <div className="flex items-center gap-2">

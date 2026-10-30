@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { apiService } from "../services/apiService";
+import type { KBEffectiveness } from "../services/apiService";
 import MetricCard from "../components/MetricCard";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 import { BookOpen, PhoneCall, CheckCircle, Target } from "lucide-react";
 
 export const AnalyticsPage: React.FC = () => {
-  const [metrics, setMetrics] = useState<any>(null);
+  const [metrics, setMetrics] = useState<KBEffectiveness | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -38,7 +39,7 @@ export const AnalyticsPage: React.FC = () => {
     );
   }
 
-  const topDocuments: any[] = metrics.most_used_documents ?? [];
+  const topDocuments = metrics.most_used_documents ?? [];
   const hasRelevanceData = (metrics.calls_with_kb_usage ?? 0) > 0;
   const relevance: number = metrics.avg_relevance_score ?? 0;
 
@@ -108,7 +109,7 @@ export const AnalyticsPage: React.FC = () => {
                   }} 
                 />
                 <Bar dataKey="usage_count" radius={[0, 8, 8, 0]}>
-                  {topDocuments.map((_entry: any, index: number) => (
+                  {topDocuments.map((_entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Bar>

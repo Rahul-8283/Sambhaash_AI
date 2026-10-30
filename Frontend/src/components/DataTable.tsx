@@ -23,20 +23,17 @@ interface DataTableProps<T> {
   onSelectionChange?: (selectedRows: T[]) => void;
 }
 
-export const DataTable = React.forwardRef<
-  HTMLTableElement,
-  DataTableProps<any>
->(({
+function DataTableImpl<T extends object>({
   columns,
   data,
   rowKey,
   onRowClick,
   selectable = false,
   onSelectionChange,
-}, ref) => {
+}: DataTableProps<T>, ref: React.ForwardedRef<HTMLTableElement>) {
   const [sortKey, setSortKey] = useState<string | null>(null);
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-  const [selectedRows, setSelectedRows] = useState<Set<any>>(new Set());
+  const [selectedRows, setSelectedRows] = useState<Set<T[keyof T]>>(new Set());
 
   // Drop selected ids that are no longer on screen (page or filter change), so the
   // "select all" checkbox and the parent's selection never refer to hidden rows
@@ -59,7 +56,7 @@ export const DataTable = React.forwardRef<
     }
   };
 
-  const handleSelectRow = (row: any) => {
+  const handleSelectRow = (row: T) => {
     const newSelected = new Set(selectedRows);
     if (newSelected.has(row[rowKey])) {
       newSelected.delete(row[rowKey]);
@@ -185,8 +182,10 @@ export const DataTable = React.forwardRef<
       </table>
     </div>
   );
-});
+}
 
-DataTable.displayName = "DataTable";
+export const DataTable = React.forwardRef(DataTableImpl) as unknown as <T extends object>(
+  props: DataTableProps<T> & { ref?: React.Ref<HTMLTableElement> }
+) => React.ReactElement;
 
 export default DataTable;
