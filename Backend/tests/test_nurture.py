@@ -13,6 +13,7 @@ def _initiator(enabled=True, start=9, end=21):
         nurture_cooldown_hours = 72
         call_window_start_hour = start
         call_window_end_hour = end
+        enforce_call_window = True
 
     ci.config = Cfg
     return ci
@@ -54,3 +55,34 @@ def test_nurture_queries_inside_window():
     ci.repository = _Repo()
     asyncio.run(ci.find_and_call_nurture_leads())
     assert ci.repository.asked
+
+
+class _NewLeadRepo:
+    def __init__(self):
+        self.listed = False
+
+    async def list_leads_by_status(self, **kw):
+        self.listed = True
+        return [], 0
+
+
+def test_new_leads_are_not_dialled_outside_the_window():
+    ci = _initiator(start=0, end=0)
+    ci.repository = _NewLeadRepo()
+    asyncio.run(ci.find_and_call_new_leads())
+    assert not ci.repository.listed
+
+
+def test_new_leads_are_listed_inside_the_window():
+    ci = _initiator(start=0, end=24)
+    ci.repository = _NewLeadRepo()
+    asyncio.run(ci.find_and_call_new_leads())
+    assert ci.repository.listed
+
+
+def test_window_can_be_disabled_for_local_testing():
+    ci = _initiator(start=0, end=0)
+    ci.config.enforce_call_window = False
+    ci.repository = _NewLeadRepo()
+    asyncio.run(ci.find_and_call_new_leads())
+    assert ci.repository.listed

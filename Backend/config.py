@@ -121,6 +121,8 @@ class Settings(BaseSettings):
     # Calls are only placed between these hours (India Standard Time)
     call_window_start_hour: int = Field(default=9, env="CALL_WINDOW_START_HOUR")
     call_window_end_hour: int = Field(default=21, env="CALL_WINDOW_END_HOUR")
+    # Applies to every automatic dial (NEW and retry leads). Set false only for local testing.
+    enforce_call_window: bool = Field(default=True, env="ENFORCE_CALL_WINDOW")
 
     # ==================== WHATSAPP ====================
     whatsapp_template_language: str = Field(default="hi", env="WHATSAPP_TEMPLATE_LANGUAGE")

@@ -103,6 +103,9 @@ class CallInitiator:
             except Exception as e:
                 logger.warning(f"[CALL_INIT] Connection retry failed: {e}. Waiting for network...")
                 return
+        if not self._within_call_window():
+            logger.debug("[CALL_INIT] Outside the calling window; not dialling NEW leads")
+            return
         try:
             # Query for NEW leads
             leads, total = await self.repository.list_leads_by_status(
@@ -130,6 +133,8 @@ class CallInitiator:
     
     def _within_call_window(self, now: Optional[datetime] = None) -> bool:
         """True during the allowed calling hours, in India Standard Time."""
+        if not self.config.enforce_call_window:
+            return True
         ist = timezone(timedelta(hours=5, minutes=30))
         hour = (now or datetime.now(ist)).astimezone(ist).hour
         return self.config.call_window_start_hour <= hour < self.config.call_window_end_hour
