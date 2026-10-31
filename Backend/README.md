@@ -93,6 +93,7 @@ crashing startup.
 | `PUBLIC_RATE_LIMIT_MAX`, `PUBLIC_RATE_LIMIT_WINDOW_SECONDS` | landing-form limit (5 per 600 s per IP) |
 | `EMBEDDING_CACHE_DIR` | where the ONNX embedding model is cached |
 | `NURTURE_ENABLED`, `NURTURE_MAX_ATTEMPTS`, `NURTURE_COOLDOWN_HOURS`, `CALL_WINDOW_START_HOUR`/`END_HOUR` | retry unanswered leads (off by default), IST calling hours |
+| `LIVE_TRANSFER_ENABLED`, `LIVE_TRANSFER_TIMEOUT_SECONDS` | bridge a HOT call to the RM's phone (off by default; falls back to hangup) |
 | `RM_ROSTER` (`Asha:+9198...,Ravi`), `DEFAULT_RM_NAME`, `DEFAULT_COUNTRY_CODE`, `MAX_TURNS_PER_SESSION` | assignment name, phone normalization, call length |
 
 `HF_API_KEY` is no longer used.

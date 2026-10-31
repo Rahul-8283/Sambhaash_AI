@@ -105,6 +105,11 @@ class Settings(BaseSettings):
     # Comma-separated RMs for HOT-lead assignment, optionally with a WhatsApp number to
     # notify: "Asha:+919800000001,Ravi:+919800000002". Empty = everyone goes to default_rm_name.
     rm_roster: str = Field(default="", env="RM_ROSTER")
+    # Bridge the live call to the assigned RM when a lead turns HOT (needs an RM phone
+    # in RM_ROSTER). If the RM does not pick up, the call just ends and the WhatsApp
+    # notification still reaches them. Off by default.
+    live_transfer_enabled: bool = Field(default=False, env="LIVE_TRANSFER_ENABLED")
+    live_transfer_timeout_seconds: int = Field(default=20, env="LIVE_TRANSFER_TIMEOUT_SECONDS")
     auto_assign_hot_leads: bool = Field(default=True, env="AUTO_ASSIGN_HOT_LEADS")
     
     # ==================== NURTURE ====================

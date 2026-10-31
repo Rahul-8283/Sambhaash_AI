@@ -26,7 +26,7 @@ from orchestration.history import history_to_messages as conversation_messages
 from orchestration.objections import classify_objection
 from utils.language import call_language, last_turn_language, to_language_code
 from services.llm.kb_context_injection import KBContextInjectionService
-from services.rm_allocator import choose_rm
+from services.rm_allocator import RM, choose_rm
 from services.call_recording_service import CallRecordingService
 from worker.queue_manager import QueueManager, JobType
 
@@ -151,9 +151,11 @@ async def _score_and_assign_lead(
         scoring_engine: ScoringEngine,
         queue_manager: QueueManager,
         classification_override: Optional[str] = None
-):
+) -> Optional[RM]:
         """
         Score the lead from the stored conversation and auto-assign/follow-up.
+        Returns the RM a HOT lead was assigned to (None for any other outcome),
+        so the caller can offer a live transfer.
 
         The ScoringEngine scores the whole call (intent, engagement, sentiment).
         A clear HOT or COLD signal from the caller (``classification_override``)
@@ -165,6 +167,7 @@ async def _score_and_assign_lead(
                 session_id: Call session ID
                 classification_override: Outcome from the keyword heuristics
         """
+        assigned_rm: Optional[RM] = None
         try:
                 session = await repository.get_call_session(session_id) or {}
                 history = session.get("conversation_history") or []
@@ -236,6 +239,7 @@ async def _score_and_assign_lead(
                 if classification == "HOT":
                         # Assign to RM immediately
                         rm = await choose_rm(repository)
+                        assigned_rm = rm
                         await repository.assign_lead_to_rm(lead_id, rm.name)
                         logger.info(f"[SCORE] HOT lead assigned to RM: {rm.name}")
                         if rm.phone:
@@ -282,6 +286,7 @@ async def _score_and_assign_lead(
         
         except Exception as e:
                 logger.error(f"Error scoring lead: {e}")
+        return assigned_rm
 
 
 @router.api_route("/voice", methods=["GET", "POST"], dependencies=[Depends(verify_twilio_signature)])
@@ -531,7 +536,7 @@ async def recording_webhook(request: Request) -> Response:
                         logger.info(f"Call ending. Max turns reached: {turn_count >= max_turns}, LLM ending: {is_ending} for call {call_sid}")
                         
                         # Score and assign lead
-                        await _score_and_assign_lead(
+                        assigned_rm = await _score_and_assign_lead(
                                 lead_id=UUID(lead_id),
                                 session_id=UUID(session_id),
                                 repository=repository,
@@ -553,6 +558,15 @@ async def recording_webhook(request: Request) -> Response:
                         # Cleanup
                         del call_sessions[call_sid]
                         
+                        if settings.live_transfer_enabled and assigned_rm and assigned_rm.phone:
+                                # <Dial> only falls through to <Hangup/> when the RM does not answer
+                                logger.info(f"[TRANSFER] Bridging call {call_sid} to RM {assigned_rm.name}")
+                                return _xml_response(
+                                        f'<Response>{plays}'
+                                        f'<Dial timeout="{settings.live_transfer_timeout_seconds}" '
+                                        f'callerId="{xml_escape(settings.twilio_phone_number)}">'
+                                        f'<Number>{xml_escape(assigned_rm.phone)}</Number></Dial><Hangup/></Response>'
+                                )
                         return _xml_response(f'<Response>{plays}<Hangup/></Response>')
                 
                 # 7. Build returning TwiML with next recording

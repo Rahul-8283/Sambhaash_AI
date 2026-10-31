@@ -170,6 +170,35 @@ def test_cold_signal_ends_call_without_rm_or_requeue(call):
     assert all(f.get("status") != "NEW" for f in repo.written("lead"))
 
 
+def _hot_call_twiml(call, monkeypatch, transfer, rm):
+    async def fake_choose(repository):
+        return rm
+
+    monkeypatch.setattr(w, "choose_rm", fake_choose)
+    monkeypatch.setattr(w.get_config(), "live_transfer_enabled", transfer)
+    client, repo, stt, jobs, spoken = call(["yes I am interested, connect me"])
+    twiml = _post_turn(client, f"?session_id={uuid.uuid4()}&lead_id={uuid.uuid4()}")
+    return twiml, jobs
+
+
+def test_hot_call_is_bridged_to_the_rm_when_transfer_is_on(call, monkeypatch):
+    from services.rm_allocator import RM
+
+    twiml, jobs = _hot_call_twiml(call, monkeypatch, True, RM("Asha", "+919800000001"))
+    assert "<Dial" in twiml and "<Number>+919800000001</Number>" in twiml
+    assert twiml.index("</Dial>") < twiml.index("<Hangup/>"), "must hang up if the RM does not answer"
+    assert "send_whatsapp" in [t for t, _ in jobs], "the RM is still notified on WhatsApp"
+
+
+def test_hot_call_just_hangs_up_when_transfer_is_off_or_rm_has_no_phone(call, monkeypatch):
+    from services.rm_allocator import RM
+
+    twiml, _ = _hot_call_twiml(call, monkeypatch, False, RM("Asha", "+919800000001"))
+    assert "<Dial" not in twiml and "<Hangup/>" in twiml
+    twiml, _ = _hot_call_twiml(call, monkeypatch, True, RM("Asha", None))
+    assert "<Dial" not in twiml and "<Hangup/>" in twiml
+
+
 def test_do_not_contact_request_rejects_the_lead_permanently(call):
     client, repo, stt, jobs, spoken = call(["please don't call me again"])
     _post_turn(client, f"?session_id={uuid.uuid4()}&lead_id={uuid.uuid4()}")
