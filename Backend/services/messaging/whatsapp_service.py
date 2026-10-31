@@ -19,6 +19,7 @@ from twilio.rest import Client
 from config import get_config
 from services.database.repository import Repository
 from utils.language import to_language_code
+from utils.phone import normalize_phone
 
 logger = logging.getLogger(__name__)
 
@@ -300,9 +301,7 @@ Thank you! 🙏"""
             Dict with Twilio response (sid, status, etc)
         """
         try:
-            # Ensure phone has country code
-            if not phone.startswith("+"):
-                phone = "+91" + phone  # Assume India if no country code
+            phone = normalize_phone(phone)
             
             # Clean from_ number to ensure we don't duplicate 'whatsapp:' prefix
             from_number = self.whatsapp_from.replace('whatsapp:', '')

@@ -265,10 +265,8 @@ async def _score_and_assign_lead(
                         lead_lang = lead.get("language", "hi") if lead else "hi"
                         job = {
                                 "lead_id": str(lead_id),
-                                "phone": lead.get("phone") if lead else None,
                                 "message_type": "warm_follow_up",
                                 "language": lead_lang,
-                                "message": "Thanks for chatting with us! We'll be in touch soon."
                         }
                         await queue_manager.enqueue_job(JobType.SEND_WHATSAPP.value, job)
                         logger.info(f"[SCORE] Scheduled WhatsApp follow-up for WARM lead in language '{lead_lang}'")
@@ -656,21 +654,6 @@ async def fetch_audio_chunk(call_sid: str, index: int) -> Response:
                 return _empty_audio()
 
         return Response(content=data, media_type="audio/wav")
-
-@router.post("/whatsapp", dependencies=[Depends(verify_twilio_signature)])
-async def whatsapp_webhook(request: Request) -> Response:
-        """Optional Twilio WhatsApp sandbox webhook."""
-
-        form = await request.form()
-        message = _form_value(dict(form), "Body", "") or ""
-        from_number = _form_value(dict(form), "From", "unknown")
-        logger.info("WhatsApp message received from %s", from_number)
-
-        client = TwilioClient()
-        reply = client.build_whatsapp_reply_twiml(
-                "Thanks for reaching out! A Relationship Manager will be in touch shortly."
-        )
-        return Response(content=reply, media_type="application/xml")
 
 @router.post("/status", dependencies=[Depends(verify_twilio_signature)])
 async def status_webhook(

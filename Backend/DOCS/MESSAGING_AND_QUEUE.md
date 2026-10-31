@@ -52,7 +52,9 @@ on the call. Numbers are normalized to E.164 (`utils/phone.py`) at upload.
 - Sandbox sender: `TWILIO_WHATSAPP_FROM=whatsapp:+14155238886`; each recipient
   must first message the sandbox join code.
 - Sandbox "When a message comes in": `{base}/api/webhook/whatsapp` (the LLM reply
-  handler). `/api/webhook/twilio/whatsapp` only returns a canned message.
+  handler). The old canned `/api/webhook/twilio/whatsapp` route no longer exists.
+- A follow-up that fails after every retry parks the lead as `FOLLOW_UP` instead of
+  only landing in the dead-letter queue.
 - Outside the sandbox, business-initiated messages need approved templates
   (content SIDs); free-form text is only allowed inside a user-initiated window.
 - Trial accounts can only message verified numbers.

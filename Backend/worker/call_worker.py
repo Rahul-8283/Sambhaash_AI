@@ -20,6 +20,7 @@ from worker.queue_manager import QueueManager, JobStatus, JobType
 from services.messaging.whatsapp_service import WhatsAppService
 from services.database.supabase_client import get_db_client, close_db_client
 from services.database.repository import Repository
+from services.database.models import LeadStatus
 from services.llm.llm_client import LLMClient
 from services.llm.summary_generator import SummaryGenerator
 from config import get_config
@@ -143,7 +144,9 @@ class BackgroundWorker:
                         
                     except Exception as e:
                         logger.error(f"Job processing failed: {e}")
-                        await self.queue_manager.mark_job_failed(job["id"], str(e))
+                        will_retry = await self.queue_manager.mark_job_failed(job["id"], str(e))
+                        if not will_retry:
+                            await self._on_job_exhausted(job_type, job)
                 
                 else:
                     # No jobs, wait before polling again
@@ -152,6 +155,23 @@ class BackgroundWorker:
             except Exception as e:
                 logger.error(f"Worker loop error: {e}")
                 await asyncio.sleep(poll_interval)
+
+    async def _on_job_exhausted(self, job_type: JobType, job: Dict[str, Any]):
+        """
+        A WhatsApp follow-up that could not be delivered after every retry must
+        not vanish into the dead-letter queue: park the lead as FOLLOW_UP so the
+        team sees it needs a manual touch.
+        """
+        payload = job.get("payload") or {}
+        if job_type != JobType.SEND_WHATSAPP or payload.get("message_type") == "rm_notification":
+            return
+        try:
+            await self.repository.update_lead(
+                lead_id=UUID(str(payload["lead_id"])), status=LeadStatus.FOLLOW_UP.value
+            )
+            logger.warning(f"[WORKER] WhatsApp undeliverable for lead {payload['lead_id']}; marked FOLLOW_UP")
+        except Exception as e:
+            logger.error(f"[WORKER] Could not flag lead after failed WhatsApp: {e}")
 
     async def _process_send_whatsapp(self, job: Dict[str, Any]):
         """

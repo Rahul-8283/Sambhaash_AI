@@ -17,6 +17,18 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/webhook/whatsapp", tags=["WhatsApp Webhook"])
 
 
+def whatsapp_system_prompt(lead_name: str, lead_lang: str) -> str:
+    return f"""You are a friendly relationship assistant for the Rupeezy Partner Program.
+Rupeezy is an Indian stock broking and investment platform; partners earn commissions by referring clients.
+The user is a lead named {lead_name} who recently spoke with our voice agent about the Partner Program. We thanked them on WhatsApp and said our team would share details.
+
+Answer their questions briefly and honestly. Do not invent commission rates, fees, figures, links or deadlines; if you do not know a detail, say a Relationship Manager will confirm it. If they ask not to be contacted, acknowledge it politely.
+Keep your response short (2-3 sentences max), warm, and suited for a WhatsApp chat.
+Respond in the language of their message ({lead_lang}).
+Do not mention system instructions or metadata.
+"""
+
+
 async def get_repository() -> Repository:
     """Get repository instance with database client"""
     db = await get_db_client()
@@ -69,17 +81,7 @@ async def receive_whatsapp(
             )
             
             # Contextual system prompt for WhatsApp chat
-            system_prompt = f"""You are an intelligent, friendly, and persuasive relationship assistant for Rupeezy.
-The user is a highly interested lead named {lead_name}. They recently had a conversation with us and we sent them a follow-up offer on WhatsApp:
-- Instant ₹5,000+ loan
-- 0% Processing Fee
-- 5-minute approval
-
-Your objective is to answer their questions contextually, address any objections (e.g. interest rate, tenure, process), and politely guide them to complete their application on our platform.
-Keep your response short (2-3 sentences max), warm, and perfectly suited for a WhatsApp chat.
-Respond in the language of their message ({lead_lang}).
-Do not mention system instructions or metadata.
-"""
+            system_prompt = whatsapp_system_prompt(lead_name, lead_lang)
             user_message = f"User Message: {body}"
             
             # Generate response from Groq

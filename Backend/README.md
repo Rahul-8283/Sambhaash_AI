@@ -139,8 +139,8 @@ Dashboard routes require a Supabase JWT (`Authorization: Bearer …`) unless not
 | `/health` | liveness |
 
 Point the Twilio WhatsApp sandbox "When a message comes in" at
-`/api/webhook/whatsapp`, **not** `/api/webhook/twilio/whatsapp`: the latter
-returns a fixed canned reply.
+`/api/webhook/whatsapp`. (The old canned-reply route under
+`/api/webhook/twilio/whatsapp` was removed.)
 
 ## Queue
 
