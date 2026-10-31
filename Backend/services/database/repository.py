@@ -777,9 +777,12 @@ class Repository:
         """
         return await self.db.execute_query(query, (rm_name,))
     
-    async def mark_as_converted(self, lead_id: UUID) -> bool:
+    async def mark_as_converted(self, lead_id: UUID, notes: Optional[str] = None) -> bool:
         """
-        Mark an RM assignment as converted.
+        Mark an RM assignment as converted, keeping the RM's notes when given.
+
+        The conversion never depends on the notes: until migration 001 adds
+        rm_assignments.conversion_notes the write fails and is only logged.
         """
         query = """
         UPDATE rm_assignments
@@ -790,6 +793,17 @@ class Repository:
         
         # Also update lead status
         await self.update_lead(lead_id, status=LeadStatus.CONVERTED.value)
+
+        if notes and notes.strip():
+            try:
+                await self.db.execute_update(
+                    "UPDATE rm_assignments SET conversion_notes = $2 WHERE lead_id = $1",
+                    (str(lead_id), notes.strip()),
+                )
+            except Exception as e:
+                logger.warning(
+                    f"Conversion notes not saved (apply scripts/migrations/001_rm_conversion_notes.sql): {e}"
+                )
         
         logger.info(f"✅ Marked lead {lead_id} as converted")
         return affected > 0

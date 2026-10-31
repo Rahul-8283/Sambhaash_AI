@@ -230,7 +230,7 @@ async def mark_lead_converted(
             raise HTTPException(status_code=404, detail=f"Lead {lead_id} not found")
         
         # Mark as converted
-        success = await repository.mark_as_converted(UUID(lead_id))
+        success = await repository.mark_as_converted(UUID(lead_id), request.notes if request else None)
         
         if not success:
             logger.warning(f"Failed to mark lead {lead_id} as converted")
@@ -244,6 +244,8 @@ async def mark_lead_converted(
             "rm_name": rm_name,
             "converted_at": datetime.utcnow().isoformat(),
         }
+    except HTTPException:
+        raise
     except ValueError as e:
         logger.error(f"Invalid lead_id format: {lead_id}")
         raise HTTPException(status_code=400, detail="Invalid lead_id format")
