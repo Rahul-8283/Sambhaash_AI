@@ -61,3 +61,17 @@ def test_unknown_lead_is_a_404_not_a_500():
         assert response.status_code == 404
     finally:
         main.app.dependency_overrides.clear()
+
+
+def test_roster_endpoint_lists_configured_names_without_phones(monkeypatch):
+    cfg = rm_routes.get_config()
+    monkeypatch.setattr(cfg, "rm_roster", "Asha:+911,Ravi")
+    main.app.dependency_overrides[get_current_user] = lambda: {"id": "u"}
+    try:
+        client = TestClient(main.app, base_url="http://localhost")
+        assert client.get("/api/rm/roster").json() == {"rms": ["Asha", "Ravi"]}
+        monkeypatch.setattr(cfg, "rm_roster", "")
+        monkeypatch.setattr(cfg, "default_rm_name", "Team")
+        assert client.get("/api/rm/roster").json() == {"rms": ["Team"]}
+    finally:
+        main.app.dependency_overrides.clear()

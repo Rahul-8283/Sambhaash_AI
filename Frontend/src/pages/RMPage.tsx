@@ -18,10 +18,9 @@ import { LANGUAGE_MAP } from "../utils/constants";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 
-const AVAILABLE_RMS = ["Rajesh Kumar", "Priya Singh", "Amit Patel", "Sneha Gupta"];
-
 export const RMPage: React.FC = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
+  const [availableRms, setAvailableRms] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRmFilter, setSelectedRmFilter] = useState("all");
@@ -57,6 +56,7 @@ export const RMPage: React.FC = () => {
   };
 
   useEffect(() => {
+    apiService.getRmRoster().then(setAvailableRms).catch(() => setAvailableRms([]));
     loadHotLeads();
   }, []);
 
@@ -85,7 +85,7 @@ export const RMPage: React.FC = () => {
 
   const handleAssignClick = (lead: Lead) => {
     setSelectedLeadForAssign(lead);
-    setAssigningRm(lead.rmAssignment?.rmName || AVAILABLE_RMS[0]);
+    setAssigningRm(lead.rmAssignment?.rmName || availableRms[0] || "");
     setShowAssignModal(true);
   };
 
@@ -207,7 +207,7 @@ export const RMPage: React.FC = () => {
                 { id: "all", label: "All" },
                 { id: "unassigned", label: "Unassigned" },
                 { id: "assigned", label: "Assigned" },
-                ...AVAILABLE_RMS.map(name => ({ id: name, label: name.split(" ")[0] }))
+                ...availableRms.map(name => ({ id: name, label: name.split(" ")[0] }))
               ].map(tab => (
                 <button
                   key={tab.id}
@@ -380,7 +380,7 @@ export const RMPage: React.FC = () => {
                   onChange={(e) => setAssigningRm(e.target.value)}
                   className="w-full px-4 py-3 bg-white/70 border border-[#faedcd] rounded-lg focus:outline-none focus:ring-2 focus:ring-[#d4a373]/30 focus:border-[#d4a373] text-[#3d2b1f] font-bold"
                 >
-                  {AVAILABLE_RMS.map(name => (
+                  {availableRms.map(name => (
                     <option key={name} value={name}>{name}</option>
                   ))}
                 </select>

@@ -413,6 +413,11 @@ class ApiService {
     return response.data;
   }
 
+  public async getRmRoster(): Promise<string[]> {
+    const response: AxiosResponse<{ rms: string[] }> = await this.api.get('/api/rm/roster');
+    return response.data.rms;
+  }
+
   public async getRMLeaderboard(params?: { days?: number; limit?: number }): Promise<RMLeaderboardResponse> {
     const response: AxiosResponse<RMLeaderboardResponse> = await this.api.get('/api/rm/leaderboard', { params });
     return response.data;

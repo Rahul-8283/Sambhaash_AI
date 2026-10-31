@@ -14,6 +14,8 @@ from typing import Optional, Annotated
 from datetime import datetime, timedelta
 from uuid import UUID
 
+from config import get_config
+from services.rm_allocator import parse_roster
 from fastapi import APIRouter, Depends, HTTPException, Query, Path
 from pydantic import BaseModel, Field
 
@@ -298,7 +300,15 @@ async def get_rm_dashboard(
         }
     except Exception as e:
         logger.error(f"Error getting RM dashboard for {rm_name}: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail="Failed to get RM dashboard")
+
+
+@router.get("/roster")
+async def get_rm_roster() -> dict:
+    """Names the dashboard can assign leads to: the configured RM_ROSTER."""
+    config = get_config()
+    names = [rm.name for rm in parse_roster(config.rm_roster)]
+    return {"rms": names or [config.default_rm_name or "Auto"]}
 
 
 @router.get("/leaderboard", response_model=RMLeaderboardResponse)
