@@ -52,3 +52,20 @@ def test_production_refuses_to_start_with_placeholders(capsys):
     # development only warns
     _validate_config(SimpleNamespace(**{**base, "groq_api_key": "sk-test-default", "environment": "development"}, mode="development"))
     assert "WARNING" in capsys.readouterr().out
+
+
+def test_placeholder_whatsapp_sender_is_detected():
+    from types import SimpleNamespace
+
+    from config import placeholder_whatsapp_sender
+
+    assert placeholder_whatsapp_sender(SimpleNamespace(twilio_whatsapp_from="+919999999999"))
+    assert placeholder_whatsapp_sender(SimpleNamespace(twilio_whatsapp_from="whatsapp:+919999999999"))
+    assert not placeholder_whatsapp_sender(SimpleNamespace(twilio_whatsapp_from="whatsapp:+14155238886"))
+
+
+def test_recording_service_builds_without_a_groq_key():
+    from services.call_recording_service import CallRecordingService
+
+    service = CallRecordingService()
+    assert service._whisper_service is None

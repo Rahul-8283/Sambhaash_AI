@@ -102,13 +102,6 @@ class TwilioClient:
 	def build_say_twiml(self, body: str) -> str:
 		return _xml_response(f'<Say voice="alice">{_safe_text(body)}</Say>')
 
-	def download_recording(self, recording_url: str) -> bytes:
-		"""Download a Twilio recording as audio bytes."""
-
-		url = recording_url if recording_url.endswith((".mp3", ".wav")) else f"{recording_url}.mp3"
-		response = requests.get(url, auth=self._auth(), timeout=30)
-		response.raise_for_status()
-		return response.content
 
 	def create_outbound_call(self, to_number: str, webhook_path: str = "/api/webhook/twilio/voice", status_callback_path: str = "/api/webhook/twilio/status") -> TwilioCallResult:
 		"""Start an outbound call that points Twilio back to this backend."""

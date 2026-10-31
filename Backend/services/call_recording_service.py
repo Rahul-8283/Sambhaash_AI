@@ -43,9 +43,16 @@ class CallRecordingService:
         self.db_client = db_client
         self.storage_client = storage_client
         self.repository: Optional[Repository] = None
-        self.whisper_service = WhisperService()
+        self._whisper_service: Optional[WhisperService] = None
         self._initialized = False
     
+    @property
+    def whisper_service(self) -> WhisperService:
+        """Built on first use so constructing the service never needs a Groq key."""
+        if self._whisper_service is None:
+            self._whisper_service = WhisperService()
+        return self._whisper_service
+
     async def _ensure_initialized(self):
         """Lazy initialization of clients"""
         if self._initialized:

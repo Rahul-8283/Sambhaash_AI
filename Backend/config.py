@@ -183,6 +183,8 @@ _PLACEHOLDER = "sk-test-default"
 _DEFAULT_DATABASE_URL = "postgresql+asyncpg://postgres:password@localhost:5432/sambhaash_ai_test"
 
 # (attribute, environment variable) that a real deployment must set
+_DEFAULT_WHATSAPP_FROM = "+919999999999"
+
 _REQUIRED_SECRETS = [
     ("database_url", "DATABASE_URL"),
     ("supabase_service_role_key", "SUPABASE_SERVICE_ROLE_KEY"),
@@ -201,6 +203,11 @@ def unconfigured_settings(config: "Settings") -> list[str]:
         if not value or value in (_PLACEHOLDER, _DEFAULT_DATABASE_URL):
             missing.append(env_name)
     return missing
+
+
+def placeholder_whatsapp_sender(config: "Settings") -> bool:
+    """True while TWILIO_WHATSAPP_FROM is still the built-in dummy number."""
+    return getattr(config, "twilio_whatsapp_from", "").replace("whatsapp:", "") == _DEFAULT_WHATSAPP_FROM
 
 
 def _validate_config(config: Settings) -> None:
@@ -222,6 +229,9 @@ def _validate_config(config: Settings) -> None:
         raise ValueError(f"Missing required environment variables: {', '.join(missing)}")
     if missing:
         print(f"[CONFIG] WARNING: not configured (features using them will fail): {', '.join(missing)}")
+
+    if placeholder_whatsapp_sender(config):
+        print("[CONFIG] WARNING: TWILIO_WHATSAPP_FROM is still the placeholder; WhatsApp sends will fail")
 
     print(f"[CONFIG] Configuration validated (environment: {config.environment})")
 
