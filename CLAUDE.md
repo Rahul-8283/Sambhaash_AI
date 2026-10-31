@@ -43,7 +43,7 @@ npx tsc -b         # type-check only
 ### Tests
 
 ```bash
-cd Backend && pytest        # ~90 tests, no network/DB/Redis/Twilio/Groq needed
+cd Backend && pytest        # ~160 tests, no network/DB/Redis/Twilio/Groq needed
 ```
 
 `Backend/tests/` covers outcome and language handling, scoring, TTS splitting, templates, the embedder's failure mode, rate limiting, Twilio signatures, KB analytics, and whole calls through the recording webhook (`test_call_flow.py`) using fakes from `tests/conftest.py`. Add a test with every behaviour change; `test_call_flow.py` is the place to prove a turn-loop fix. There is no frontend test runner; verify the frontend with `npx tsc -b` / `npm run build`. `Backend/scripts/place_test_call.py` (places a real call, needs `--yes`), `scripts/list_leads.py` and `scripts/test_call.py` are manual scripts, not part of the suite.
