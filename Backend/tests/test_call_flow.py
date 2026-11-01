@@ -268,3 +268,41 @@ def test_hangup_before_speaking_is_not_scored(call):
     _status(client, CallStatus="completed")
     assert repo.written("lead")[0]["status"] == "FOLLOW_UP"
     assert not repo.written("score")
+
+
+def test_outbound_call_is_greeted_in_the_leads_language(call):
+    client, repo, stt, jobs, spoken = call([])
+    repo.lead_language = "hi"
+    response = client.post(
+        f"/api/webhook/twilio/voice?session_id={uuid.uuid4()}&lead_id={uuid.uuid4()}",
+        data={"CallSid": "CA-greet", "From": "+910000000000"},
+    )
+    assert response.status_code == 200
+    assert "<Play>" in response.text and "/audio/CA-greet/0" in response.text
+    assert spoken and spoken[0][1] == "hi"
+    assert "नमस्ते" in spoken[0][0]
+
+
+def test_greeting_falls_back_to_english_say_when_tts_fails(call, monkeypatch):
+    client, repo, stt, jobs, spoken = call([])
+    repo.lead_language = "ta"
+
+    async def broken(text, language):
+        raise RuntimeError("sarvam down")
+
+    monkeypatch.setattr(w._call_manager, "generate_tts", broken)
+    response = client.post(
+        f"/api/webhook/twilio/voice?session_id={uuid.uuid4()}&lead_id={uuid.uuid4()}",
+        data={"CallSid": "CA-fallback", "From": "+910000000000"},
+    )
+    assert response.status_code == 200
+    assert "<Say" in response.text and "<Play>" not in response.text
+    assert "<Record" in response.text
+
+
+def test_short_first_reply_uses_the_leads_language_without_hinting_whisper(call):
+    client, repo, stt, jobs, spoken = call(["haan"])
+    repo.lead_language = "ta"
+    _post_turn(client, f"?session_id={uuid.uuid4()}&lead_id={uuid.uuid4()}", call_sid="CA-first")
+    assert stt.hints == [None]            # a saved default must not bias transcription
+    assert spoken[0][1] == "ta"           # but a one-word reply is answered in the lead's language

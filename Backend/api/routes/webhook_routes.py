@@ -24,7 +24,7 @@ from services.database.models import LeadStatus
 from orchestration.outcome import classify_outcome, is_do_not_contact, user_texts_from_history
 from orchestration.history import history_to_messages as conversation_messages
 from orchestration.objections import classify_objection
-from utils.language import call_language, last_turn_language, to_language_code
+from utils.language import call_greeting, call_language, last_turn_language, to_language_code
 from services.llm.kb_context_injection import KBContextInjectionService
 from services.rm_allocator import RM, choose_rm
 from services.call_recording_service import CallRecordingService
@@ -317,12 +317,39 @@ async def voice_webhook(request: Request) -> Response:
         callback_path = "/api/webhook/twilio/recording"
         if session_id and lead_id:
                 callback_path += f"?session_id={session_id}&lead_id={lead_id}"
-                
+
+        # Greet in the language saved on the lead. Twilio's <Say> voice only speaks a
+        # few of these, so the greeting is synthesized with the same TTS as the replies.
+        # Any failure falls back to the English <Say> so the call still connects.
+        greeting_lang, greeting_text = call_greeting(await _lead_language(lead_id))
+        play_url = None
+        try:
+                _, _, manager = _services()
+                audio_cache[call_sid] = [await manager.generate_tts(text=greeting_text, language=greeting_lang)]
+                play_url = client.build_base_url(f"/api/webhook/twilio/audio/{call_sid}/0")
+        except Exception as exc:
+                logger.warning("Greeting TTS failed, using the English fallback: %s", exc)
+                greeting_text = call_greeting("en")[1]
+
         twiml = client.build_voice_entry_twiml(
-                greeting_text="Hello, welcome to Sambhaash AI. Please speak after the beep.",
+                greeting_text=greeting_text,
                 recording_callback_path=callback_path,
+                greeting_play_url=play_url,
         )
         return Response(content=twiml, media_type="application/xml")
+
+
+async def _lead_language(lead_id: Optional[str]) -> Optional[str]:
+        """The language saved on the lead, or None when it cannot be read."""
+        if not lead_id:
+                return None
+        try:
+                repository = Repository(await get_db_client())
+                lead = await repository.get_lead(UUID(lead_id))
+                return (lead or {}).get("language")
+        except Exception as exc:
+                logger.warning("Could not read the lead's language for the greeting: %s", exc)
+                return None
 
 
 @router.post("/recording", dependencies=[Depends(verify_twilio_signature)])
@@ -413,6 +440,13 @@ async def recording_webhook(request: Request) -> Response:
                 call_session = await repository.get_call_session(UUID(session_id)) if session_id else None
                 stored_history = (call_session or {}).get("conversation_history") or []
                 previous_lang = last_turn_language(stored_history)
+                # Before the caller has said anything long enough to detect, fall back to
+                # the language the lead chose. It is NOT used as the Whisper hint: the
+                # saved value is often just the form default, and a wrong hint garbles speech.
+                fallback_lang = previous_lang
+                if not fallback_lang and lead_id:
+                        lead_record = await repository.get_lead(UUID(lead_id))
+                        fallback_lang = (lead_record or {}).get("language") or None
 
                 # 1. STT
                 stt, language_detector, _ = _services()
@@ -426,7 +460,7 @@ async def recording_webhook(request: Request) -> Response:
                         language=previous_lang,
                 )
                 detected_lang, lang_confident = call_language(
-                        language_detector.detect_language(transcript), transcript, previous_lang
+                        language_detector.detect_language(transcript), transcript, fallback_lang
                 )
                 
                 logger.info(f"User said: {transcript} (Lang: {detected_lang}, hint: {previous_lang})")

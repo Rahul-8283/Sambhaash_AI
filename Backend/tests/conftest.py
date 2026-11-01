@@ -20,6 +20,7 @@ class FakeRepository:
         self.writes = []
         self.created_lead = False
         self.objections = []
+        self.lead_language = "en"
 
     async def get_call_session(self, session_id):
         return {
@@ -55,7 +56,7 @@ class FakeRepository:
         return {}
 
     async def get_lead(self, lead_id):
-        return {"phone": "+910000000000", "language": "en"}
+        return {"phone": "+910000000000", "language": self.lead_language}
 
     async def create_objection(self, **fields):
         self.writes.append(("objection", fields))

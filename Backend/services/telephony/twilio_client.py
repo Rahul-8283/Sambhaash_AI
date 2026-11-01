@@ -84,10 +84,17 @@ class TwilioClient:
 		recording_callback_path: str = "/api/webhook/twilio/recording",
 		timeout_seconds: int = 60,
 		silence_timeout_seconds: int = 2,
+		greeting_play_url: Optional[str] = None,
 	) -> str:
 		callback_url = self.build_base_url(recording_callback_path)
+		# A synthesized greeting speaks the lead's language; <Say> is the English fallback
+		greeting_xml = (
+			f'<Play>{_safe_text(greeting_play_url)}</Play>'
+			if greeting_play_url
+			else f'<Say voice="alice">{_safe_text(greeting_text)}</Say>'
+		)
 		inner_xml = (
-			f'<Say voice="alice">{_safe_text(greeting_text)}</Say>'
+			greeting_xml +
 			f'<Record action="{_safe_text(callback_url)}" '
 			f'method="POST" playBeep="true" maxLength="{int(timeout_seconds)}" '
 			f'timeout="{int(silence_timeout_seconds)}" '

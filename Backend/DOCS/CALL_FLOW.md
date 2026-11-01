@@ -21,7 +21,7 @@ leaves it `NEW` for the next cycle.
 ## 2. The turn loop — `api/routes/webhook_routes.py`
 
 ```
-voice webhook ── greeting + <Record action=/recording?session_id&lead_id>
+voice webhook ── greeting in the lead's saved language (Sarvam <Play>; English <Say> if TTS fails) + <Record action=/recording?session_id&lead_id>
    │
 recording webhook (one per caller utterance)
    ├─ read stored turns (language so far, history)
