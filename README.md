@@ -24,10 +24,10 @@ To solve this, Sambhaash AI acts as an autonomous telephony orchestrator that se
 
 ## Key Features
 
-- **Multilingual Speech Engine:** English, Hindi and nine regional languages (Marathi, Bengali, Gujarati, Punjabi, Odia, Tamil, Telugu, Kannada, Malayalam) using Sarvam BulBul V3 for speech and Groq Whisper for transcription. The language spoken on the call is detected, remembered and used for the reply and the follow-up.
+- **Multilingual Speech Engine:** English, Hindi and nine regional languages (Marathi, Bengali, Gujarati, Punjabi, Odia, Tamil, Telugu, Kannada, Malayalam) using Sarvam BulBul V3 for speech and Groq Whisper for transcription. The call opens with a greeting in the lead's saved language, and the language spoken on the call is then detected, remembered and used for the reply and the follow-up.
 - **Dynamic RAG Knowledge Base:** Real-time semantic knowledge retrieval during live calls using local sentence-transformer embeddings and pgvector to handle complex client objections on the fly.
-- **Lead Scoring & Routing:** Scores each call on intent, engagement and sentiment and classifies it HOT / WARM / COLD. HOT leads are assigned to a Relationship Manager queue on the dashboard; COLD leads are not re-dialled.
-- **WhatsApp Follow-up Agent:** Sends WARM leads a follow-up in their own language and answers their replies with an LLM.
+- **Lead Scoring & Routing:** Scores each call on intent, engagement and sentiment and classifies it HOT / WARM / COLD. HOT leads go to the least-loaded Relationship Manager in the configured roster, who is notified on WhatsApp (with an optional live transfer of the call); COLD leads are not re-dialled, and a spoken do-not-contact request permanently stops all calls to that lead.
+- **WhatsApp Follow-up Agent:** Sends WARM leads a Partner Program follow-up in their own language and answers their replies with an LLM.
 - **Unified Admin Dashboard:** A React command center to upload CSV leads, manage the knowledge base, review each call's transcript, score and summary, and work the RM queue.
 
 ---
@@ -81,11 +81,11 @@ graph TD
 
 ### How It Works (The Lifecycle)
 
-1. **Lead Ingestion:** Administrators upload campaign lists via the React dashboard. Numbers are normalized to E.164 and leads are stored in **Supabase** with status `NEW`.
+1. **Lead Ingestion:** Administrators upload campaign lists via the React dashboard. Numbers are normalized to E.164 and leads are stored in **Supabase** with status `NEW`. New leads are only dialled between 09:00 and 21:00 IST.
 2. **Dialing:** A background worker picks up `NEW` leads and has **Twilio** place the call. Each caller utterance is recorded and posted to the backend, which answers with the next spoken reply (a record-and-respond loop, not a live audio stream).
 3. **Transcription & Retrieval:** **Groq Whisper** transcribes the recording and the language is detected. The utterance is embedded locally and matched against the knowledge base to pull relevant chunks.
-4. **Reasoning & Speech:** A **LangGraph** graph, given the call so far, picks a pitch / objection / knowledge-answer path and writes a short reply with a **Groq**-hosted LLM, which **Sarvam BulBul V3** synthesizes in the caller's language.
-5. **Scoring & Follow-up:** When the caller gives a clear yes or no, or the call reaches its turn limit, the whole conversation is scored. **HOT** leads are assigned to a Relationship Manager's queue, **WARM** leads receive a WhatsApp follow-up in their language, and **COLD** leads are parked. A call summary is generated for every scored call.
+4. **Reasoning & Speech:** A **LangGraph** graph, given the call so far, picks a pitch / objection / knowledge-answer path and writes a short reply with a **Groq**-hosted LLM, which **Sarvam BulBul V3** synthesizes in the caller's language. The opening greeting is spoken in the lead's saved language.
+5. **Scoring & Follow-up:** When the caller gives a clear yes or no, or the call reaches its turn limit, the whole conversation is scored. **HOT** leads are assigned to the least-loaded Relationship Manager (who gets a WhatsApp notification, and the call can be transferred live), **WARM** leads receive a WhatsApp follow-up in their language, and **COLD** leads are parked. Leads that never answered can optionally be retried by the nurture schedule. A call summary is generated for every scored call.
 
 ---
 
@@ -146,12 +146,15 @@ python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 cp .env.example .env # Configure environment variables
+python scripts/migrate.py --apply # Apply the pending SQL migrations (conversion notes, lead notes)
 
 # 3. Start Infrastructure & Workers
 docker run -d --name sambhaash-redis -p 6379:6379 redis:alpine
 python run_worker.py # Start dialer + job worker (it calls every NEW lead: see Backend/README.md)
 
 # 4. Start Backend API (start this before the worker)
+# For local calls set ENABLE_NGROK=true with MODE=development and NGROK_AUTH_TOKEN; the tunnel is off by default.
+# Don't edit backend files during a live call while using --reload: the restart drops the call.
 python -m uvicorn main:app --reload
 
 # 5. Run the tests (no external services needed)
@@ -162,7 +165,7 @@ pytest
 
 ## Future Scope
 
-- **Real RM allocation:** a roster, round-robin or workload-based assignment, RM notifications, a per-RM dashboard and a live call transfer for HOT leads.
+- **Richer RM tooling:** a per-RM dashboard and working hours / availability-aware assignment on top of the current roster allocation.
 - **More integrations:** Native integrations with standard CRM systems (Salesforce, HubSpot) to automatically update lead statuses and log call transcripts.
 - **Security enhancements:** Enhanced access controls and PII redaction during LLM processing.
 - **Localization / broader accessibility:** Expanding to international language models for global outreach and implementing custom voice branding/cloning.

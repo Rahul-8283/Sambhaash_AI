@@ -104,7 +104,9 @@ crashing startup.
 1. The worker picks a `NEW` lead, creates a `call_sessions` row and asks Twilio
    to call, with `session_id` and `lead_id` in the webhook URL.
 2. Twilio hits `POST /api/webhook/twilio/voice` (signature-checked), which
-   answers with a greeting and a `<Record>`.
+   answers with a greeting in the lead's saved language (Sarvam TTS via `<Play>`,
+   English `<Say>` if synthesis fails) and a `<Record>`. The lead's language is the
+   fallback for short first replies; it is not used as the Whisper hint.
 3. Each recording lands on `POST /api/webhook/twilio/recording`:
    Whisper → language detection → KB lookup → LangGraph (with the call so far
    rebuilt from `call_sessions.conversation_history`) → turn saved while TTS
