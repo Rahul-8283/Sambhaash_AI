@@ -171,9 +171,10 @@ class SupabaseClient:
         try:
             async with self.pool.acquire() as conn:
                 result = await conn.execute(query, *params)
-                # result is a string like "INSERT 0 1" or "UPDATE 3"
-                affected = int(result.split()[-1]) if result else 0
-                return affected
+                # result is a command tag like "INSERT 0 1" or "UPDATE 3"; DDL
+                # such as "ALTER TABLE" carries no row count
+                tail = result.split()[-1] if result else ""
+                return int(tail) if tail.isdigit() else 0
         except asyncpg.PostgresError as e:
             logger.error(f"Update execution failed: {str(e)}")
             raise SupabaseClientError(f"Update failed: {str(e)}")
